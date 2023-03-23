@@ -90,7 +90,7 @@
       </li>
       <li v-for="file in filteredFiles" :key="file.key">
         <a
-          :href="`/raw/${file.key}`"
+          :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
           @contextmenu.prevent="
             showContextMenu = true;
@@ -102,7 +102,7 @@
               :content-type="file.httpMetadata.contentType"
               :thumbnail="
                 file.customMetadata.thumbnail
-                  ? `/raw/_$flaredrive$/thumbnails/${file.customMetadata.thumbnail}.png`
+                  ? `${rawBaseURL}/_$flaredrive$/thumbnails/${file.customMetadata.thumbnail}.png`
                   : null
               "
             />
@@ -159,12 +159,12 @@
           </button>
         </li>
         <li>
-          <a :href="`/raw/${focusedItem.key}`" target="_blank" download>
+          <a :href="`${rawBaseURL}/${focusedItem.key}`" target="_blank" download>
             <span>Download</span>
           </a>
         </li>
         <li>
-          <button @click="copyLink(`/raw/${focusedItem.key}`)">
+          <button @click="copyLink(`${rawBaseURL}/${focusedItem.key}`)">
             <span>Copy Link</span>
           </button>
         </li>
@@ -205,6 +205,7 @@ export default {
     showUploadPopup: false,
     uploadProgress: null,
     uploadQueue: [],
+    rawBaseURL: 'https://r2.epb.wiki',
   }),
 
   computed: {
