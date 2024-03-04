@@ -493,6 +493,7 @@ export default {
     Menu,
     MimeIcon,
     UploadPopup,
+    UploadedListPopup,
   },
 };
 </script>
