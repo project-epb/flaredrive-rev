@@ -20,11 +20,11 @@
         @contextmenu.prevent
       />
     </button>
-    <UploadedListPopup
-      v-model="showUploadedListPopup"
-      :list="uploadedFiles"
-    ></UploadedListPopup>
-    <button class="upload-button circle" @click="showUploadedListPopup = true" style="font-size: 1.5rem; background: green; right: 80px">👍</button>
+    <UploadHistoryPopup
+      v-model="showUploadHistoryPopup"
+      :list="uploadHistory"
+    ></UploadHistoryPopup>
+    <button class="upload-button circle" @click="showUploadHistoryPopup = true" style="font-size: 1.5rem; background: #41b883; right: 80px">👍</button>
     <div class="app-bar">
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
@@ -194,7 +194,7 @@ import Dialog from "./Dialog.vue";
 import Menu from "./Menu.vue";
 import MimeIcon from "./MimeIcon.vue";
 import UploadPopup from "./UploadPopup.vue";
-import UploadedListPopup from "./UploadedListPopup.vue";
+import UploadHistoryPopup from "./UploadHistoryPopup.vue";
 
 export default {
   data: () => ({
@@ -212,8 +212,8 @@ export default {
     showUploadPopup: false,
     uploadProgress: null,
     uploadQueue: [],
-    showUploadedListPopup: false,
-    uploadedFiles: [],
+    showUploadHistoryPopup: false,
+    uploadHistory: [],
     rawBaseURL: 'https://r2.epb.wiki',
   }),
 
@@ -416,7 +416,7 @@ export default {
         } else {
           await axios.put(uploadUrl, file, { headers, onUploadProgress });
         }
-        this.uploadedFiles.push({
+        this.uploadHistory.push({
           key: finalFilePath,
           time: Date.now(),
           url: `${this.rawBaseURL}/${finalFilePath}`,
@@ -478,6 +478,11 @@ export default {
       },
       immediate: true,
     },
+    uploadHistory() {
+      // 仅保留最近的 100 条记录
+      this.uploadHistory = this.uploadHistory.slice(-100);
+      localStorage.setItem("flaredrive:upload-history", JSON.stringify(this.uploadHistory));
+    },
   },
 
   created() {
@@ -486,6 +491,13 @@ export default {
       if (searchParams.get("p") !== this.cwd)
         this.cwd = searchParams.get("p") || "";
     });
+
+    const localUploadHistory = localStorage.getItem("flaredrive:upload-history");
+    try {
+      this.uploadHistory = JSON.parse(localUploadHistory) || [];
+    } catch (error) {
+      console.log("Parse local storage failed", error);
+    }
   },
 
   components: {
@@ -493,7 +505,7 @@ export default {
     Menu,
     MimeIcon,
     UploadPopup,
-    UploadedListPopup,
+    UploadHistoryPopup,
   },
 };
 </script>
@@ -530,4 +542,4 @@ export default {
   top: 100%;
   right: 0;
 }
-</style>./UploadedListPopup.vue
+</style>
