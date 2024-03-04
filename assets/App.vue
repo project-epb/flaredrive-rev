@@ -417,7 +417,7 @@ export default {
           await axios.put(uploadUrl, file, { headers, onUploadProgress });
         }
         this.uploadHistory = [
-          ...this.uploadHistory,
+          ...this.uploadHistory.filter((item) => item.key !== finalFilePath),
           {
             key: finalFilePath,
             time: Date.now(),
