@@ -13,6 +13,19 @@ const sortedList = Vue.computed(() => {
     }) || []
   )
 })
+
+function copyText(text = '') {
+  const input = document.createElement('input')
+  input.value = text
+  document.body.appendChild(input)
+  input.select()
+  document.execCommand('copy')
+  document.body.removeChild(input)
+}
+
+function handleJumpTo(url = '') {
+  window.open(url, '_blank')
+}
 </script>
 <template>
   <div class="popup">
@@ -33,8 +46,8 @@ const sortedList = Vue.computed(() => {
             v-if="item.thumbUrl"
             class="thumb"
             :style="{
-              height: '2rem',
-              width: '2rem',
+              height: '3rem',
+              width: '3rem',
               backgroundImage: `url(${item.thumbUrl})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -46,19 +59,40 @@ const sortedList = Vue.computed(() => {
               readonly
               :value="item.url"
               :style="{
-                width: 'calc(100% - 2rem)',
-                border: 'none',
-                padding: '0.25rem',
+                width: '100%',
+                border: '1px solid #ddd',
+                padding: '0.5rem',
                 borderRadius: '0.25rem',
-                fontSize: '0.8rem',
+                fontSize: '1rem',
               }"
               @click="
                 (e) => {
                   e.target.select()
-                  document.execCommand('copy')
                 }
               "
             />
+          </div>
+          <div class="actions flex gap-1">
+            <button
+              @click="copyText(item.url)"
+              :style="{
+                background: '#ddd',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+              }"
+            >
+              Copy
+            </button>
+            <button
+              @click="handleJumpTo(item.url)"
+              :style="{
+                background: '#ddd',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+              }"
+            >
+              View
+            </button>
           </div>
         </div>
       </div>
