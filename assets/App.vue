@@ -20,6 +20,11 @@
         @contextmenu.prevent
       />
     </button>
+    <UploadedListPopup
+      v-model="showUploadedListPopup"
+      :list="uploadedFiles"
+    ></UploadedListPopup>
+    <button class="upload-button circle" @click="showUploadedListPopup = true" style="font-size: 1.5rem; background: green; right: 80px">👍</button>
     <div class="app-bar">
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
@@ -189,6 +194,7 @@ import Dialog from "./Dialog.vue";
 import Menu from "./Menu.vue";
 import MimeIcon from "./MimeIcon.vue";
 import UploadPopup from "./UploadPopup.vue";
+import UploadedListPopup from "./UploadedListPopup.vue";
 
 export default {
   data: () => ({
@@ -206,6 +212,8 @@ export default {
     showUploadPopup: false,
     uploadProgress: null,
     uploadQueue: [],
+    showUploadedListPopup: false,
+    uploadedFiles: [],
     rawBaseURL: 'https://r2.epb.wiki',
   }),
 
@@ -408,6 +416,14 @@ export default {
         } else {
           await axios.put(uploadUrl, file, { headers, onUploadProgress });
         }
+        this.uploadedFiles.push({
+          key: finalFilePath,
+          time: Date.now(),
+          url: `${this.rawBaseURL}/${finalFilePath}`,
+          thumbUrl: thumbnailDigest
+            ? `${this.rawBaseURL}/_$flaredrive$/thumbnails/${thumbnailDigest}.png`
+            : null,
+        });
       } catch (error) {
         fetch("/api/write/")
           .then((value) => {
@@ -513,4 +529,4 @@ export default {
   top: 100%;
   right: 0;
 }
-</style>
+</style>./UploadedListPopup.vue
