@@ -319,13 +319,13 @@ export default {
       const originalOrder = this.orderBy;
       switch (text) {
         case "Name":
-          this.order = "name";
+          this.orderBy = "name";
           break;
         case "Size":
-          this.order = "size";
+          this.orderBy = "size";
           break;
         case "Date":
-          this.order = "date";
+          this.orderBy = "date";
           break;
         case "Paste":
           return this.pasteFile();
