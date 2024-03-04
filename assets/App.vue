@@ -480,12 +480,13 @@ export default {
     },
     uploadHistory: {
       handler(val) {
+        console.info("Upload history updated", val)
         if (val.length > 100) {
           this.uploadHistory = val.slice(-100);
         }
         localStorage.setItem(
           "flaredrive:upload-history",
-          JSON.stringify(this.uploadHistory)
+          JSON.stringify(val)
         );
       }
     },
