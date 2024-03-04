@@ -6,7 +6,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'upload', 'createFolder'])
 
-const sortedList = computed(() => {
+const sortedList = Vue.computed(() => {
   return (
     props?.list?.sort((a, b) => {
       return new Date(b.time) - new Date(a.time)
