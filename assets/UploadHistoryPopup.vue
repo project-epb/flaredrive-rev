@@ -4,7 +4,7 @@ const props = defineProps({
   list: Array,
 })
 
-const emit = defineEmits(['update:modelValue', 'upload', 'createFolder'])
+const emit = defineEmits(['update:modelValue', 'update:list'])
 
 const sortedList = Vue.computed(() => {
   return (
@@ -94,7 +94,7 @@ function handleJumpTo(url = '') {
               View
             </button>
             <button
-              @click="props.list = props.list.filter((i) => i.key !== item.key)"
+              @click="emit('update:list', props.list.filter((i) => i.key !== item.key))"
               :style="{
                 background: '#ffbdbd',
                 padding: '0.5rem 1rem',
