@@ -93,6 +93,16 @@ function handleJumpTo(url = '') {
             >
               View
             </button>
+            <button
+              @click="props.list = props.list.filter((i) => i.key !== item.key)"
+              :style="{
+                background: '#ffbdbd',
+                padding: '0.5rem 1rem',
+                borderRadius: '0.25rem',
+              }"
+            >
+              ×
+            </button>
           </div>
         </div>
       </div>
