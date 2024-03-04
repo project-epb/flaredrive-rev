@@ -416,14 +416,17 @@ export default {
         } else {
           await axios.put(uploadUrl, file, { headers, onUploadProgress });
         }
-        this.uploadHistory.push({
-          key: finalFilePath,
-          time: Date.now(),
-          url: `${this.rawBaseURL}/${finalFilePath}`,
-          thumbUrl: thumbnailDigest
-            ? `${this.rawBaseURL}/_$flaredrive$/thumbnails/${thumbnailDigest}.png`
-            : null,
-        });
+        this.uploadHistory = [
+          ...this.uploadHistory,
+          {
+            key: finalFilePath,
+            time: Date.now(),
+            url: `${this.rawBaseURL}/${finalFilePath}`,
+            thumbUrl: thumbnailDigest
+              ? `${this.rawBaseURL}/_$flaredrive$/thumbnails/${thumbnailDigest}.png`
+              : null,
+          },
+        ];
       } catch (error) {
         fetch("/api/write/")
           .then((value) => {
@@ -480,7 +483,6 @@ export default {
     },
     uploadHistory: {
       handler(val) {
-        console.info("Upload history updated", val)
         if (val.length > 100) {
           this.uploadHistory = val.slice(-100);
         }
