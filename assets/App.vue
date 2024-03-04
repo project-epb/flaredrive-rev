@@ -479,9 +479,7 @@ export default {
       immediate: true,
     },
     uploadHistory() {
-      // 仅保留最近的 100 条记录
-      this.uploadHistory = this.uploadHistory.slice(-100);
-      localStorage.setItem("flaredrive:upload-history", JSON.stringify(this.uploadHistory));
+      localStorage.setItem("flaredrive:upload-history", JSON.stringify(this.uploadHistory.slice(-100)));
     },
   },
 
