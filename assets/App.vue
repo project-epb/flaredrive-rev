@@ -389,8 +389,8 @@ export default {
       try {
         const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
         const finalFilePath = 
-          basedir.startsWith('/-/')
-            ? `/-/${dateStr}/${await blobDigest(file)}.${file?.type.split('/').pop() || file?.name.split('.').pop()}`
+          basedir.startsWith('-/')
+            ? `-/${dateStr}/${await blobDigest(file)}.${file?.type.split('/').pop() || file?.name.split('.').pop()}`
             : `${basedir}${file.name}`;
         const uploadUrl = `/api/write/items/${finalFilePath}`;
         const headers = {};
