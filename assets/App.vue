@@ -40,7 +40,7 @@
         </button>
         <Menu
           v-model="showMenu"
-          :items="[{ text: 'Name' }, { text: 'Size' }, { text: 'Paste' }]"
+          :items="[{ text: 'Name' }, { text: 'Size' }, { text: 'Date' }, { text: 'Paste' }]"
           @click="onMenuClick"
         />
       </div>
@@ -88,7 +88,7 @@
           ></span>
         </div>
       </li>
-      <li v-for="file in filteredFiles" :key="file.key">
+      <li v-for="file in currentShownFiles" :key="file.key">
         <a
           :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
@@ -198,7 +198,8 @@ export default {
     folders: [],
     focusedItem: null,
     loading: false,
-    order: null,
+    orderBy: null,
+    orderIn: "asc",
     search: "",
     showContextMenu: false,
     showMenu: false,
@@ -226,6 +227,28 @@ export default {
       }
       return folders;
     },
+
+    currentShownFiles() {
+      let files = this.filteredFiles;
+      this.orderBy ??= "name";
+      files.sort((a, b) => {
+        switch (this.orderBy) {
+          case "name":
+            return this.orderIn === "asc"
+              ? a.key.localeCompare(b.key)
+              : b.key.localeCompare(a.key);
+          case "size":
+            return this.orderIn === "asc"
+              ? a.size - b.size
+              : b.size - a.size;
+          case "date":
+            return this.orderIn === "asc"
+              ? new Date(a.uploaded) - new Date(b.uploaded)
+              : new Date(b.uploaded) - new Date(a.uploaded);
+        }
+      });
+      return files;
+    }
   },
 
   methods: {
@@ -267,13 +290,6 @@ export default {
         .then((res) => res.json())
         .then((files) => {
           this.files = files.value;
-          if (this.order) {
-            this.files.sort((a, b) => {
-              if (this.order === "size") {
-                return b.size - a.size;
-              }
-            });
-          }
           this.folders = files.folders;
           this.loading = false;
         });
@@ -300,19 +316,25 @@ export default {
     },
 
     onMenuClick(text) {
+      const originalOrder = this.orderBy;
       switch (text) {
         case "Name":
-          this.order = null;
+          this.order = "name";
           break;
         case "Size":
           this.order = "size";
           break;
+        case "Date":
+          this.order = "date";
+          break;
         case "Paste":
           return this.pasteFile();
       }
-      let compareFn = undefined;
-      if (this.order === "size") compareFn = (a, b) => b.size - a.size;
-      this.files.sort(compareFn);
+      if (originalOrder === this.orderBy) {
+        this.orderIn = this.orderIn === "asc" ? "desc" : "asc";
+      } else {
+        this.orderIn = "asc";
+      }
     },
 
     onUploadClicked(fileElement) {
