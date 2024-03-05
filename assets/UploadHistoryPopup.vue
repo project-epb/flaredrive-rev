@@ -31,13 +31,13 @@ function handleJumpTo(url = '') {
   <div class="popup">
     <Transition name="fade">
       <div
-        v-if="modelValue"
+        v-if="show"
         class="popup-modal"
         @click="emit('update:show', false)"
       ></div>
     </Transition>
     <Transition name="slide-up">
-      <div v-if="modelValue" class="list-content flex flex-col gap-1">
+      <div v-if="show" class="list-content flex flex-col gap-1">
         <div v-if="!sortedList.length" class="placeholder">
           <p style="text-align: center">No uploads yet</p>
         </div>
