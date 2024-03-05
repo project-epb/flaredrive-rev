@@ -21,7 +21,7 @@
       />
     </button>
     <UploadHistoryPopup
-      v-model:value="showUploadHistoryPopup"
+      v-model:show="showUploadHistoryPopup"
       v-model:list="uploadHistory"
     ></UploadHistoryPopup>
     <button class="upload-button circle" @click="showUploadHistoryPopup = true" style="font-size: 1.5rem; background: #41b883; right: 80px">👍</button>

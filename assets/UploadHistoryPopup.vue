@@ -1,10 +1,10 @@
 <script setup>
 const props = defineProps({
-  modelValue: Boolean,
+  show: Boolean,
   list: Array,
 })
 
-const emit = defineEmits(['update:modelValue', 'update:list'])
+const emit = defineEmits(['update:show', 'update:list'])
 
 const sortedList = Vue.computed(() => {
   return (
@@ -33,7 +33,7 @@ function handleJumpTo(url = '') {
       <div
         v-if="modelValue"
         class="popup-modal"
-        @click="emit('update:modelValue', false)"
+        @click="emit('update:show', false)"
       ></div>
     </Transition>
     <Transition name="slide-up">
