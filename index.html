@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FlareDrive</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.2.37/vue.global.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader/dist/vue3-sfc-loader.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.5.0/axios.min.js"></script>
+    <script src="https://unpkg.com/vue3-sfc-loader@0.9.5/dist/vue3-sfc-loader.js"></script>
     <link rel="prefetch" href="/assets/main.mjs" />
     <link rel="prefetch" href="/assets/MimeIcon.vue" />
     <link rel="stylesheet" href="/assets/main.css" />
@@ -16,39 +16,38 @@
   <body>
     <div id="app"></div>
     <script>
-      const { loadModule } = window["vue3-sfc-loader"];
+      const { createApp, h, defineComponent, defineAsyncComponent } = Vue
+      const { loadModule } = window['vue3-sfc-loader']
 
       const options = {
-        moduleCache: { vue: Vue },
+        moduleCache: { vue: Vue, axios },
         async getFile(url) {
-          const res = await fetch(url);
+          const res = await fetch(url)
           if (!res.ok)
-            throw Object.assign(new Error(res.statusText + " " + url), { res });
+            throw Object.assign(new Error(res.statusText + ' ' + url), { res })
           return {
             getContentData: (asBinary) =>
               asBinary ? res.arrayBuffer() : res.text(),
-          };
+          }
         },
         addStyle(textContent) {
-          const style = document.createElement("style");
-          style.textContent = textContent;
-          const ref = document.head.getElementsByTagName("style")[0] || null;
-          document.head.insertBefore(style, ref);
+          const style = document.createElement('style')
+          style.textContent = textContent
+          const ref = document.head.getElementsByTagName('style')[0] || null
+          document.head.insertBefore(style, ref)
         },
-      };
+      }
 
-      const app = Vue.createApp({
-        components: {
-          App: Vue.defineAsyncComponent(() =>
-            loadModule("/assets/App.vue", options)
-          ),
-        },
-        template: "<App></App>",
-      });
+      const app = createApp(
+        defineComponent(() => {
+          const App = defineAsyncComponent(() =>
+            loadModule('./assets/App.vue', options)
+          )
+          return () => h(App)
+        })
+      )
 
-      app.mount("#app");
+      app.mount('#app')
     </script>
-
-    <script type="module"></script>
   </body>
 </html>

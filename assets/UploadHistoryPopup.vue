@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue'
+
 const props = defineProps({
   show: Boolean,
   list: Array,
@@ -6,7 +8,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'update:list'])
 
-const sortedList = Vue.computed(() => {
+const sortedList = computed(() => {
   return (
     props?.list?.sort((a, b) => {
       return new Date(b.time) - new Date(a.time)
@@ -27,6 +29,7 @@ function handleJumpTo(url = '') {
   window.open(url, '_blank')
 }
 </script>
+
 <template>
   <div class="popup">
     <Transition name="fade">
@@ -94,7 +97,12 @@ function handleJumpTo(url = '') {
               View
             </button>
             <button
-              @click="emit('update:list', props.list.filter((i) => i.key !== item.key))"
+              @click="
+                emit(
+                  'update:list',
+                  props.list.filter((i) => i.key !== item.key)
+                )
+              "
               :style="{
                 background: '#ffbdbd',
                 padding: '0.5rem 1rem',
@@ -110,7 +118,7 @@ function handleJumpTo(url = '') {
   </div>
 </template>
 
-<style>
+<style scoped>
 .popup-modal {
   position: fixed;
   top: 0;
