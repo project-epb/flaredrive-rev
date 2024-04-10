@@ -24,7 +24,16 @@
       v-model:show="showUploadHistoryPopup"
       v-model:list="uploadHistory"
     ></UploadHistoryPopup>
-    <button class="upload-button circle" @click="showUploadHistoryPopup = true" style="font-size: 1.5rem; background: #41b883; right: 80px">👍</button>
+    <button class="upload-button circle" @click="showUploadHistoryPopup = true" style="background: #41b883; right: 80px">
+      <img
+        style="filter: invert(100%)"
+        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/history.svg"
+        alt="Upload History"
+        width="36"
+        height="36"
+        @contextmenu.prevent
+      />
+    </button>
     <div class="app-bar">
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
