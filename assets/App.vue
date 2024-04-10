@@ -13,7 +13,7 @@
     <button class="upload-button circle" @click="showUploadPopup = true">
       <img
         style="filter: invert(100%)"
-        src="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/4.0.0/png/file/upload_file/materialicons/36dp/2x/baseline_upload_file_black_36dp.png"
+        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/cloud-upload.svg
         alt="Upload"
         width="36"
         height="36"
@@ -29,19 +29,7 @@
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
         <button class="circle" @click="showMenu = true">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 448 512"
-            width="24"
-            height="24"
-            title="Menu"
-            style="display: block; margin: 4px"
-          >
-            <!--! Font Awesome Pro 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. -->
-            <path
-              d="M120 256c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm160 0c0 30.9-25.1 56-56 56s-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56zm104 56c-30.9 0-56-25.1-56-56s25.1-56 56-56s56 25.1 56 56s-25.1 56-56 56z"
-            />
-          </svg>
+          <img src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/dots.svg" />
         </button>
         <Menu
           v-model="showMenu"
@@ -60,7 +48,7 @@
         >
           <div class="file-icon">
             <img
-              src="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/4.0.0/png/file/folder/materialicons/36dp/2x/baseline_folder_black_36dp.png"
+              src="https://unpkg.com/@tabler/icons@3.1.0/icons/filled/folder.svg"
               width="36"
               height="36"
               alt="Folder"
@@ -81,7 +69,7 @@
         >
           <div class="file-icon">
             <img
-              src="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/4.0.0/png/file/folder/materialicons/36dp/2x/baseline_folder_black_36dp.png"
+              src="https://unpkg.com/@tabler/icons@3.1.0/icons/filled/folder.svg"
               width="36"
               height="36"
               alt="Folder"
