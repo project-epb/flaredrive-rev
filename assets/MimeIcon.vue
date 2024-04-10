@@ -18,7 +18,7 @@ const props = defineProps({
 
 const computedIconImg = computed(() => {
   if (props.thumbnail) {
-    return thumbnail;
+    return props.thumbnail;
   } else if (
     [
       'application/gzip',
