@@ -102,6 +102,7 @@
           <div class="file-item">
             <MimeIcon
               :content-type="file.httpMetadata.contentType"
+              :filename="file.key.split('/').pop()"
               :thumbnail="
                 file.customMetadata.thumbnail
                   ? `${rawBaseURL}/_$flaredrive$/thumbnails/${file.customMetadata.thumbnail}.png`
