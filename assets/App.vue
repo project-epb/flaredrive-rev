@@ -13,7 +13,7 @@
     <button class="upload-button circle" @click="showUploadPopup = true">
       <img
         style="filter: invert(100%)"
-        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/cloud-upload.svg
+        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/cloud-upload.svg"
         alt="Upload"
         width="36"
         height="36"
