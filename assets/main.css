@@ -56,7 +56,6 @@ input[type="search"] {
 .file-item {
   height: 64px;
   padding: 8px 0;
-  transition: background-color 0.2s ease-in-out;
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -67,6 +66,7 @@ input[type="search"] {
   display: flex;
   gap: 1rem;
   padding: 0px 1rem;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .file-list li:hover {
