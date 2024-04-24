@@ -5,9 +5,9 @@ defineProps({
     type: Array,
     required: true,
   },
-});
+})
 
-const emit = defineEmits(["update:modelValue", "click"]);
+const emit = defineEmits(['update:modelValue', 'click'])
 </script>
 
 <template>
@@ -25,11 +25,20 @@ const emit = defineEmits(["update:modelValue", "click"]);
           v-for="(item, index) in items"
           :key="index"
           @click="
-            emit('update:modelValue', false);
-            emit('click', item.text);
+            () => {
+              emit('update:modelValue', false)
+              emit('click', item)
+            }
           "
         >
-          <span v-text="item.text"></span>
+          <component
+            v-if="typeof item.render === 'function'"
+            :is="item.render"
+          ></component>
+          <span
+            v-else-if="typeof item.text === 'string'"
+            v-text="item.text"
+          ></span>
         </li>
       </ul>
     </div>
