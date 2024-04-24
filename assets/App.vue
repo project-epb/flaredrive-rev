@@ -208,13 +208,13 @@ import {
   blobDigest,
   multipartUpload,
   SIZE_LIMIT,
-} from '/assets/main.mjs'
-import Dialog from './Dialog.vue'
-import Menu from './Menu.vue'
-import MimeIcon from './MimeIcon.vue'
-import UploadPopup from './UploadPopup.vue'
-import UploadHistoryPopup from './UploadHistoryPopup.vue'
-import TablerIcon from './TablerIcon.vue'
+} from './main.mjs'
+import Dialog from './components/Dialog.vue'
+import Menu from './components/Menu.vue'
+import MimeIcon from './components/MimeIcon.vue'
+import UploadPopup from './components/UploadPopup.vue'
+import UploadHistoryPopup from './components/UploadHistoryPopup.vue'
+import TablerIcon from './components/TablerIcon.vue'
 
 export default {
   data: () => ({
