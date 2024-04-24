@@ -45,16 +45,12 @@ input[type='search'] {
 }
 
 .file-list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
   padding-bottom: 64px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
 .file-list > li {
-  width: 300px;
-  max-width: 100%;
-  flex: auto;
   display: flex;
   gap: 1rem;
   border-radius: 0.5rem;
