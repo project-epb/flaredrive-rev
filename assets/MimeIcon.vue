@@ -82,7 +82,7 @@ const computedIconName = computed(() => {
   <div class="file-icon">
     <img
       v-if="props.thumbnail"
-      :src="computedIconImg"
+      :src="props.thumbnail"
       :width="size"
       :height="size"
       alt="Image"

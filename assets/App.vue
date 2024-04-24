@@ -88,10 +88,15 @@
           ></span>
         </div>
       </li>
-      <li v-for="file in currentShownFiles" :key="file.key">
+      <li
+        v-for="file in currentShownFiles"
+        :key="file.key"
+        style="display: flex; gap: 1rem; padding: 0 0.5rem"
+      >
         <a
           :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
+          style="flex: 1"
           @contextmenu.prevent="
             () => {
               showContextMenu = true
@@ -116,20 +121,18 @@
                 <span v-text="formatSize(file.size)"></span>
               </div>
             </div>
-            <div style="margin-right: 1rem">
-              <button
-                @click.stop="
-                  () => {
-                    showContextMenu = true
-                    focusedItem = file
-                  }
-                "
-              >
-                <MimeIcon name="dots" />
-              </button>
-            </div>
           </div>
         </a>
+        <button
+          @click.stop.prevent="
+            () => {
+              showContextMenu = true
+              focusedItem = file
+            }
+          "
+        >
+          <TablerIcon name="dots" />
+        </button>
       </li>
     </ul>
     <div v-if="loading" style="margin-top: 12px; text-align: center">
