@@ -91,6 +91,7 @@
       </li>
       <li v-for="file in currentShownFiles" :key="file.key">
         <a
+          class="file-link"
           :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
           style="flex: 1"
@@ -103,6 +104,7 @@
         >
           <div class="file-item">
             <MimeIcon
+              class="file-icon"
               :content-type="file.httpMetadata.contentType"
               :filename="file.key.split('/').pop()"
               :thumbnail="
@@ -111,25 +113,28 @@
                   : null
               "
             />
-            <div>
+            <div class="file-info">
               <div class="file-name" v-text="file.key.split('/').pop()"></div>
               <div class="file-attr">
                 <span v-text="new Date(file.uploaded).toLocaleString()"></span>
                 <span v-text="formatSize(file.size)"></span>
               </div>
             </div>
+            <button
+              class="file-action"
+              @click="
+                (e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  showContextMenu = true
+                  focusedItem = file
+                }
+              "
+            >
+              <TablerIcon name="dots" />
+            </button>
           </div>
         </a>
-        <button
-          @click.stop.prevent="
-            () => {
-              showContextMenu = true
-              focusedItem = file
-            }
-          "
-        >
-          <TablerIcon name="dots" />
-        </button>
       </li>
     </ul>
     <div v-if="loading" style="margin-top: 12px; text-align: center">

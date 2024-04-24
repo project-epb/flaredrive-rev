@@ -64,22 +64,22 @@ input[type='search'] {
   background-color: #f5f5f5;
 }
 
-.file-list li a {
+.file-list .file-link {
   display: flex;
   flex: 1;
 }
 
-.file-list li button {
-  margin-right: 1rem;
-}
-
 .file-item {
   height: 64px;
-  padding: 8px 0;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   cursor: pointer;
   user-select: none;
+  flex: 1;
+}
+
+.file-item .file-info {
   flex: 1;
 }
 
