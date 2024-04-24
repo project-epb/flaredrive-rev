@@ -148,6 +148,7 @@
               </div>
             </div>
             <button
+              v-if="isTouchDevice"
               class="file-action"
               @click="
                 (e) => {
@@ -267,12 +268,13 @@ const uploadQueue = ref([])
 const showUploadHistoryPopup = ref(false)
 const uploadHistory = ref([])
 const rawBaseURL = ref('https://r2.epb.wiki')
+const isTouchDevice = 'ontouchstart' in window
 
 // computed
 const filteredFiles = computed(() => {
   let list = files.value
   if (search.value) {
-    list = files.filter((file) =>
+    list = list.filter((file) =>
       file.key.split('/').pop().includes(search.value)
     )
   }
@@ -281,7 +283,7 @@ const filteredFiles = computed(() => {
 const filteredFolders = computed(() => {
   let list = folders.value
   if (search.value) {
-    list = folders.filter((folder) => folder.includes(search.value))
+    list = list.filter((folder) => folder.includes(search.value))
   }
   return list
 })
@@ -545,7 +547,7 @@ onMounted(() => {
 .app-bar {
   position: sticky;
   top: 0;
-  padding: 8px;
+  padding: 8px 20px;
   background-color: white;
   display: flex;
 }
