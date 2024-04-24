@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import MimeIcon from './MimeIcon.vue'
 
 const props = defineProps({
   show: Boolean,
@@ -45,17 +46,11 @@ function handleJumpTo(url = '') {
           <p style="text-align: center">No uploads yet</p>
         </div>
         <div v-else class="file-item flex gap-1" v-for="item in sortedList">
-          <div
-            v-if="item.thumbUrl"
-            class="thumb"
-            :style="{
-              height: '3rem',
-              width: '3rem',
-              backgroundImage: `url(${item.thumbUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }"
-          ></div>
+          <MimeIcon
+            :size="48"
+            :thumbnail="item.thumbUrl"
+            :filename="item.key"
+          />
           <div class="link flex-1">
             <input
               type="text"
@@ -133,7 +128,7 @@ function handleJumpTo(url = '') {
   position: fixed;
   bottom: 0;
   width: 100%;
-  height: 80vh;
+  height: 70vh;
   z-index: 2;
   border-radius: 16px 16px 0 0;
   background-color: white;

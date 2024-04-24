@@ -1,55 +1,54 @@
 <script setup>
 import { computed } from 'vue'
+import TablerIcon from './TablerIcon.vue'
 
 const props = defineProps({
   contentType: {
     type: String,
-    default: "",
+    default: '',
   },
   thumbnail: {
     type: String,
-    default: "",
+    default: '',
   },
   filename: {
     type: String,
-    default: "",
+    default: '',
   },
   size: {
     type: Number,
     default: 36,
   },
-});
+})
 
 const validExtIcons = [
-    "bmp",
-    "css",
-    "csv",
-    "doc",
-    "docx",
-    "html",
-    "jpg",
-    "js",
-    "jsx",
-    "pdf",
-    "php",
-    "png",
-    "ppt",
-    "rs",
-    "sql",
-    "svg",
-    "ts",
-    "tsx",
-    "txt",
-    "vue",
-    "xls",
-    "xml",
-    "zip"
-];
+  'bmp',
+  'css',
+  'csv',
+  'doc',
+  'docx',
+  'html',
+  'jpg',
+  'js',
+  'jsx',
+  'pdf',
+  'php',
+  'png',
+  'ppt',
+  'rs',
+  'sql',
+  'svg',
+  'ts',
+  'tsx',
+  'txt',
+  'vue',
+  'xls',
+  'xml',
+  'zip',
+]
 
-const computedIconImg = computed(() => {
-  if (props.thumbnail) {
-    return props.thumbnail;
-  } else if (
+const computedIconName = computed(() => {
+  if (
     [
       'application/gzip',
       'application/vnd.rar',
@@ -61,32 +60,34 @@ const computedIconImg = computed(() => {
       'application/x-xz',
     ].includes(props.contentType)
   ) {
-    return 'https://unpkg.com/@tabler/icons@3.1.0/icons/outline/file-zip.svg'
+    return 'file-zip'
   } else if (props.contentType === 'application/pdf') {
-    return 'https://unpkg.com/@tabler/icons@3.1.0/icons/outline/file-type-pdf.svg'
+    return 'file-type-pdf'
   } else if (props.contentType.startsWith('video/')) {
-    return 'https://unpkg.com/@tabler/icons@3.1.0/icons/outline/movie.svg'
+    return 'movie'
   } else if (props.contentType.startsWith('audio/')) {
-    return 'https://unpkg.com/@tabler/icons@3.1.0/icons/outline/file-music.svg'
+    return 'file-music'
   }
 
-  const ext = props.filename.split('.').pop().toLowerCase();
+  const ext = props.filename.split('.').pop().toLowerCase()
   if (validExtIcons.includes(ext)) {
-    return `https://unpkg.com/@tabler/icons@3.1.0/icons/outline/file-type-${ext}.svg`;
+    return `file-type-${ext}`
   }
 
-  return 'https://unpkg.com/@tabler/icons@3.1.0/icons/outline/file-unknown.svg'
-});
+  return 'file-unknown'
+})
 </script>
 
 <template>
   <div class="file-icon">
     <img
+      v-if="props.thumbnail"
       :src="computedIconImg"
       :width="size"
       :height="size"
       alt="Image"
       loading="lazy"
     />
+    <TablerIcon v-else :name="computedIconName" :size="size" loading="lazy" />
   </div>
 </template>

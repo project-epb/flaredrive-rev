@@ -11,12 +11,11 @@
       @createFolder="createFolder"
     ></UploadPopup>
     <button class="upload-button circle" @click="showUploadPopup = true">
-      <img
+      <TablerIcon
         style="filter: invert(100%)"
-        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/cloud-upload.svg"
+        name="cloud-upload"
+        size="36"
         alt="Upload"
-        width="36"
-        height="36"
         @contextmenu.prevent
       />
     </button>
@@ -24,13 +23,15 @@
       v-model:show="showUploadHistoryPopup"
       v-model:list="uploadHistory"
     ></UploadHistoryPopup>
-    <button class="upload-button circle" @click="showUploadHistoryPopup = true" style="background: #41b883; right: 80px">
-      <img
-        style="filter: invert(100%)"
-        src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/history.svg"
+    <button
+      class="upload-button circle"
+      @click="showUploadHistoryPopup = true"
+      style="background: #41b883; right: 80px"
+    >
+      <TablerIcon
+        name="history"
+        size="36"
         alt="Upload History"
-        width="36"
-        height="36"
         @contextmenu.prevent
       />
     </button>
@@ -38,11 +39,16 @@
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
         <button class="circle" @click="showMenu = true">
-          <img src="https://unpkg.com/@tabler/icons@3.1.0/icons/outline/dots.svg" />
+          <TablerIcon name="dots" alt="..." />
         </button>
         <Menu
           v-model="showMenu"
-          :items="[{ text: 'Name' }, { text: 'Size' }, { text: 'Date' }, { text: 'Paste' }]"
+          :items="[
+            { text: 'Name' },
+            { text: 'Size' },
+            { text: 'Date' },
+            { text: 'Paste' },
+          ]"
           @click="onMenuClick"
         />
       </div>
@@ -56,12 +62,7 @@
           @contextmenu.prevent
         >
           <div class="file-icon">
-            <img
-              src="https://unpkg.com/@tabler/icons@3.1.0/icons/filled/folder.svg"
-              width="36"
-              height="36"
-              alt="Folder"
-            />
+            <TablerIcon name="folder" type="filled" size="36" alt="Folder" />
           </div>
           <span class="file-name">..</span>
         </div>
@@ -72,17 +73,14 @@
           class="file-item"
           @click="cwd = folder"
           @contextmenu.prevent="
-            showContextMenu = true;
-            focusedItem = folder;
+            () => {
+              showContextMenu = true
+              focusedItem = folder
+            }
           "
         >
           <div class="file-icon">
-            <img
-              src="https://unpkg.com/@tabler/icons@3.1.0/icons/filled/folder.svg"
-              width="36"
-              height="36"
-              alt="Folder"
-            />
+            <TablerIcon name="folder" type="filled" size="36" alt="Folder" />
           </div>
           <span
             class="file-name"
@@ -95,8 +93,10 @@
           :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
           @contextmenu.prevent="
-            showContextMenu = true;
-            focusedItem = file;
+            () => {
+              showContextMenu = true
+              focusedItem = file
+            }
           "
         >
           <div class="file-item">
@@ -109,12 +109,24 @@
                   : null
               "
             />
-            <div>
+            <div style="flex: 1">
               <div class="file-name" v-text="file.key.split('/').pop()"></div>
               <div class="file-attr">
                 <span v-text="new Date(file.uploaded).toLocaleString()"></span>
                 <span v-text="formatSize(file.size)"></span>
               </div>
+            </div>
+            <div style="margin-right: 1rem">
+              <button
+                @click.stop="
+                  () => {
+                    showContextMenu = true
+                    focusedItem = file
+                  }
+                "
+              >
+                <MimeIcon name="dots" />
+              </button>
             </div>
           </div>
         </a>
@@ -162,7 +174,11 @@
           </button>
         </li>
         <li>
-          <a :href="`${rawBaseURL}/${focusedItem.key}`" target="_blank" download>
+          <a
+            :href="`${rawBaseURL}/${focusedItem.key}`"
+            target="_blank"
+            download
+          >
             <span>Download</span>
           </a>
         </li>
@@ -187,24 +203,25 @@ import {
   blobDigest,
   multipartUpload,
   SIZE_LIMIT,
-} from "/assets/main.mjs";
-import Dialog from "./Dialog.vue";
-import Menu from "./Menu.vue";
-import MimeIcon from "./MimeIcon.vue";
-import UploadPopup from "./UploadPopup.vue";
-import UploadHistoryPopup from "./UploadHistoryPopup.vue";
+} from '/assets/main.mjs'
+import Dialog from './Dialog.vue'
+import Menu from './Menu.vue'
+import MimeIcon from './MimeIcon.vue'
+import UploadPopup from './UploadPopup.vue'
+import UploadHistoryPopup from './UploadHistoryPopup.vue'
+import TablerIcon from './TablerIcon.vue'
 
 export default {
   data: () => ({
     clipboard: null,
-    cwd: new URL(window.location).searchParams.get("p") || "",
+    cwd: new URL(window.location).searchParams.get('p') || '',
     files: [],
     folders: [],
     focusedItem: null,
     loading: false,
     orderBy: null,
-    orderIn: "asc",
-    search: "",
+    orderIn: 'asc',
+    search: '',
     showContextMenu: false,
     showMenu: false,
     showUploadPopup: false,
@@ -217,202 +234,204 @@ export default {
 
   computed: {
     filteredFiles() {
-      let files = this.files;
+      let files = this.files
       if (this.search) {
         files = files.filter((file) =>
-          file.key.split("/").pop().includes(this.search)
-        );
+          file.key.split('/').pop().includes(this.search)
+        )
       }
-      return files;
+      return files
     },
 
     filteredFolders() {
-      let folders = this.folders;
+      let folders = this.folders
       if (this.search) {
-        folders = folders.filter((folder) => folder.includes(this.search));
+        folders = folders.filter((folder) => folder.includes(this.search))
       }
-      return folders;
+      return folders
     },
 
     currentShownFiles() {
-      let files = this.filteredFiles;
-      this.orderBy ??= "name";
+      let files = this.filteredFiles
+      this.orderBy ??= 'name'
       files.sort((a, b) => {
         switch (this.orderBy) {
-          case "name":
-            return this.orderIn === "asc"
+          case 'name':
+            return this.orderIn === 'asc'
               ? a.key.localeCompare(b.key)
-              : b.key.localeCompare(a.key);
-          case "size":
-            return this.orderIn === "asc"
-              ? a.size - b.size
-              : b.size - a.size;
-          case "date":
-            return this.orderIn === "asc"
+              : b.key.localeCompare(a.key)
+          case 'size':
+            return this.orderIn === 'asc' ? a.size - b.size : b.size - a.size
+          case 'date':
+            return this.orderIn === 'asc'
               ? new Date(a.uploaded) - new Date(b.uploaded)
-              : new Date(b.uploaded) - new Date(a.uploaded);
+              : new Date(b.uploaded) - new Date(a.uploaded)
         }
-      });
-      return files;
-    }
+      })
+      return files
+    },
   },
 
   methods: {
     copyLink(link) {
-      const url = new URL(link, window.location.origin);
-      navigator.clipboard.writeText(url.toString());
+      const url = new URL(link, window.location.origin)
+      navigator.clipboard.writeText(url.toString())
     },
 
     async copyPaste(source, target) {
-      const uploadUrl = `/api/write/items/${target}`;
-      await axios.put(uploadUrl, "", {
-        headers: { "x-amz-copy-source": encodeURIComponent(source) },
-      });
+      const uploadUrl = `/api/write/items/${target}`
+      await axios.put(uploadUrl, '', {
+        headers: { 'x-amz-copy-source': encodeURIComponent(source) },
+      })
     },
 
     async createFolder() {
       try {
-        const folderName = window.prompt("Folder name");
-        if (!folderName) return;
-        this.showUploadPopup = false;
-        const uploadUrl = `/api/write/items/${this.cwd}${folderName}/_$folder$`;
-        await axios.put(uploadUrl, "");
-        this.fetchFiles();
+        const folderName = window.prompt('Folder name')
+        if (!folderName) return
+        this.showUploadPopup = false
+        const uploadUrl = `/api/write/items/${this.cwd}${folderName}/_$folder$`
+        await axios.put(uploadUrl, '')
+        this.fetchFiles()
       } catch (error) {
-        fetch("/api/write/")
+        fetch('/api/write/')
           .then((value) => {
-            if (value.redirected) window.location.href = value.url;
+            if (value.redirected) window.location.href = value.url
           })
-          .catch(() => {});
-        console.log(`Create folder failed`);
+          .catch(() => {})
+        console.log(`Create folder failed`)
       }
     },
 
     fetchFiles() {
-      this.files = [];
-      this.folders = [];
-      this.loading = true;
+      this.files = []
+      this.folders = []
+      this.loading = true
       fetch(`/api/children/${this.cwd}`)
         .then((res) => res.json())
         .then((files) => {
-          this.files = files.value;
-          this.folders = files.folders;
-          this.loading = false;
-        });
+          this.files = files.value
+          this.folders = files.folders
+          this.loading = false
+        })
     },
 
     formatSize(size) {
-      const units = ["B", "KB", "MB", "GB", "TB"];
-      let i = 0;
+      const units = ['B', 'KB', 'MB', 'GB', 'TB']
+      let i = 0
       while (size >= 1024) {
-        size /= 1024;
-        i++;
+        size /= 1024
+        i++
       }
-      return `${size.toFixed(1)} ${units[i]}`;
+      return `${size.toFixed(1)} ${units[i]}`
     },
 
     onDrop(ev) {
-      let files;
+      let files
       if (ev.dataTransfer.items) {
         files = [...ev.dataTransfer.items]
-          .filter((item) => item.kind === "file")
-          .map((item) => item.getAsFile());
-      } else files = ev.dataTransfer.files;
-      this.uploadFiles(files);
+          .filter((item) => item.kind === 'file')
+          .map((item) => item.getAsFile())
+      } else files = ev.dataTransfer.files
+      this.uploadFiles(files)
     },
 
     onMenuClick(text) {
-      const originalOrder = this.orderBy;
+      const originalOrder = this.orderBy
       switch (text) {
-        case "Name":
-          this.orderBy = "name";
-          break;
-        case "Size":
-          this.orderBy = "size";
-          break;
-        case "Date":
-          this.orderBy = "date";
-          break;
-        case "Paste":
-          return this.pasteFile();
+        case 'Name':
+          this.orderBy = 'name'
+          break
+        case 'Size':
+          this.orderBy = 'size'
+          break
+        case 'Date':
+          this.orderBy = 'date'
+          break
+        case 'Paste':
+          return this.pasteFile()
       }
       if (originalOrder === this.orderBy) {
-        this.orderIn = this.orderIn === "asc" ? "desc" : "asc";
+        this.orderIn = this.orderIn === 'asc' ? 'desc' : 'asc'
       } else {
-        this.orderIn = "asc";
+        this.orderIn = 'asc'
       }
     },
 
     onUploadClicked(fileElement) {
-      if (!fileElement.value) return;
-      this.uploadFiles(fileElement.files);
-      this.showUploadPopup = false;
-      fileElement.value = null;
+      if (!fileElement.value) return
+      this.uploadFiles(fileElement.files)
+      this.showUploadPopup = false
+      fileElement.value = null
     },
 
     async pasteFile() {
-      if (!this.clipboard) return;
-      let newName = window.prompt("Rename to:");
-      if (newName === null) return;
-      if (newName === "") newName = this.clipboard.split("/").pop();
-      await this.copyPaste(this.clipboard, `${this.cwd}${newName}`);
-      this.fetchFiles();
+      if (!this.clipboard) return
+      let newName = window.prompt('Rename to:')
+      if (newName === null) return
+      if (newName === '') newName = this.clipboard.split('/').pop()
+      await this.copyPaste(this.clipboard, `${this.cwd}${newName}`)
+      this.fetchFiles()
     },
 
     async processUploadQueue() {
       if (!this.uploadQueue.length) {
-        this.fetchFiles();
-        this.uploadProgress = null;
-        return;
+        this.fetchFiles()
+        this.uploadProgress = null
+        return
       }
 
       /** @type File **/
-      const { basedir, file } = this.uploadQueue.pop(0);
-      let thumbnailDigest = null;
+      const { basedir, file } = this.uploadQueue.pop(0)
+      let thumbnailDigest = null
 
-      if (file.type.startsWith("image/") || file.type === "video/mp4") {
+      if (file.type.startsWith('image/') || file.type === 'video/mp4') {
         try {
-          const thumbnailBlob = await generateThumbnail(file);
-          const digestHex = await blobDigest(thumbnailBlob);
+          const thumbnailBlob = await generateThumbnail(file)
+          const digestHex = await blobDigest(thumbnailBlob)
 
-          const thumbnailUploadUrl = `/api/write/items/_$flaredrive$/thumbnails/${digestHex}.png`;
+          const thumbnailUploadUrl = `/api/write/items/_$flaredrive$/thumbnails/${digestHex}.png`
           try {
-            await axios.put(thumbnailUploadUrl, thumbnailBlob);
-            thumbnailDigest = digestHex;
+            await axios.put(thumbnailUploadUrl, thumbnailBlob)
+            thumbnailDigest = digestHex
           } catch (error) {
-            fetch("/api/write/")
+            fetch('/api/write/')
               .then((value) => {
-                if (value.redirected) window.location.href = value.url;
+                if (value.redirected) window.location.href = value.url
               })
-              .catch(() => {});
-            console.log(`Upload ${digestHex}.png failed`);
+              .catch(() => {})
+            console.log(`Upload ${digestHex}.png failed`)
           }
         } catch (error) {
-          console.log(`Generate thumbnail failed`);
+          console.log(`Generate thumbnail failed`)
         }
       }
 
       try {
-        const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '/');
-        const finalFilePath = 
-          basedir.startsWith('-/')
-            ? `-/${dateStr}/${await blobDigest(file)}.${file?.type.split('/').pop() || file?.name.split('.').pop()}`
-            : `${basedir}${file.name}`;
-        const uploadUrl = `/api/write/items/${finalFilePath}`;
-        const headers = {};
+        const dateStr = new Date()
+          .toISOString()
+          .split('T')[0]
+          .replace(/-/g, '/')
+        const finalFilePath = basedir.startsWith('-/')
+          ? `-/${dateStr}/${await blobDigest(file)}.${
+              file?.type.split('/').pop() || file?.name.split('.').pop()
+            }`
+          : `${basedir}${file.name}`
+        const uploadUrl = `/api/write/items/${finalFilePath}`
+        const headers = {}
         const onUploadProgress = (progressEvent) => {
           var percentCompleted =
-            (progressEvent.loaded * 100) / progressEvent.total;
-          this.uploadProgress = percentCompleted;
-        };
-        if (thumbnailDigest) headers["fd-thumbnail"] = thumbnailDigest;
+            (progressEvent.loaded * 100) / progressEvent.total
+          this.uploadProgress = percentCompleted
+        }
+        if (thumbnailDigest) headers['fd-thumbnail'] = thumbnailDigest
         if (file.size >= SIZE_LIMIT) {
           await multipartUpload(`${finalFilePath}`, file, {
             headers,
             onUploadProgress,
-          });
+          })
         } else {
-          await axios.put(uploadUrl, file, { headers, onUploadProgress });
+          await axios.put(uploadUrl, file, { headers, onUploadProgress })
         }
         this.uploadHistory = [
           ...this.uploadHistory.filter((item) => item.key !== finalFilePath),
@@ -424,86 +443,83 @@ export default {
               ? `${this.rawBaseURL}/_$flaredrive$/thumbnails/${thumbnailDigest}.png`
               : null,
           },
-        ];
+        ]
       } catch (error) {
-        fetch("/api/write/")
+        fetch('/api/write/')
           .then((value) => {
-            if (value.redirected) window.location.href = value.url;
+            if (value.redirected) window.location.href = value.url
           })
-          .catch(() => {});
-        console.log(`Upload ${file.name} failed`, error);
+          .catch(() => {})
+        console.log(`Upload ${file.name} failed`, error)
       }
-      setTimeout(this.processUploadQueue);
+      setTimeout(this.processUploadQueue)
     },
 
     async removeFile(key) {
-      if (!window.confirm(`Delete ${key} permanently?`)) return;
-      await axios.delete(`/api/write/items/${key}`);
-      this.fetchFiles();
+      if (!window.confirm(`Delete ${key} permanently?`)) return
+      await axios.delete(`/api/write/items/${key}`)
+      this.fetchFiles()
     },
 
     async renameFile(key) {
-      const newName = window.prompt("Rename to:");
-      if (!newName) return;
-      await this.copyPaste(key, `${this.cwd}${newName}`);
-      await axios.delete(`/api/write/items/${key}`);
-      this.fetchFiles();
+      const newName = window.prompt('Rename to:')
+      if (!newName) return
+      await this.copyPaste(key, `${this.cwd}${newName}`)
+      await axios.delete(`/api/write/items/${key}`)
+      this.fetchFiles()
     },
 
     uploadFiles(files) {
-      if (this.cwd && !this.cwd.endsWith("/")) this.cwd += "/";
+      if (this.cwd && !this.cwd.endsWith('/')) this.cwd += '/'
 
       const uploadTasks = Array.from(files).map((file) => ({
         basedir: this.cwd,
         file,
-      }));
-      this.uploadQueue.push(...uploadTasks);
-      setTimeout(() => this.processUploadQueue());
+      }))
+      this.uploadQueue.push(...uploadTasks)
+      setTimeout(() => this.processUploadQueue())
     },
   },
 
   watch: {
     cwd: {
       handler() {
-        this.fetchFiles();
-        const url = new URL(window.location);
-        if ((url.searchParams.get("p") || "") !== this.cwd) {
+        this.fetchFiles()
+        const url = new URL(window.location)
+        if ((url.searchParams.get('p') || '') !== this.cwd) {
           this.cwd
-            ? url.searchParams.set("p", this.cwd)
-            : url.searchParams.delete("p");
-          window.history.pushState(null, "", url.toString());
+            ? url.searchParams.set('p', this.cwd)
+            : url.searchParams.delete('p')
+          window.history.pushState(null, '', url.toString())
         }
         document.title = `${
-          this.cwd.replace(/.*\/(?!$)|\//g, "") || "/"
-        } - FlareDrive`;
+          this.cwd.replace(/.*\/(?!$)|\//g, '') || '/'
+        } - FlareDrive`
       },
       immediate: true,
     },
     uploadHistory: {
       handler(val) {
         if (val.length > 100) {
-          this.uploadHistory = val.slice(-100);
+          this.uploadHistory = val.slice(-100)
         }
-        localStorage.setItem(
-          "flaredrive:upload-history",
-          JSON.stringify(val)
-        );
-      }
+        localStorage.setItem('flaredrive:upload-history', JSON.stringify(val))
+      },
     },
   },
 
   created() {
-    window.addEventListener("popstate", (ev) => {
-      const searchParams = new URL(window.location).searchParams;
-      if (searchParams.get("p") !== this.cwd)
-        this.cwd = searchParams.get("p") || "";
-    });
+    window.addEventListener('popstate', (ev) => {
+      const searchParams = new URL(window.location).searchParams
+      if (searchParams.get('p') !== this.cwd)
+        this.cwd = searchParams.get('p') || ''
+    })
 
-    const localUploadHistory = localStorage.getItem("flaredrive:upload-history");
+    const localUploadHistory = localStorage.getItem('flaredrive:upload-history')
     try {
-      this.uploadHistory = JSON.parse(localUploadHistory) || [];
+      this.uploadHistory = JSON.parse(localUploadHistory) || []
     } catch (error) {
-      console.log("Parse local storage failed", error);
+      console.log('Parse local storage failed', error)
     }
   },
 
@@ -511,10 +527,11 @@ export default {
     Dialog,
     Menu,
     MimeIcon,
+    TablerIcon,
     UploadPopup,
     UploadHistoryPopup,
   },
-};
+}
 </script>
 
 <style>
