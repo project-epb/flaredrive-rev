@@ -29,6 +29,7 @@
       style="background: #41b883; right: 80px"
     >
       <TablerIcon
+        style="filter: invert(100%)"
         name="history"
         size="36"
         alt="Upload History"
