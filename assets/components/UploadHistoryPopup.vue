@@ -45,12 +45,18 @@ function handleJumpTo(url = '') {
         <div v-if="!sortedList.length" class="placeholder">
           <p style="text-align: center">No uploads yet</p>
         </div>
-        <div v-else class="file-item flex gap-1" v-for="item in sortedList">
-          <MimeIcon
-            :size="48"
-            :thumbnail="item.thumbUrl"
-            :filename="item.key"
-          />
+        <div
+          v-else
+          v-for="item in sortedList"
+          class="history-file-item flex gap-1"
+        >
+          <a @click="handleJumpTo(item.url)">
+            <MimeIcon
+              :size="48"
+              :thumbnail="item.thumbUrl"
+              :filename="item.key"
+            />
+          </a>
           <div class="link flex-1">
             <input
               type="text"
