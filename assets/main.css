@@ -30,12 +30,12 @@ ul {
   flex-wrap: wrap;
 }
 
-.file-list > li {
+.file-list>li {
   width: 33.33%;
 }
 
 @media only screen and (max-width: 768px) {
-  .file-list > li {
+  .file-list>li {
     width: 100%;
   }
 }
@@ -63,11 +63,17 @@ input[type="search"] {
   user-select: none;
 }
 
-.file-item:hover {
+.file-list li {
+  display: flex;
+  gap: 1rem;
+  padding: 0px 1rem;
+}
+
+.file-list li:hover {
   background-color: #f5f5f5;
 }
 
-.file-item > div {
+.file-item>div {
   min-width: 0;
 }
 
@@ -93,7 +99,7 @@ input[type="search"] {
   font-size: 0.8em;
 }
 
-.file-attr > span + span {
+.file-attr>span+span {
   margin-left: 8px;
 }
 
@@ -135,7 +141,7 @@ button.circle {
   min-width: 256px;
 }
 
-.contextmenu-list > li > * {
+.contextmenu-list>li>* {
   display: block;
   width: 100%;
   padding: 12px;
@@ -144,7 +150,7 @@ button.circle {
   font-size: inherit;
 }
 
-.contextmenu-list > li > *:hover {
+.contextmenu-list>li>*:hover {
   background-color: whitesmoke;
 }
 
@@ -186,21 +192,27 @@ button {
 .flex {
   display: flex;
 }
+
 .flex-col {
   flex-direction: column;
 }
+
 .flex-row {
   flex-direction: row;
 }
+
 .flex-1 {
   flex: 1;
 }
+
 .justify-center {
   justify-content: center;
 }
+
 .items-center {
   align-items: center;
 }
+
 .gap-1 {
   gap: 1rem;
 }
@@ -208,9 +220,11 @@ button {
 .block {
   display: block;
 }
+
 .inline-block {
   display: inline-block;
 }
+
 .inline {
   display: inline;
 }

@@ -89,11 +89,7 @@
           ></span>
         </div>
       </li>
-      <li
-        v-for="file in currentShownFiles"
-        :key="file.key"
-        style="display: flex; gap: 1rem; padding: 0 0.5rem"
-      >
+      <li v-for="file in currentShownFiles" :key="file.key">
         <a
           :href="`${rawBaseURL}/${file.key}`"
           target="_blank"
@@ -115,7 +111,7 @@
                   : null
               "
             />
-            <div style="flex: 1">
+            <div>
               <div class="file-name" v-text="file.key.split('/').pop()"></div>
               <div class="file-attr">
                 <span v-text="new Date(file.uploaded).toLocaleString()"></span>
