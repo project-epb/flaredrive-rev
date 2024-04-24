@@ -67,6 +67,7 @@ input[type='search'] {
 .file-list .file-link {
   display: flex;
   flex: 1;
+  width: 100%;
 }
 
 .file-item {
@@ -77,6 +78,7 @@ input[type='search'] {
   cursor: pointer;
   user-select: none;
   flex: 1;
+  width: 100%;
 }
 
 .file-item .file-info {
