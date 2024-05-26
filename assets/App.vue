@@ -42,7 +42,7 @@
         <button
           class="circle"
           @click="showMenu = true"
-          :data-order="JSON.stringify({ orderBy, orderIn })"
+          :data-order="JSON.stringify({ orderField, orderSort })"
         >
           <TablerIcon name="dots" alt="..." />
         </button>
@@ -59,16 +59,17 @@
                     {
                       class: 'flex',
                       style: {
-                        fontWeight: orderBy === key ? 'bold' : 'normal',
+                        fontWeight: orderField === key ? 'bold' : 'normal',
                       },
                     },
                     [
                       h('span', key[0].toUpperCase() + key.slice(1)),
                       h('div', { class: 'flex-1' }),
-                      // orderBy === key ? (orderIn === 'asc' ? '↑' : '↓') : '',
-                      orderBy === key
+                      // orderField === key ? (orderSort === 'asc' ? '↑' : '↓') : '',
+                      orderField === key
                         ? h(TablerIcon, {
-                            name: orderIn === 'asc' ? 'arrow-up' : 'arrow-down',
+                            name:
+                              orderSort === 'asc' ? 'arrow-up' : 'arrow-down',
                           })
                         : '',
                     ]
@@ -230,8 +231,8 @@
   </div>
 </template>
 
-<script setup>
-import { defineComponent } from 'vue'
+<script setup lang="ts">
+import { h, ref, computed, watch, onMounted } from 'vue'
 import {
   generateThumbnail,
   blobDigest,
@@ -244,11 +245,7 @@ import MimeIcon from './components/MimeIcon.vue'
 import UploadPopup from './components/UploadPopup.vue'
 import UploadHistoryPopup from './components/UploadHistoryPopup.vue'
 import TablerIcon from './components/TablerIcon.vue'
-import { h } from 'vue'
-import { ref } from 'vue'
-import { computed } from 'vue'
-import { watch } from 'vue'
-import { onMounted } from 'vue'
+import { useStorage } from '@vueuse/cpre'
 
 // refs
 const clipboard = ref(null)
@@ -257,8 +254,8 @@ const files = ref([])
 const folders = ref([])
 const focusedItem = ref(null)
 const loading = ref(false)
-const orderBy = ref('name')
-const orderIn = ref('asc')
+const orderField = useStorage('flaredrive:order/field', 'name')
+const orderSort = useStorage('oflaredrive:rder/sort', 'asc')
 const search = ref('')
 const showContextMenu = ref(false)
 const showMenu = ref(false)
@@ -289,17 +286,17 @@ const filteredFolders = computed(() => {
 })
 const currentShownFiles = computed(() => {
   let list = filteredFiles.value
-  orderBy.value ??= 'name'
+  orderField.value ??= 'name'
   list.sort((a, b) => {
-    switch (orderBy.value) {
+    switch (orderField.value) {
       case 'name':
-        return orderIn.value === 'asc'
+        return orderSort.value === 'asc'
           ? a.key.localeCompare(b.key)
           : b.key.localeCompare(a.key)
       case 'size':
-        return orderIn.value === 'asc' ? a.size - b.size : b.size - a.size
+        return orderSort.value === 'asc' ? a.size - b.size : b.size - a.size
       case 'date':
-        return orderIn.value === 'asc'
+        return orderSort.value === 'asc'
           ? new Date(a.uploaded) - new Date(b.uploaded)
           : new Date(b.uploaded) - new Date(a.uploaded)
     }
@@ -367,24 +364,24 @@ const onDrop = (ev) => {
 }
 const onMenuClick = (item) => {
   const { key } = item
-  const originalOrder = orderBy.value
+  const originalOrder = orderField.value
   switch (key) {
     case 'name':
-      orderBy.value = 'name'
+      orderField.value = 'name'
       break
     case 'size':
-      orderBy.value = 'size'
+      orderField.value = 'size'
       break
     case 'date':
-      orderBy.value = 'date'
+      orderField.value = 'date'
       break
     case 'paste':
       return pasteFile()
   }
-  if (originalOrder === orderBy.value) {
-    orderIn.value = orderIn.value === 'asc' ? 'desc' : 'asc'
+  if (originalOrder === orderField.value) {
+    orderSort.value = orderSort.value === 'asc' ? 'desc' : 'asc'
   } else {
-    orderIn.value = 'asc'
+    orderSort.value = 'asc'
   }
 }
 const onUploadClicked = (fileElement) => {

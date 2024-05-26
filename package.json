@@ -17,6 +17,7 @@
   "homepage": "https://github.com/longern/FlareDrive#readme",
   "devDependencies": {
     "@cloudflare/workers-types": "^3.3.1",
+    "@vueuse/core": "^10.9.0",
     "vue": "^3.4.24",
     "wrangler": "^2.6.2"
   }
