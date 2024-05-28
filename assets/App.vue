@@ -245,7 +245,7 @@ import MimeIcon from './components/MimeIcon.vue'
 import UploadPopup from './components/UploadPopup.vue'
 import UploadHistoryPopup from './components/UploadHistoryPopup.vue'
 import TablerIcon from './components/TablerIcon.vue'
-import { useStorage } from '@vueuse/cpre'
+import { useStorage } from '@vueuse/core'
 
 // refs
 const clipboard = ref(null)
