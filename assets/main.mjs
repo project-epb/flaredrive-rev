@@ -17,7 +17,7 @@ export async function generateThumbnail(file) {
       image.src = URL.createObjectURL(file);
     });
     ctx.drawImage(image, 0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
-  } else if (file.type === "video/mp4") {
+  } else if (file.type.startsWith("video/")) {
     // Generate thumbnail from video
     const video = await new Promise(async (resolve, reject) => {
       const video = document.createElement("video");
@@ -27,6 +27,11 @@ export async function generateThumbnail(file) {
       await video.play();
       await video.pause();
       video.currentTime = 0;
+      const canPlay = video.canPlayType(file.type);
+      if (!canPlay) {
+        reject(new Error("Failed to play video"));
+        return;
+      }
       resolve(video);
     });
     ctx.drawImage(video, 0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
@@ -36,6 +41,8 @@ export async function generateThumbnail(file) {
   const thumbnailBlob = await new Promise((resolve) =>
     canvas.toBlob((blob) => resolve(blob))
   );
+
+  canvas.remove();
 
   return thumbnailBlob;
 }
