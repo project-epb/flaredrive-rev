@@ -409,7 +409,7 @@ const processUploadQueue = async () => {
   const { basedir, file } = uploadQueue.value.pop(0)
   let thumbnailDigest = null
 
-  if (file.type.startsWith('image/') || file.type === 'video/mp4') {
+  if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
     try {
       const thumbnailBlob = await generateThumbnail(file)
       const digestHex = await blobDigest(thumbnailBlob)
