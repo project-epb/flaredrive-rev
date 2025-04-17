@@ -40,7 +40,7 @@
       <input
         type="search"
         placeholder="Search files"
-        v-model="search"
+        v-model="searchInput"
         aria-label="Search"
         autocomplete="false"
       />
@@ -103,7 +103,10 @@
         </a>
       </template>
       <div style="flex: 1"></div>
-      <div>{{ files.length }} {{ files.length > 1 ? 'files' : 'file' }}</div>
+      <div>
+        {{ cwdFiles.length }}
+        {{ cwdFiles.length > 1 ? 'files' : 'file' }}
+      </div>
     </div>
 
     <!-- grid mode -->
@@ -121,7 +124,7 @@
           <span class="file-name">..</span>
         </div>
       </li>
-      <li v-for="folder in filteredFolders" :key="folder">
+      <li v-for="folder in finalFolderList" :key="folder">
         <div
           tabindex="0"
           class="file-item"
@@ -142,7 +145,7 @@
           ></span>
         </div>
       </li>
-      <li v-for="file in currentShownFiles" :key="file.key">
+      <li v-for="file in finalFileList" :key="file.key">
         <a
           class="file-link"
           :href="`${rawBaseURL}/${file.key}`"
@@ -211,7 +214,7 @@
           </div>
         </a>
       </li>
-      <li v-for="folder in filteredFolders" :key="folder">
+      <li v-for="folder in finalFolderList" :key="folder">
         <a
           class="file-image-link"
           @click="cwd = folder"
@@ -232,7 +235,7 @@
           </div>
         </a>
       </li>
-      <li v-for="file in currentShownFiles" :key="file.key">
+      <li v-for="file in finalFileList" :key="file.key">
         <a
           :data-info="JSON.stringify(file)"
           class="file-image-link"
@@ -279,7 +282,7 @@
       <span>Loading...</span>
     </div>
     <div
-      v-else-if="!filteredFiles.length && !filteredFolders.length"
+      v-else-if="!searchFilteredFiles.length && !finalFolderList.length"
       style="margin-top: 12px; text-align: center"
     >
       <span>No files</span>
@@ -354,18 +357,24 @@ import MimeIcon from './components/MimeIcon.vue'
 import UploadPopup from './components/UploadPopup.vue'
 import UploadHistoryPopup from './components/UploadHistoryPopup.vue'
 import TablerIcon from './components/TablerIcon.vue'
-import { useStorage } from '@vueuse/core'
+import { useStorage, useUrlSearchParams } from '@vueuse/core'
 
 // refs
 const clipboard = ref(null)
-const cwd = ref(new URLSearchParams(window.location.search).get('p') || '')
-const files = ref([])
-const folders = ref([])
+const searchParams = useUrlSearchParams()
+const cwd = computed({
+  get: () => (searchParams.p || '')?.toString(),
+  set: (val) => {
+    searchParams.p = val || ''
+  },
+})
+const cwdFiles = ref([])
+const cwdFolders = ref([])
 const focusedItem = ref(null)
 const loading = ref(false)
 const orderField = useStorage('flaredrive:order/field', 'name')
 const orderSort = useStorage('oflaredrive:order/sort', 'asc')
-const search = ref('')
+const searchInput = ref('')
 const showContextMenu = ref(false)
 const showSortMenu = ref(false)
 const showUploadPopup = ref(false)
@@ -379,24 +388,24 @@ const rawBaseURL = computed(() =>
 const isTouchDevice = 'ontouchstart' in window
 
 // computed
-const filteredFiles = computed(() => {
-  let list = files.value
-  if (search.value) {
+const searchFilteredFiles = computed(() => {
+  let list = cwdFiles.value
+  if (searchInput.value) {
     list = list.filter((file) =>
-      file.key.split('/').pop().includes(search.value)
+      file.key.split('/').pop().includes(searchInput.value)
     )
   }
   return list
 })
-const filteredFolders = computed(() => {
-  let list = folders.value
-  if (search.value) {
-    list = list.filter((folder) => folder.includes(search.value))
+const finalFolderList = computed(() => {
+  let list = cwdFolders.value
+  if (searchInput.value) {
+    list = list.filter((folder) => folder.includes(searchInput.value))
   }
   return list
 })
-const currentShownFiles = computed(() => {
-  let list = filteredFiles.value
+const finalFileList = computed(() => {
+  let list = searchFilteredFiles.value
   orderField.value ??= 'name'
   list.sort((a, b) => {
     switch (orderField.value) {
@@ -444,8 +453,8 @@ const createFolder = async () => {
   }
 }
 const fetchFiles = async () => {
-  files.value = []
-  folders.value = []
+  cwdFiles.value = []
+  cwdFolders.value = []
   loading.value = true
   fetch(`/api/children/${cwd.value}`)
     .then((res) => res.json())
@@ -460,8 +469,8 @@ const fetchFiles = async () => {
         }>
         folders: Array<string>
       }) => {
-        files.value = data.value
-        folders.value = data.folders
+        cwdFiles.value = data.value
+        cwdFolders.value = data.folders
         loading.value = false
       }
     )
@@ -684,11 +693,6 @@ watch(
   cwd,
   (val) => {
     fetchFiles()
-    const url = new URL(window.location.href)
-    if ((url.searchParams.get('p') || '') !== val) {
-      val ? url.searchParams.set('p', val) : url.searchParams.delete('p')
-      window.history.pushState(null, '', url.toString())
-    }
     document.title = `${val.replace(/.*\/(?!$)|\//g, '') || '/'} - FlareDrive`
   },
   { immediate: true }
