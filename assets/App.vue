@@ -720,7 +720,7 @@ onMounted(() => {
 
 <style>
 .main {
-  height: 100%;
+  min-height: 100vh;
 }
 
 .app-bar {
@@ -730,6 +730,10 @@ onMounted(() => {
   background-color: white;
   display: flex;
   z-index: 10;
+}
+
+.upload-button {
+  z-index: 5;
 }
 
 .menu-button {
