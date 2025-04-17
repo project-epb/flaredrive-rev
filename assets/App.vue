@@ -39,50 +39,28 @@
     <div class="app-bar">
       <input type="search" v-model="search" aria-label="Search" />
       <div class="menu-button">
-        <button
-          class="circle"
-          @click="showMenu = true"
-          :data-order="JSON.stringify({ orderField, orderSort })"
-        >
-          <TablerIcon name="dots" alt="..." />
+        <button class="circle" @click="showDisplayModeMenu = true">
+          <TablerIcon name="category" alt="cate" />
         </button>
         <Menu
-          v-model="showMenu"
-          @click="onMenuClick"
-          :items="[
-            ...['name', 'size', 'date'].map((key) => {
-              return {
-                key,
-                render() {
-                  return h(
-                    'div',
-                    {
-                      class: 'flex',
-                      style: {
-                        fontWeight: orderField === key ? 'bold' : 'normal',
-                      },
-                    },
-                    [
-                      h('span', key[0].toUpperCase() + key.slice(1)),
-                      h('div', { class: 'flex-1' }),
-                      // orderField === key ? (orderSort === 'asc' ? '↑' : '↓') : '',
-                      orderField === key
-                        ? h(TablerIcon, {
-                            name:
-                              orderSort === 'asc' ? 'arrow-up' : 'arrow-down',
-                          })
-                        : '',
-                    ]
-                  )
-                },
-              }
-            }),
-            { key: 'paste', text: 'Paste' },
-          ]"
+          v-model="showDisplayModeMenu"
+          @click="onDisplayModeMenuClick"
+          :items="displayModeMenuItems"
+        />
+
+        <button class="circle" @click="showSortMenu = true">
+          <TablerIcon name="arrows-sort" alt="sort" />
+        </button>
+        <Menu
+          v-model="showSortMenu"
+          @click="onSortMenuClick"
+          :items="sortMenuItems"
         />
       </div>
     </div>
-    <ul class="file-list">
+
+    <!-- grid mode -->
+    <ul class="file-list" v-if="displayMode === 'grid'">
       <li v-if="cwd !== ''">
         <div
           tabindex="0"
@@ -166,6 +144,90 @@
         </a>
       </li>
     </ul>
+
+    <!-- gallery mode -->
+    <ul class="file-gallery" v-else-if="displayMode === 'gallery'">
+      <li v-if="cwd !== ''">
+        <a
+          class="file-image-link"
+          @click="cwd = cwd.replace(/[^\/]+\/$/, '')"
+          href="javascript:;"
+          @contextmenu.prevent="() => {}"
+        >
+          <div class="file-image">
+            <TablerIcon name="folder" type="filled" size="200" alt="Folder" />
+          </div>
+          <div class="file-name">..</div>
+          <div class="file-attr">
+            <span>(parent_dir)</span>
+            <span>/{{ cwd.replace(/[^\/]+\/$/, '') }}</span>
+          </div>
+        </a>
+      </li>
+      <li v-for="folder in filteredFolders" :key="folder">
+        <a
+          class="file-image-link"
+          @click="cwd = folder"
+          href="javascript:;"
+          @contextmenu.prevent="
+            () => {
+              showContextMenu = true
+              focusedItem = folder
+            }
+          "
+        >
+          <div class="file-image">
+            <TablerIcon name="folder" type="filled" size="200" alt="Folder" />
+          </div>
+          <div class="file-name">./{{ folder.match(/.*?([^/]*)\/?$/)[1] }}</div>
+          <div class="file-attr">
+            <span>(sub_dir)</span>
+          </div>
+        </a>
+      </li>
+      <li v-for="file in currentShownFiles" :key="file.key">
+        <a
+          :data-info="JSON.stringify(file)"
+          class="file-image-link"
+          :href="`${rawBaseURL}/${file.key}`"
+          target="_blank"
+          style="flex: 1"
+          @contextmenu.prevent="
+            () => {
+              showContextMenu = true
+              focusedItem = file
+            }
+          "
+        >
+          <div class="file-image">
+            <img
+              v-if="
+                file.httpMetadata?.contentType?.startsWith?.('image/') ||
+                /\.(jpg|png|gif|webp|svg)$/.test(file.key)
+              "
+              loading="lazy"
+              :src="`${rawBaseURL}/${file.key}`"
+            />
+            <MimeIcon
+              v-else
+              :content-type="file.httpMetadata.contentType"
+              :filename="file.key.split('/').pop()"
+              :thumbnail="
+                file.customMetadata.thumbnail
+                  ? `${rawBaseURL}/_$flaredrive$/thumbnails/${file.customMetadata.thumbnail}.png`
+                  : null
+              "
+            />
+          </div>
+          <div class="file-name" v-text="file.key.split('/').pop()"></div>
+          <div class="file-attr">
+            <span v-text="new Date(file.uploaded).toLocaleString()"></span>
+            <span v-text="formatSize(file.size)"></span>
+          </div>
+        </a>
+      </li>
+    </ul>
+
     <div v-if="loading" style="margin-top: 12px; text-align: center">
       <span>Loading...</span>
     </div>
@@ -232,7 +294,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref, computed, watch, onMounted } from 'vue'
+import { h, ref, computed, watch, onMounted, VNode } from 'vue'
 import {
   generateThumbnail,
   blobDigest,
@@ -249,22 +311,24 @@ import { useStorage } from '@vueuse/core'
 
 // refs
 const clipboard = ref(null)
-const cwd = ref(new URL(window.location).searchParams.get('p') || '')
+const cwd = ref(new URLSearchParams(window.location.search).get('p') || '')
 const files = ref([])
 const folders = ref([])
 const focusedItem = ref(null)
 const loading = ref(false)
 const orderField = useStorage('flaredrive:order/field', 'name')
-const orderSort = useStorage('oflaredrive:rder/sort', 'asc')
+const orderSort = useStorage('oflaredrive:order/sort', 'asc')
 const search = ref('')
 const showContextMenu = ref(false)
-const showMenu = ref(false)
+const showSortMenu = ref(false)
 const showUploadPopup = ref(false)
 const uploadProgress = ref(null)
 const uploadQueue = ref([])
 const showUploadHistoryPopup = ref(false)
 const uploadHistory = ref([])
-const rawBaseURL = ref('https://r2.epb.wiki')
+const rawBaseURL = computed(() =>
+  location.host.includes('localhost') ? '/raw' : 'https://r2.epb.wiki'
+)
 const isTouchDevice = 'ontouchstart' in window
 
 // computed
@@ -296,9 +360,9 @@ const currentShownFiles = computed(() => {
       case 'size':
         return orderSort.value === 'asc' ? a.size - b.size : b.size - a.size
       case 'date':
-        return orderSort.value === 'asc'
-          ? new Date(a.uploaded) - new Date(b.uploaded)
-          : new Date(b.uploaded) - new Date(a.uploaded)
+        const aTime = new Date(a.uploaded).getTime()
+        const bTime = new Date(b.uploaded).getTime()
+        return orderSort.value === 'asc' ? aTime - bTime : bTime - aTime
     }
   })
   return list
@@ -338,11 +402,22 @@ const fetchFiles = async () => {
   loading.value = true
   fetch(`/api/children/${cwd.value}`)
     .then((res) => res.json())
-    .then((data) => {
-      files.value = data.value
-      folders.value = data.folders
-      loading.value = false
-    })
+    .then(
+      (data: {
+        value: Array<{
+          key: string
+          size: number
+          uploaded: string
+          httpMetadata: { contentType: string }
+          customMetadata: { thumbnail?: string }
+        }>
+        folders: Array<string>
+      }) => {
+        files.value = data.value
+        folders.value = data.folders
+        loading.value = false
+      }
+    )
 }
 const formatSize = (size) => {
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
@@ -362,7 +437,35 @@ const onDrop = (ev) => {
   } else files = ev.dataTransfer.files
   uploadFiles(files)
 }
-const onMenuClick = (item) => {
+
+const sortMenuItems = computed<{ key: string; render: () => VNode }[]>(() =>
+  ['name', 'size', 'date'].map((key) => {
+    return {
+      key,
+      render() {
+        return h(
+          'div',
+          {
+            class: 'flex',
+            style: {
+              fontWeight: orderField.value === key ? 'bold' : 'normal',
+            },
+          },
+          [
+            h('span', key[0].toUpperCase() + key.slice(1)),
+            h('div', { class: 'flex-1' }),
+            orderField.value === key
+              ? h(TablerIcon, {
+                  name: orderSort.value === 'asc' ? 'arrow-up' : 'arrow-down',
+                })
+              : '',
+          ]
+        )
+      },
+    }
+  })
+)
+const onSortMenuClick = (item) => {
   const { key } = item
   const originalOrder = orderField.value
   switch (key) {
@@ -375,8 +478,6 @@ const onMenuClick = (item) => {
     case 'date':
       orderField.value = 'date'
       break
-    case 'paste':
-      return pasteFile()
   }
   if (originalOrder === orderField.value) {
     orderSort.value = orderSort.value === 'asc' ? 'desc' : 'asc'
@@ -384,6 +485,40 @@ const onMenuClick = (item) => {
     orderSort.value = 'asc'
   }
 }
+
+const showDisplayModeMenu = ref(false)
+const displayMode = useStorage('flaredrive:display-mode', 'grid')
+const displayModeMenuItems = computed(() => {
+  return ['grid', 'gallery'].map((key) => {
+    return {
+      key,
+      render() {
+        return h(
+          'div',
+          {
+            class: 'flex',
+            style: {
+              fontWeight: key === displayMode.value ? 'bold' : 'normal',
+            },
+          },
+          [
+            h('div', { class: 'flex-1' }, key[0].toUpperCase() + key.slice(1)),
+            key === displayMode.value
+              ? h(TablerIcon, {
+                  name: 'check',
+                })
+              : '',
+          ]
+        )
+      },
+    }
+  })
+})
+const onDisplayModeMenuClick = (item) => {
+  const { key } = item
+  displayMode.value = key
+}
+
 const onUploadClicked = (fileElement) => {
   if (!fileElement.value) return
   uploadFiles(fileElement.files)
@@ -406,7 +541,7 @@ const processUploadQueue = async () => {
   }
 
   /** @type File **/
-  const { basedir, file } = uploadQueue.value.pop(0)
+  const { basedir, file } = uploadQueue.value.pop()
   let thumbnailDigest = null
 
   if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
@@ -502,7 +637,7 @@ watch(
   cwd,
   (val) => {
     fetchFiles()
-    const url = new URL(window.location)
+    const url = new URL(window.location.href)
     if ((url.searchParams.get('p') || '') !== val) {
       val ? url.searchParams.set('p', val) : url.searchParams.delete('p')
       window.history.pushState(null, '', url.toString())
@@ -522,7 +657,7 @@ watch(uploadHistory, (val) => {
 // created
 onMounted(() => {
   window.addEventListener('popstate', (ev) => {
-    const searchParams = new URL(window.location).searchParams
+    const searchParams = new URLSearchParams(window.location.search)
     if (searchParams.get('p') !== cwd.value)
       cwd.value = searchParams.get('p') || ''
   })
@@ -547,6 +682,7 @@ onMounted(() => {
   padding: 8px 20px;
   background-color: white;
   display: flex;
+  z-index: 10;
 }
 
 .menu-button {
@@ -567,5 +703,60 @@ onMounted(() => {
   position: absolute;
   top: 100%;
   right: 0;
+}
+
+/* gallery mode */
+.file-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  padding: 0 12px;
+}
+@media (max-width: 768px) {
+  .file-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .file-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+.file-gallery li {
+  list-style: none;
+}
+.file-gallery a {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  padding: 8px;
+  border-radius: 6px;
+  background-color: white;
+  transition: background-color 0.2s ease;
+}
+.file-gallery a:hover {
+  background-color: whitesmoke;
+}
+.file-gallery .file-image {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+}
+.file-gallery .file-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.file-gallery .file-image .mime-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>
