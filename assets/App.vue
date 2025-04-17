@@ -37,7 +37,13 @@
       />
     </button>
     <div class="app-bar">
-      <input type="search" v-model="search" aria-label="Search" />
+      <input
+        type="search"
+        placeholder="Search files"
+        v-model="search"
+        aria-label="Search"
+        autocomplete="false"
+      />
       <div class="menu-button">
         <button class="circle" @click="showDisplayModeMenu = true">
           <TablerIcon name="category" alt="cate" />
@@ -57,6 +63,47 @@
           :items="sortMenuItems"
         />
       </div>
+    </div>
+
+    <!-- bread crumb -->
+    <div class="bread-crumb">
+      <a
+        class="bread-crumb-link bread-crumb-home"
+        :href="`/?p=`"
+        @click.prevent="
+          () => {
+            cwd = ''
+          }
+        "
+      >
+        <TablerIcon name="home" type="filled" size="22" alt="Home" />
+      </a>
+      <template
+        v-for="(part, index) in cwd.split('/').filter(Boolean)"
+        :key="index"
+      >
+        <span class="bread-crumb-sep">/</span>
+        <a
+          class="bread-crumb-link"
+          :href="`/?p=${cwd
+            .split('/')
+            .slice(0, index + 1)
+            .join('/')}/`"
+          @click.prevent="
+            () => {
+              cwd =
+                cwd
+                  .split('/')
+                  .slice(0, index + 1)
+                  .join('/') + '/'
+            }
+          "
+        >
+          {{ part }}
+        </a>
+      </template>
+      <div style="flex: 1"></div>
+      <div>{{ files.length }} {{ files.length > 1 ? 'files' : 'file' }}</div>
     </div>
 
     <!-- grid mode -->
@@ -703,6 +750,31 @@ onMounted(() => {
   position: absolute;
   top: 100%;
   right: 0;
+}
+
+/* bread crumb */
+.bread-crumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  margin: 0 20px 1em 20px;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 8px;
+}
+.bread-crumb > a,
+.bread-crumb > span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.bread-crumb .bread-crumb-sep {
+  font-size: 0.8em;
+  color: #888;
+}
+.bread-crumb .bread-crumb-link:last-of-type {
+  text-decoration: underline;
 }
 
 /* gallery mode */
