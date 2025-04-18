@@ -111,7 +111,13 @@
 
     <!-- grid mode -->
     <ul class="file-list" v-if="displayMode === 'grid'">
-      <li v-if="cwd !== ''">
+      <li
+        :style="
+          cwd === ''
+            ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' }
+            : ''
+        "
+      >
         <div
           tabindex="0"
           class="file-item"
@@ -119,9 +125,9 @@
           @contextmenu.prevent
         >
           <div class="file-icon">
-            <TablerIcon name="folder" type="filled" size="36" alt="Folder" />
+            <TablerIcon name="folder" size="36" alt="Folder" />
           </div>
-          <span class="file-name">..</span>
+          <span class="file-name">{{ cwd === '' ? '/(root)' : '..' }}</span>
         </div>
       </li>
       <li v-for="folder in finalFolderList" :key="folder">
@@ -197,7 +203,13 @@
 
     <!-- gallery mode -->
     <ul class="file-gallery" v-else-if="displayMode === 'gallery'">
-      <li v-if="cwd !== ''">
+      <li
+        :style="
+          cwd === ''
+            ? { opacity: 0.5, pointerEvents: 'none', userSelect: 'none' }
+            : ''
+        "
+      >
         <a
           class="file-image-link"
           @click="cwd = cwd.replace(/[^\/]+\/$/, '')"
@@ -205,12 +217,11 @@
           @contextmenu.prevent="() => {}"
         >
           <div class="file-image">
-            <TablerIcon name="folder" type="filled" size="200" alt="Folder" />
+            <TablerIcon name="folder" size="200" alt="Parent" />
           </div>
-          <div class="file-name">..</div>
+          <div class="file-name">{{ cwd === '' ? '/' : '..' }}</div>
           <div class="file-attr">
-            <span>(parent_dir)</span>
-            <span>/{{ cwd.replace(/[^\/]+\/$/, '') }}</span>
+            <span>{{ cwd === '' ? '/(root)' : 'parent folder' }}</span>
           </div>
         </a>
       </li>
@@ -229,9 +240,9 @@
           <div class="file-image">
             <TablerIcon name="folder" type="filled" size="200" alt="Folder" />
           </div>
-          <div class="file-name">./{{ folder.match(/.*?([^/]*)\/?$/)[1] }}</div>
+          <div class="file-name">{{ folder.match(/.*?([^/]*)\/?$/)[1] }}</div>
           <div class="file-attr">
-            <span>(sub_dir)</span>
+            <span>folder</span>
           </div>
         </a>
       </li>
@@ -389,7 +400,7 @@ const isTouchDevice = 'ontouchstart' in window
 
 // computed
 const searchFilteredFiles = computed(() => {
-  let list = cwdFiles.value
+  let list = cwdFiles.value.filter((file) => !!file?.key)
   if (searchInput.value) {
     list = list.filter((file) =>
       file.key.split('/').pop().includes(searchInput.value)
@@ -398,7 +409,7 @@ const searchFilteredFiles = computed(() => {
   return list
 })
 const finalFolderList = computed(() => {
-  let list = cwdFolders.value
+  let list = cwdFolders.value.filter(Boolean)
   if (searchInput.value) {
     list = list.filter((folder) => folder.includes(searchInput.value))
   }
