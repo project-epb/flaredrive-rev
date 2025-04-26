@@ -267,7 +267,7 @@
                 /\.(jpg|png|gif|webp|svg)$/.test(file.key)
               "
               loading="lazy"
-              :src="`${rawBaseURL}/${file.key}`"
+              :src="`${imageThumbBaseURL}/${file.key}`"
             />
             <MimeIcon
               v-else
@@ -395,6 +395,11 @@ const showUploadHistoryPopup = ref(false)
 const uploadHistory = ref([])
 const rawBaseURL = computed(() =>
   location.host.includes('localhost') ? '/raw' : 'https://r2.epb.wiki'
+)
+const imageThumbBaseURL = computed(() =>
+  location.host.includes('localhost')
+    ? '/raw'
+    : 'https://r2.epb.wiki/cdn-cgi/image/format=auto,fit=contain,width=600,height=600,onerror=redirect'
 )
 const isTouchDevice = 'ontouchstart' in window
 
