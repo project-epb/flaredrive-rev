@@ -7,62 +7,90 @@ export async function generateThumbnail(file) {
   const canvas = document.createElement('canvas')
   canvas.width = THUMBNAIL_SIZE
   canvas.height = THUMBNAIL_SIZE
-  var ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d')
+  const objectUrl = URL.createObjectURL(file)
 
-  /** @type HTMLImageElement */
-  if (file.type.startsWith('image/')) {
-    const image = await new Promise((resolve) => {
-      const image = new Image()
-      image.onload = () => resolve(image)
-      image.src = URL.createObjectURL(file)
-    })
-    const { width, height } = computeThumbPixel({
-      width: image.naturalWidth,
-      height: image.naturalHeight,
-      maxWidth: THUMBNAIL_SIZE,
-      maxHeight: THUMBNAIL_SIZE,
-      fit: 'contain',
-    })
-    canvas.width = width
-    canvas.height = height
-    ctx.drawImage(image, 0, 0, width, height)
-  } else if (file.type.startsWith('video/')) {
-    // Generate thumbnail from video
-    const video = await new Promise(async (resolve, reject) => {
-      const video = document.createElement('video')
-      const canPlay = video.canPlayType(file.type)
-      if (!canPlay) {
-        reject(new Error('Failed to play video'))
-        return
-      }
-      video.muted = true
-      video.src = URL.createObjectURL(file)
-      setTimeout(() => reject(new Error('Video load timeout')), 2000)
-      await video.play()
-      await video.pause()
-      video.currentTime = 0
-      resolve(video)
-    })
-    const { width, height } = computeThumbPixel({
-      width: video.videoWidth,
-      height: video.videoHeight,
-      maxWidth: THUMBNAIL_SIZE,
-      maxHeight: THUMBNAIL_SIZE,
-      fit: 'contain',
-    })
-    canvas.width = width
-    canvas.height = height
-    ctx.drawImage(video, 0, 0, width, height)
+  try {
+    // Image
+    if (file.type.startsWith('image/')) {
+      /** @type {HTMLImageElement} */
+      const image = await new Promise((resolve) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.src = objectUrl
+      })
+      const { width, height } = computeThumbPixel({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        maxWidth: THUMBNAIL_SIZE,
+        maxHeight: THUMBNAIL_SIZE,
+        fit: 'contain',
+      })
+      canvas.width = width
+      canvas.height = height
+      ctx.drawImage(image, 0, 0, width, height)
+    }
+    // Video
+    else if (file.type.startsWith('video/')) {
+      /** @type {HTMLVideoElement} */
+      const video = await new Promise(async (resolve, reject) => {
+        const video = document.createElement('video')
+        const canPlay = video.canPlayType(file.type)
+        if (!canPlay) {
+          reject(new Error('Failed to play video'))
+          return
+        }
+        video.muted = true
+        video.src = objectUrl
+        setTimeout(() => reject(new Error('Video load timeout')), 2000)
+        await video.play()
+        video.pause()
+        video.currentTime = 0
+        resolve(video)
+      })
+      const { width, height } = computeThumbPixel({
+        width: video.videoWidth,
+        height: video.videoHeight,
+        maxWidth: THUMBNAIL_SIZE,
+        maxHeight: THUMBNAIL_SIZE,
+        fit: 'contain',
+      })
+      canvas.width = width
+      canvas.height = height
+      ctx.drawImage(video, 0, 0, width, height)
+      // draw a #fff play icon, with #0005 circle background, size 1/2 of the thumbnail, in the center
+      const iconSize = Math.round(Math.min(width, height) / 2)
+      const iconX = Math.round((width - iconSize) / 2)
+      const iconY = Math.round((height - iconSize) / 2)
+      ctx.fillStyle = '#0005'
+      ctx.beginPath()
+      ctx.arc(
+        iconX + iconSize / 2,
+        iconY + iconSize / 2,
+        iconSize / 2,
+        0,
+        Math.PI * 2
+      )
+      ctx.fill()
+      ctx.fillStyle = '#fff'
+      ctx.beginPath()
+      ctx.moveTo(iconX + iconSize / 4, iconY + iconSize / 4)
+      ctx.lineTo(iconX + (iconSize * 3) / 4, iconY + iconSize / 2)
+      ctx.lineTo(iconX + iconSize / 4, iconY + (iconSize * 3) / 4)
+      ctx.lineTo(iconX + iconSize / 4, iconY + iconSize / 4)
+      ctx.fill()
+    }
+
+    /** @type Blob */
+    const thumbnailBlob = await new Promise((resolve) =>
+      canvas.toBlob((blob) => resolve(blob))
+    )
+
+    return thumbnailBlob
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+    canvas.remove()
   }
-
-  /** @type Blob */
-  const thumbnailBlob = await new Promise((resolve) =>
-    canvas.toBlob((blob) => resolve(blob))
-  )
-
-  canvas.remove()
-
-  return thumbnailBlob
 }
 
 /**
