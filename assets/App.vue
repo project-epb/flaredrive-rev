@@ -61,6 +61,7 @@
           v-model="showSortMenu"
           @click="onSortMenuClick"
           :items="sortMenuItems"
+          :close-after-click="false"
         />
       </div>
     </div>
@@ -387,18 +388,19 @@ const orderField = useStorage('flaredrive:order/field', 'name')
 const orderSort = useStorage('oflaredrive:order/sort', 'asc')
 const searchInput = ref('')
 const showContextMenu = ref(false)
-const showSortMenu = ref(false)
 const showUploadPopup = ref(false)
 const uploadProgress = ref(null)
 const uploadQueue = ref([])
 const showUploadHistoryPopup = ref(false)
 const uploadHistory = ref([])
 const rawBaseURL = computed(() =>
-  location.host.includes('localhost') ? '/raw' : 'https://r2.epb.wiki'
+  location.host.includes('localhost')
+    ? new URL('/raw', window.location.origin).toString()
+    : 'https://r2.epb.wiki'
 )
 const imageThumbBaseURL = computed(() =>
   location.host.includes('localhost')
-    ? '/raw'
+    ? new URL('/raw', window.location.origin).toString()
     : 'https://r2.epb.wiki/cdn-cgi/image/format=auto,fit=contain,width=600,height=600,onerror=redirect'
 )
 const isTouchDevice = 'ontouchstart' in window
@@ -423,7 +425,7 @@ const finalFolderList = computed(() => {
 const finalFileList = computed(() => {
   let list = searchFilteredFiles.value
   orderField.value ??= 'name'
-  list.sort((a, b) => {
+  list = list.sort((a, b) => {
     switch (orderField.value) {
       case 'name':
         return orderSort.value === 'asc'
@@ -510,6 +512,7 @@ const onDrop = (ev) => {
   uploadFiles(files)
 }
 
+const showSortMenu = ref(false)
 const sortMenuItems = computed<{ key: string; render: () => VNode }[]>(() =>
   ['name', 'size', 'date'].map((key) => {
     return {
@@ -537,19 +540,12 @@ const sortMenuItems = computed<{ key: string; render: () => VNode }[]>(() =>
     }
   })
 )
-const onSortMenuClick = (item) => {
-  const { key } = item
+const onSortMenuClick = ({ key }: { key: string }) => {
   const originalOrder = orderField.value
-  switch (key) {
-    case 'name':
-      orderField.value = 'name'
-      break
-    case 'size':
-      orderField.value = 'size'
-      break
-    case 'date':
-      orderField.value = 'date'
-      break
+  if (['name', 'date', 'size'].includes(key)) {
+    orderField.value = key
+  } else {
+    orderField.value = 'name'
   }
   if (originalOrder === orderField.value) {
     orderSort.value = orderSort.value === 'asc' ? 'desc' : 'asc'
@@ -753,7 +749,7 @@ onMounted(() => {
 }
 
 .upload-button {
-  z-index: 5;
+  z-index: 1;
 }
 
 .menu-button {

@@ -1,32 +1,32 @@
 <script setup>
+const show = defineModel({ default: false })
 defineProps({
-  modelValue: Boolean,
   items: {
     type: Array,
     required: true,
   },
+  closeAfterClick: {
+    type: Boolean,
+    default: true,
+  },
 })
 
-const emit = defineEmits(['update:modelValue', 'click'])
+const emit = defineEmits(['click'])
 </script>
 
 <template>
   <div class="menu">
     <Transition name="fade">
-      <div
-        v-show="modelValue"
-        class="menu-modal"
-        @click="emit('update:modelValue', false)"
-      ></div>
+      <div v-show="show" class="menu-modal" @click="show = false"></div>
     </Transition>
-    <div v-show="modelValue" class="menu-content">
+    <div v-show="show" class="menu-content">
       <ul>
         <li
           v-for="(item, index) in items"
           :key="index"
           @click="
             () => {
-              emit('update:modelValue', false)
+              show = !closeAfterClick
               emit('click', item)
             }
           "
