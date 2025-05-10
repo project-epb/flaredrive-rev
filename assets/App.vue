@@ -636,9 +636,10 @@ const processUploadQueue = async () => {
 
   try {
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '/')
-    const finalFilePath = basedir.startsWith('-/')
+    const isQuickUpload = basedir.startsWith('-/')
+    const finalFilePath = isQuickUpload
       ? `-/${dateStr}/${await blobDigest(file)}.${
-          file?.type.split('/').pop() || file?.name.split('.').pop()
+          file.name.split('.').pop() || file.type.split('/').pop()
         }`
       : `${basedir}${file.name}`
     const uploadUrl = `/api/write/items/${finalFilePath}`
@@ -647,7 +648,7 @@ const processUploadQueue = async () => {
       var percentCompleted = (progressEvent.loaded * 100) / progressEvent.total
       uploadProgress.value = percentCompleted
     }
-    if (thumbnailDigest) headers['fd-thumbnail'] = thumbnailDigest
+    if (thumbnailDigest) headers['x-amz-meta-thumbnail'] = thumbnailDigest
     if (file.size >= SIZE_LIMIT) {
       await multipartUpload(`${finalFilePath}`, file, {
         headers,

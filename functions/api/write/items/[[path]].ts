@@ -7,8 +7,12 @@ export async function onRequestPostCreateMultipart(context) {
   const request: Request = context.request;
 
   const customMetadata: Record<string, string> = {};
-  if (request.headers.has("fd-thumbnail"))
-    customMetadata.thumbnail = request.headers.get("fd-thumbnail");
+  request.headers.forEach((value, key) => {
+    if (key.startsWith("x-amz-meta-")) {
+      const metadataKey = key.replace("x-amz-meta-", "");
+      customMetadata[metadataKey] = value;
+    }
+  })
 
   const multipartUpload = await bucket.createMultipartUpload(path, {
     httpMetadata: {
