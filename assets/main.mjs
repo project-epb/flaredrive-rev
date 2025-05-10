@@ -35,18 +35,18 @@ export async function generateThumbnail(file) {
       /** @type {HTMLVideoElement} */
       const video = await new Promise(async (resolve, reject) => {
         const video = document.createElement('video')
-        const canPlay = video.canPlayType(file.type)
-        if (!canPlay) {
-          reject(new Error('Failed to play video'))
-          return
-        }
         video.muted = true
         video.src = objectUrl
         setTimeout(() => reject(new Error('Video load timeout')), 2000)
         await video.play()
         video.pause()
         video.currentTime = 0
-        resolve(video)
+        const canPlay = video.canPlayType(file.type)
+        if (canPlay) {
+          resolve(video)
+        } else {
+          reject(new Error('Failed to play video'))
+        }
       })
       const { width, height } = computeThumbPixel({
         width: video.videoWidth,
@@ -58,27 +58,6 @@ export async function generateThumbnail(file) {
       canvas.width = width
       canvas.height = height
       ctx.drawImage(video, 0, 0, width, height)
-      // draw a #fff play icon, with #0005 circle background, size 1/2 of the thumbnail, in the center
-      const iconSize = Math.round(Math.min(width, height) / 2)
-      const iconX = Math.round((width - iconSize) / 2)
-      const iconY = Math.round((height - iconSize) / 2)
-      ctx.fillStyle = '#0005'
-      ctx.beginPath()
-      ctx.arc(
-        iconX + iconSize / 2,
-        iconY + iconSize / 2,
-        iconSize / 2,
-        0,
-        Math.PI * 2
-      )
-      ctx.fill()
-      ctx.fillStyle = '#fff'
-      ctx.beginPath()
-      ctx.moveTo(iconX + iconSize / 4, iconY + iconSize / 4)
-      ctx.lineTo(iconX + (iconSize * 3) / 4, iconY + iconSize / 2)
-      ctx.lineTo(iconX + iconSize / 4, iconY + (iconSize * 3) / 4)
-      ctx.lineTo(iconX + iconSize / 4, iconY + iconSize / 4)
-      ctx.fill()
     }
 
     /** @type Blob */
