@@ -11,6 +11,8 @@ import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import VueRouter from 'unplugin-vue-router/vite'
 import UnoCSS from 'unocss/vite'
 
+const IS_PROD = process.env.NODE_ENV === 'production' && process.env.BUILD_ENV !== 'development'
+
 export default defineConfig({
   plugins: [
     VueRouter({
@@ -39,6 +41,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+  },
+  esbuild: {
+    drop: IS_PROD ? ['console'] : [],
   },
   resolve: {
     alias: {
