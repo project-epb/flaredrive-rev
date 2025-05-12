@@ -1,54 +1,44 @@
 <template lang="pug">
 #browser-view
-  NCard(size='small', mb-4, z-5)
-    //- actions
-    .file-list-actions(flex, justify-between, lt-sm='flex-col gap-4 items-center')
+  NCard.top-sticky-rail(size='small', mb-4, z-5, sticky, top='[calc(60px+0.5rem)]')
+    .flex(justify-between, lt-sm='flex-col gap-4 items-center')
       //- display mode
-      NRadioGroup(v-model:value='currentDisplayMode', size='small')
-        NRadioButton(v-for='i in displayModeOptions', :key='i.value', :value='i.value')
+      NRadioGroup(v-model:value='currentLayout', size='small')
+        NRadioButton(v-for='i in layoutOptions', :key='i.value', :value='i.value')
           NIcon(v-if='i.icon', mr-2): Component(:is='i.icon')
           | {{ i.label }}
       //- file operations
-      NButtonGroup(size='small')
-        NButton(type='primary', secondary, :render-icon='() => h(IconUpload)', @click='createUploadModal') Upload
-        NButton(type='default', secondary, :render-icon='() => h(IconFolderPlus)', @click='handleCreateFolder')
-        NButton(type='default', secondary, :render-icon='() => h(IconHistory)', @click='isShowUploadHistory = true')
-        NButton(
-          type='default',
-          secondary,
-          :render-icon='() => h(IconReload)',
-          :loading='isLoading',
-          @click='() => { loadFileList().then(() => nmessage.success("Refresh success")) }'
-        )
-
-    //- breadcrumb
-    .flex(justify-between, align-center, mt-4)
-      NBreadcrumb
-        NBreadcrumbItem(key='__ROOT__', @click='$router.push("/")')
-          NIcon: IconHomeFilled
-        NBreadcrumbItem(
-          v-for='(item, index) in filePath.split("/").filter(Boolean)',
-          :key='index',
-          @click='() => $router.push({ name: "/[...path]", params: { path: filePath.split("/").slice(0, index + 1).join("/"), }, })'
-        )
-          | {{ item || '(???)' }}
-      .file-count-info
-        | {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }}
-        | /
-        | {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
+      .flex.items-center.gap-2
+        NText.file-count-info(depth='3')
+          | {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }}
+          | /
+          | {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
+          template(v-if='payload?.hasMore') / hasMore
+        NButtonGroup(size='small')
+          NButton(
+            v-for='(action, index) in pathActions',
+            :key='index',
+            :type='action.type',
+            secondary,
+            :loading='action.loading',
+            :title='action.tooltip',
+            :render-icon='() => h(action.icon)',
+            @click='action.action'
+          ) {{ action.label }}
 
   NAlert(v-if='isRandomUploadDir', type='info', title='Random upload', closable, my-4) 
-    | This is a random upload directory. Files will be uploaded to this directory with a random name.
-    | You find the final url in the
+    | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
     |
-    NA(@click='isShowUploadHistory = true') Upload History
+    NA(@click='isShowUploadHistory = true')
+      NIcon(mr-1): IconHistory
+      | upload history
     | .
 
   //- file browser
   NSkeleton(v-if='!payload', height='200px')
   NSpin(v-else, :show='isLoading')
     BrowserListView(
-      v-if='currentDisplayMode === "list"',
+      v-if='currentLayout === "list"',
       :payload,
       @navigate='onNavigate',
       @delete='onDelete',
@@ -56,7 +46,7 @@
       @rename='onRename'
     )
     BrowserGridView(
-      v-if='currentDisplayMode === "grid"',
+      v-if='currentLayout === "grid"',
       :payload,
       @navigate='onNavigate',
       @delete='onDelete',
@@ -64,7 +54,7 @@
       @rename='onRename'
     )
     BrowserGalleryView(
-      v-if='currentDisplayMode === "gallery"',
+      v-if='currentLayout === "gallery"',
       :payload,
       @navigate='onNavigate',
       @delete='onDelete',
@@ -107,15 +97,15 @@
   )
 
   //- floating action button
-  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem')
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2)
     NIcon: IconPlus
     template(#menu)
-      NFloatButton(type='primary', @click='createUploadModal'): NIcon: IconUpload
-      NFloatButton(type='default', @click='handleCreateFolder'): NIcon: IconFolderPlus
-      NFloatButton(type='default', @click='isShowUploadHistory = true'): NIcon: IconHistory
-      NFloatButton(type='default', @click='() => { loadFileList().then(() => nmessage.success("Refresh success")) }')
-        NSpin(v-if='isLoading', show, :size='16')
-        NIcon(v-else): IconReload
+      NTooltip(v-for='(action, index) in pathActions', :key='index', placement='left', :show-arrow='false')
+        template(#default) {{ action.tooltip }}
+        template(#trigger)
+          NFloatButton(:type='action.type', @click='action.action')
+            NSpin(v-if='action.loading', show, :size='16')
+            NIcon(v-else): component(:is='action.icon')
 
   //- debug info
   details.dev-only.bg-dev.mt-6
@@ -152,8 +142,8 @@ const filePath = computed(() => {
   return route.params.path
 })
 
-const currentDisplayMode = useLocalStorage('flaredrive:current-view', 'list')
-const displayModeOptions = ref<{ label: string; value: string; icon?: Component }[]>([
+const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
+const layoutOptions = ref<{ label: string; value: string; icon?: Component }[]>([
   { label: 'List', value: 'list', icon: IconList },
   { label: 'Grid', value: 'grid', icon: IconLayout2 },
   { label: 'Gallery', value: 'gallery', icon: IconLibraryPhoto },
@@ -376,6 +366,54 @@ function createUploadModal() {
 }
 
 const isShowUploadHistory = ref(false)
+
+const pathActions = computed<
+  {
+    label: string
+    type?: 'primary' | 'default'
+    tooltip: string
+    icon: Component
+    loading?: boolean
+    action: () => void
+  }[]
+>(() => {
+  return [
+    {
+      label: 'Upload',
+      type: 'primary',
+      tooltip: 'Upload files',
+      icon: IconUpload,
+      action: createUploadModal,
+    },
+    {
+      label: '',
+      tooltip: 'Create folder',
+      icon: IconFolderPlus,
+      action: handleCreateFolder,
+    },
+    {
+      label: '',
+      tooltip: 'Upload history',
+      icon: IconHistory,
+      action: () => (isShowUploadHistory.value = true),
+    },
+    {
+      label: '',
+      tooltip: 'Refresh file list',
+      icon: IconReload,
+      loading: isLoading.value,
+      action: () => {
+        loadFileList().then(() => nmessage.success('Refresh success'))
+      },
+    },
+  ]
+})
 </script>
 
-<style scoped lang="sass"></style>
+<style scoped lang="sass">
+.top-sticky-rail
+  backdrop-filter: blur(16px)
+  background-color: rgba(255, 255, 255, 0.8)
+  html.dark &
+    background-color: rgba(0, 0, 0, 0.8)
+</style>

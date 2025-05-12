@@ -1,14 +1,14 @@
 <template lang="pug">
 NForm
-  NFormItem(label='File')
-    NUpload(multiple, directory-dnd, :default-upload='false', :custom-request, @finish='onFinish', ref='uploaderRef')
+  NFormItem(label='Files')
+    NUpload(multiple, directory-dnd, :custom-request, @finish='onFinish', ref='uploaderRef')
       NUploadDragger
         div: NIcon(size='80'): IconUpload
         NP Click or drag files to this area to upload
   NFormItem(label='Prefix', v-if='!prefixReadonly')
     NInput(:placeholder='defaultPrefix', :default-value='defaultPrefix', v-model:value='formData.prefix', clearable)
-  div
-    NButton(type='primary', block, @click='handleStart') Upload
+  //- div
+  //-   NButton(type='primary', block, @click='handleStart') Upload
 </template>
 
 <script setup lang="ts">
@@ -43,7 +43,7 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
     if (payload.file.percentage >= 90) {
       clearInterval(timer)
     }
-  }, 50)
+  }, 100)
   bucket
     .uploadOne(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
     .then(({ data }) => {

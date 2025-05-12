@@ -1,7 +1,7 @@
 <template lang="pug">
 NaiveuiProvider#full-app-container
-  NLayout.full-layout-container(content-class='min-h-100vh flex flex-col')
-    NLayoutContent.main-content-container(flex-1)
+  NLayout.full-layout-container(content-class='min-h-100vh flex flex-col', native-scrollbar)
+    NLayoutContent.main-content-container(flex-1, native-scrollbar)
       RouterView.root-router-view(:data-route-name='$route.name')
     GlobalHeader
     GlobalFooter
@@ -40,4 +40,8 @@ router.afterEach((to) => {
   max-width: calc(100vw - 2rem)
   margin: 0 auto
   padding-top: 1rem
+
+:deep(.n-layout)
+  &, .n-layout-scroll-container
+    overflow: unset
 </style>
