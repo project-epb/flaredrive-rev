@@ -16,7 +16,7 @@ import type { R2BucketListResponse } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import { IconDots } from '@tabler/icons-vue'
-import { NButton, NDropdown, NIcon, useMessage } from 'naive-ui'
+import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
 
 const props = withDefaults(
@@ -52,6 +52,10 @@ const columns = computed(() => {
       title: '',
       key: '_preview',
       render: (row: R2Object) => {
+        const thumbs = bucket.getThumbnailUrls(row, true)
+        if (thumbs) {
+          return <NImage width={40} height={40} objectFit="cover" src={thumbs.square} previewDisabled={true} />
+        }
         const FileIcon = FileHelper.getObjectIcon(row)
         return (
           <NIcon size={40}>

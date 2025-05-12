@@ -59,7 +59,7 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
             td: NA(:href='cdnUrl', target='_blank') {{ cdnUrl }}
           tr(v-if='item?.customMetadata?.thumbnail')
             th Thumbnail URL
-            td: NA(:href='bucket.getThumbnailUrl(item)?.square', target='_blank') {{ bucket.getThumbnailUrl(item)?.square }}
+            td: NA(:href='bucket.getThumbnailUrls(item)?.square', target='_blank') {{ bucket.getThumbnailUrls(item)?.square }}
 
         details
           pre {{ item }}

@@ -90,7 +90,10 @@ export const useBucketStore = defineStore('bucket', () => {
     version && url.searchParams.set('v', version)
     return url.toString()
   }
-  const getThumbnailUrl = (item: R2Object): { square: string; small: string; medium: string; large: string } | null => {
+  const getThumbnailUrls = (
+    item: R2Object,
+    strict = false
+  ): { square: string; small: string; medium: string; large: string } | null => {
     if (!item || item.key.endsWith('/')) {
       return null
     }
@@ -98,6 +101,9 @@ export const useBucketStore = defineStore('bucket', () => {
       !item.httpMetadata?.contentType?.startsWith('image/') &&
       !item.httpMetadata?.contentType?.startsWith('video/')
     ) {
+      return null
+    }
+    if (strict && !item.customMetadata?.thumbnail) {
       return null
     }
     const makeCgiUrl = (size: number) => {
@@ -239,7 +245,7 @@ export const useBucketStore = defineStore('bucket', () => {
     deleteFile,
     rename,
     getCDNUrl,
-    getThumbnailUrl,
+    getThumbnailUrls,
     uploadHistory,
     uploadQueue,
     currentUploading,

@@ -129,7 +129,7 @@ const list = computed<
         icon?: Component
       }
     ) => {
-      const thumb = bucket.getThumbnailUrl(item)
+      const thumb = bucket.getThumbnailUrls(item)
       if (thumb) {
         item.thumbnailUrl = thumb.medium
       }
