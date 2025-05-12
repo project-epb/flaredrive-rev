@@ -32,6 +32,9 @@ importers:
       vue-router:
         specifier: ^4.5.1
         version: 4.5.1(vue@3.5.13(typescript@5.8.3))
+      vue-waterfall-plugin-next:
+        specifier: ^2.6.5
+        version: 2.6.5
     devDependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.1.1
@@ -2160,6 +2163,9 @@ packages:
     resolution: {integrity: sha512-ogAF3P97NPm8fJsE4by9dwSYtDwXIY1nFY9T6DyQnGHd1E2Da94w9JIolpe42LJGIl0DwOHBi8TcRPlPGwbTtw==}
     peerDependencies:
       vue: ^3.2.0
+
+  vue-waterfall-plugin-next@2.6.5:
+    resolution: {integrity: sha512-8ACGbdjoyKLiJfnKXB8h8f9eE14lhyzfI1N1nrfVAIRczSpNY1KRwGOnVXN5OHqheLl3V1C0uVVRPtjTJkHkhw==}
 
   vue@3.5.13:
     resolution: {integrity: sha512-wmeiSMxkZCSc+PM2w2VRsOYAZC8GdipNFRTsLSfodVqI9mbejKeXEGr8SckuLnrQPGe3oJN5c3K0vpoU9q/wCQ==}
@@ -4340,6 +4346,8 @@ snapshots:
     dependencies:
       '@vue/devtools-api': 6.6.4
       vue: 3.5.13(typescript@5.8.3)
+
+  vue-waterfall-plugin-next@2.6.5: {}
 
   vue@3.5.13(typescript@5.8.3):
     dependencies:

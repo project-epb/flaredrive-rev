@@ -1,8 +1,27 @@
 <template lang="pug">
 #browser-view
-  //- breadcrumb
-  NCard(size='small', m-y-4)
-    .flex(justify-between, align-center)
+  NCard(size='small', mb-4, z-5)
+    //- actions
+    .file-list-actions(flex, justify-between, lt-sm='flex-col gap-4 items-center')
+      //- display mode
+      NRadioGroup(v-model:value='currentDisplayMode', size='small')
+        NRadioButton(v-for='i in displayModeOptions', :key='i.value', :value='i.value')
+          NIcon(v-if='i.icon', mr-2): Component(:is='i.icon')
+          | {{ i.label }}
+      //- file operations
+      NButtonGroup(size='small')
+        NButton(type='primary', secondary, :render-icon='() => h(IconUpload)', @click='createUploadModal') Upload
+        NButton(type='default', secondary, :render-icon='() => h(IconFolderPlus)', @click='handleCreateFolder')
+        NButton(type='default', secondary, :render-icon='() => h(IconHistory)', @click='isShowUploadHistory = true')
+        NButton(
+          type='default',
+          secondary,
+          :render-icon='() => h(IconReload)',
+          @click='() => { loadFileList().then(() => nmessage.success("Refresh success")) }'
+        )
+
+    //- breadcrumb
+    .flex(justify-between, align-center, mt-4)
       NBreadcrumb
         NBreadcrumbItem(key='__ROOT__', @click='$router.push("/")')
           NIcon: IconHomeFilled
@@ -17,24 +36,6 @@
         | /
         | {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
 
-  //- filelist actions
-  .file-list-actions(m-y-4, flex, justify-between, lt-sm='flex-col gap-4 items-center')
-    //- display mode
-    NRadioGroup(v-model:value='currentDisplayMode')
-      NRadioButton(v-for='i in displayModeOptions', :key='i.value', :value='i.value', size='small')
-        NIcon(v-if='i.icon', mr-2): Component(:is='i.icon')
-        | {{ i.label }}
-    //- file operations
-    NButtonGroup
-      NButton(type='primary', secondary, :render-icon='() => h(IconUpload)') Upload
-      NButton(type='default', secondary, :render-icon='() => h(IconFolderPlus)', @click='handleCreateFolder')
-      NButton(
-        type='default',
-        secondary,
-        :render-icon='() => h(IconReload)',
-        @click='() => { fetchFileList().then(() => nmessage.success("Refresh success")) }'
-      )
-
   //- file browser
   NSkeleton(v-if='!payload', height='200px')
   NSpin(v-else, :show='isLoading')
@@ -46,8 +47,14 @@
       @download='onDownload',
       @rename='onRename'
     )
-    .grid-show(v-if='currentDisplayMode === "grid"')
-      NP 没做好，嘻嘻……
+    BrowserGridView(
+      v-if='currentDisplayMode === "grid"',
+      :payload,
+      @navigate='onNavigate',
+      @delete='onDelete',
+      @download='onDownload',
+      @rename='onRename'
+    )
     BrowserGalleryView(
       v-if='currentDisplayMode === "gallery"',
       :payload,
@@ -73,7 +80,23 @@
       NP Drop files here to upload
 
   //- preview modal
-  BrowserPreviewModal(v-model:show='isShowPreview', :item='previewItem')
+  BrowserPreviewModal(
+    v-model:show='isShowPreview',
+    :item='previewItem',
+    @delete='onDelete',
+    @download='onDownload',
+    @rename='onRename'
+  )
+
+  //- upload history
+  BrowserUploadHistory(
+    v-model:show='isShowUploadHistory',
+    :list='bucket.uploadHistory',
+    @delete='onDelete',
+    @download='onDownload',
+    @rename='onRename',
+    @navigate='onNavigate'
+  )
 
   //- debug info
   details.dev-only.bg-dev.mt-6
@@ -86,6 +109,7 @@ import { type R2BucketListResponse } from '@/models/R2BucketClient'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
   IconFolderPlus,
+  IconHistory,
   IconHomeFilled,
   IconLayout2,
   IconLibraryPhoto,
@@ -95,6 +119,8 @@ import {
 } from '@tabler/icons-vue'
 import { NBreadcrumb, NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
 import type { Component } from 'vue'
+
+const UploadForm = defineAsyncComponent(() => import('@/components/UploadForm.vue'))
 
 const nmodal = useModal()
 const nmessage = useMessage()
@@ -132,13 +158,13 @@ watch(
     } else if (newPath === '/') {
       router.replace('/')
     } else {
-      fetchFileList()
+      loadFileList()
     }
   },
   { immediate: true }
 )
 
-async function fetchFileList() {
+async function loadFileList() {
   isLoading.value = true
   try {
     const { data } = await bucket.list(filePath.value)
@@ -175,7 +201,7 @@ async function onDelete(item: R2Object) {
     content: () => {
       return (
         <div>
-          Are you sure you want to delete <code>${item.key.split('/').pop()}</code>?
+          Are you sure you want to delete <code>{item.key.split('/').pop()}</code>?
         </div>
       )
     },
@@ -184,7 +210,8 @@ async function onDelete(item: R2Object) {
     onPositiveClick() {
       bucket.deleteFile(item.key).then(() => {
         nmessage.success('File deleted successfully')
-        fetchFileList()
+        payload.value?.objects.splice(payload.value.objects.indexOf(item), 1)
+        isShowPreview.value = false
       })
     },
   })
@@ -199,14 +226,22 @@ async function onDownload(item: R2Object) {
 }
 async function onRename(item: R2Object) {
   const toPathInput = ref(item.key)
-  nmodal.create({
+  const modal = nmodal.create({
     title: 'Rename File',
     preset: 'confirm',
     content: () => {
       return (
         <NForm>
           <NFormItem label="New Name (including path)">
-            <NInput value={toPathInput.value} onUpdateValue={(e) => (toPathInput.value = e)} clearable />
+            <NInput
+              value={toPathInput.value}
+              onUpdateValue={(e) => (toPathInput.value = e)}
+              clearable
+              onKeydown={(e) => {
+                if (e.key === 'Enter') {
+                }
+              }}
+            />
           </NFormItem>
         </NForm>
       )
@@ -269,10 +304,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      bucket.createFolder(`${filePath.value}${folderName}`).then(() => {
-        nmessage.success('Folder created successfully')
-        fetchFileList()
-      })
+      router.push(`/${filePath.value}${folderName}/`)
     },
   })
 }
@@ -291,36 +323,25 @@ const { isOverDropZone } = useDropZone(document.body, {
 })
 watch(bucket.uploadQueue, (queue, oldQueue) => {
   if (queue.length === 0 && oldQueue.length > 0) {
-    fetchFileList()
+    loadFileList()
   }
 })
 
-const uploadState = reactive({
-  isUploading: false,
-  successes: 0,
-  errors: 0,
-  total: 0,
-})
-const resetUploadState = () => {
-  uploadState.isUploading = false
-  uploadState.successes = 0
-  uploadState.errors = 0
-  uploadState.total = 0
-}
-async function handleUpload(files: File[]) {}
-
 function createUploadModal() {
+  let isUploaded = false
   nmodal.create({
     title: 'Upload Files',
-    preset: 'confirm',
+    preset: 'card',
     content: () => {
-      return <NForm></NForm>
+      return <UploadForm defaultPrefix={filePath.value} prefixReadonly={true} onUpload={() => (isUploaded = true)} />
     },
-    positiveText: 'OK',
-    negativeText: 'Cancel',
-    onPositiveClick() {},
+    onAfterLeave() {
+      isUploaded && loadFileList()
+    },
   })
 }
+
+const isShowUploadHistory = ref(false)
 </script>
 
 <style scoped lang="sass"></style>

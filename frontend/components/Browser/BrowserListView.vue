@@ -3,6 +3,7 @@
   NDataTable(
     :columns='columns',
     :data='tableData',
+    :row-key='(row) => row.key',
     :row-props='(row) => ({ onClick: () => handleRowClick(row), style: row.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" } })',
     bordered,
     hoverable,
@@ -18,9 +19,21 @@ import { IconDots } from '@tabler/icons-vue'
 import { NButton, NDropdown, NIcon, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
 
-const props = defineProps<{
-  payload: R2BucketListResponse
-}>()
+const props = withDefaults(
+  defineProps<{
+    payload: R2BucketListResponse
+    noActions?: boolean
+    noFolder?: boolean
+    defaultSortBy?: string
+    defaultSortOrder?: 'ascend' | 'descend'
+  }>(),
+  {
+    noActions: false,
+    noFolder: false,
+    defaultSortBy: 'key',
+    defaultSortOrder: 'ascend',
+  }
+)
 
 const bucket = useBucketStore()
 const nmessage = useMessage()
@@ -34,7 +47,7 @@ const emit = defineEmits<{
 
 const columns = computed(() => {
   if (!props.payload) return [] as TableColumns<R2Object>
-  return [
+  const cols = [
     {
       title: '',
       key: '_preview',
@@ -55,7 +68,6 @@ const columns = computed(() => {
         if (row.key === '/') return '/(root)'
         return row.key.replace(props.payload!.prefix, '').replace(/\/$/, '')
       },
-      defaultSortOrder: 'ascend',
       sorter: (a: R2Object, b: R2Object) => {
         // 文件夹不参与排序
         if (a.key.endsWith('/') || b.key.endsWith('/')) {
@@ -69,17 +81,7 @@ const columns = computed(() => {
       key: 'size',
       render: (row: R2Object) => {
         if (row.key.endsWith('/')) return ''
-        let unit = 'B'
-        let size = row.size
-        while (size > 1024) {
-          size /= 1024
-          if (unit === 'B') unit = 'KB'
-          else if (unit === 'KB') unit = 'MB'
-          else if (unit === 'MB') unit = 'GB'
-          else if (unit === 'GB') unit = 'TB'
-          else break
-        }
-        return `${size.toFixed(2)} ${unit}`
+        return FileHelper.formatFileSize(row.size)
       },
       sorter: (a: R2Object, b: R2Object) => {
         // 文件夹不参与排序
@@ -124,10 +126,36 @@ const columns = computed(() => {
         return new Date(a.uploaded).getTime() - new Date(b.uploaded).getTime()
       },
     },
-    {
+  ] as TableColumns<R2Object>
+  if (!props.noActions) {
+    // selection
+    // cols.unshift({
+    //   type: 'selection',
+    //   disabled(row) {
+    //     return row.key.endsWith('/')
+    //   },
+    //   cellProps(row) {
+    //     return {
+    //       onClick(e) {
+    //         e.stopPropagation()
+    //       },
+    //       style: row.key.endsWith('/') ? { opacity: '0%', pointerEvents: 'none' } : {},
+    //     }
+    //   },
+    // })
+    // actions
+    cols.push({
       title: '',
-      key: 'actions',
+      key: '_actions',
+      cellProps() {
+        return {
+          onClick(e) {
+            e.stopPropagation()
+          },
+        }
+      },
       render: (row: R2Object) => {
+        if (row.key.endsWith('/')) return ''
         const onSelect = (key: string) => {
           switch (key) {
             case 'copy_url':
@@ -163,33 +191,37 @@ const columns = computed(() => {
               ]}
               onSelect={onSelect}
             >
-              <NButton
-                secondary
-                size="small"
-                circle
-                renderIcon={() => <IconDots></IconDots>}
-                onClick={(e) => e.stopPropagation()}
-              ></NButton>
+              <NButton secondary size="small" circle renderIcon={() => <IconDots></IconDots>}></NButton>
             </NDropdown>
           </div>
         )
       },
       width: 50,
-    },
-  ] as TableColumns<R2Object>
+    })
+  }
+  if (props.defaultSortBy) {
+    const col = cols.find((col: any) => col.key === props.defaultSortBy)
+    if (col) {
+      // @ts-ignore
+      col.defaultSortOrder = props.defaultSortOrder || 'ascend'
+    }
+  }
+  return cols
 })
 const isROOT = computed(() => {
   return props.payload?.prefix === ''
 })
 const tableData = computed(() => {
   let list = props.payload?.objects || []
-  if (props.payload?.folders) {
-    list = [...props.payload.folders.map(FileHelper.createFolderObject), ...list]
-  }
-  if (isROOT.value) {
-    list = [FileHelper.createFolderObject('/'), ...list]
-  } else {
-    list = [FileHelper.createFolderObject('../'), ...list]
+  if (!props.noFolder) {
+    if (props.payload?.folders) {
+      list = [...props.payload.folders.map(FileHelper.createFolderObject), ...list]
+    }
+    if (isROOT.value) {
+      list = [FileHelper.createFolderObject('/'), ...list]
+    } else {
+      list = [FileHelper.createFolderObject('../'), ...list]
+    }
   }
   return list
 })

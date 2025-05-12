@@ -5,21 +5,33 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
     .file-preview-main(v-else)
       .file-preview-file-container
         .preview-file-image(v-if='previewType === "image"', text-center)
-          img(:src='cdnUrl', alt='preview', min-w='20px', h-auto, inline)
+          NImage(
+            :src='cdnUrl',
+            :alt='fileName',
+            :width='300',
+            :height='300',
+            object-fit='contain',
+            text-center,
+            :img-props='{ style: {} }'
+          )
         .preview-file-video(v-else-if='previewType === "video"', text-center)
           video(:src='cdnUrl', controls, w-full, h-auto)
         .preview-file-audio(v-else-if='previewType === "audio"', text-center)
           audio(:src='cdnUrl', controls, w-full, h-auto)
         .preview-file-text(v-else-if='previewType === "text"')
-          pre(v-if='rawText', :innerHTML='rawText')
+          pre(v-if='rawTextContent', max-h='50vh', overflow-auto) {{ rawTextContent }}
           NSpin(v-else, :show='isLoading', size='small')
             NP Loading...
         .preview-file-iframe(v-else-if='previewType === "iframe"', text-center)
-          iframe(:src='cdnUrl', w-full, h-auto)
-            NP Loading...
+          iframe(:src='cdnUrl', w-full, h-50vh, onerror='this.replaceWith("Error loading file")')
         .preview-file-unknown(v-else, text-center)
           NIcon(size='40'): IconFileUnknown
           NP Unknown file type
+
+      .preview-actions(mt-4, text-center)
+        NButtonGroup
+          NButton(size='small', type='primary', @click='emit("download", item)') Download
+          NButton(size='small', type='error', @click='emit("delete", item)') Delete
 
       .preview-details(v-if='item', mt-4, flex, flex-col, gap-4)
         NTable
@@ -51,10 +63,6 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
 
         details
           pre {{ item }}
-
-        NButtonGroup
-          NButton(size='small', type='primary', @click='() => emit("download")') Download
-          NButton(size='small', type='error', @click='() => emit("delete")') Delete
 </template>
 
 <script setup lang="ts">
@@ -66,8 +74,8 @@ const props = defineProps<{
   item?: R2Object | null
 }>()
 const emit = defineEmits<{
-  download: []
-  delete: []
+  download: [item: R2Object]
+  delete: [item: R2Object]
 }>()
 
 const bucket = useBucketStore()
@@ -96,14 +104,14 @@ const getPreviewType = (item?: R2Object | null) => {
 const previewType = computed(() => getPreviewType(props.item))
 
 const isLoading = ref(false)
-const rawText = ref('')
+const rawTextContent = ref('')
 watch(
   computed<[boolean, R2Object | null | undefined]>(() => [show.value, props.item]),
   ([show, item], [_, prevItem]) => {
     if (!show || !item || item?.key === prevItem?.key) {
       return
     }
-    rawText.value = ''
+    rawTextContent.value = ''
     const previewType = getPreviewType(item)
     if (previewType === 'text') {
       fetch(bucket.getCDNUrl(item))
@@ -115,7 +123,7 @@ watch(
           }
         })
         .then((text) => {
-          rawText.value = text
+          rawTextContent.value = text
         })
         .catch((error) => {
           console.error('Error fetching text:', error)
@@ -128,5 +136,7 @@ watch(
 <style scoped lang="sass">
 :global(.file-preview-modal)
   width: 860px
-  max-width: 96vw
+  max-width: 95vw
+  margin-top: 2rem
+  margin-bottom: 2rem
 </style>

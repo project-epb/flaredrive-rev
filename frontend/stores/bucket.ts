@@ -69,7 +69,13 @@ export const useBucketStore = defineStore('bucket', () => {
     return url.toString()
   }
   const getThumbnailUrl = (item: R2Object): { square: string; small: string; medium: string; large: string } | null => {
-    if (!item) {
+    if (!item || item.key.endsWith('/')) {
+      return null
+    }
+    if (
+      !item.httpMetadata?.contentType?.startsWith('image/') &&
+      !item.httpMetadata?.contentType?.startsWith('video/')
+    ) {
       return null
     }
     const makeCgiUrl = (size: number) => {

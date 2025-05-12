@@ -212,4 +212,21 @@ export namespace FileHelper {
 
     return IconFileUnknown
   }
+
+  export function formatFileSize(size: number = 0) {
+    size = parseFloat(size as any)
+    if (isNaN(size) || size < 0) {
+      return '0 B'
+    }
+    let unit = 'B'
+    while (size > 1024) {
+      size /= 1024
+      if (unit === 'B') unit = 'KB'
+      else if (unit === 'KB') unit = 'MB'
+      else if (unit === 'MB') unit = 'GB'
+      else if (unit === 'GB') unit = 'TB'
+      else break
+    }
+    return `${size.toFixed(2)} ${unit}`
+  }
 }
