@@ -52,7 +52,11 @@ export const useBucketStore = defineStore('bucket', () => {
     })
     return response
   }
-  const deleteFile = client.delete.bind(client)
+  const deleteFile = async (key: string) => {
+    await client.delete(key)
+    // Remove from upload history
+    uploadHistory.value = uploadHistory.value.filter((item) => item.key !== key)
+  }
   const rename = client.rename.bind(client)
 
   const createFolder = async (key: string) => {
@@ -126,13 +130,10 @@ export const useBucketStore = defineStore('bucket', () => {
   const UPLOAD_HISTORY_MAX = 1000
   const uploadHistory = useLocalStorage<R2Object[]>('flaredrive:upload-history', [])
   const addToUploadHistory = (item: R2Object) => {
-    const existingIndex = uploadHistory.value.findIndex((i) => i.key === item.key)
-    if (existingIndex !== -1) {
-      uploadHistory.value.splice(existingIndex, 1)
-    }
-    uploadHistory.value.unshift(item)
+    console.info('Upload history', item)
+    uploadHistory.value = [item, ...uploadHistory.value.filter((i) => i.key !== item.key)]
     if (uploadHistory.value.length > UPLOAD_HISTORY_MAX) {
-      uploadHistory.value.splice(UPLOAD_HISTORY_MAX)
+      uploadHistory.value = uploadHistory.value.slice(0, UPLOAD_HISTORY_MAX)
     }
   }
 
@@ -160,9 +161,14 @@ export const useBucketStore = defineStore('bucket', () => {
 
     console.info('Now uploading', key, file, { metadata })
 
-    return client.upload(key, file, {
+    const res = await client.upload(key, file, {
       metadata,
     })
+    console.info('Upload complete', res)
+    if (res.data) {
+      addToUploadHistory(res.data)
+    }
+    return res
   }
 
   const MAX_UPLOAD_BATCH = 10
@@ -185,9 +191,6 @@ export const useBucketStore = defineStore('bucket', () => {
       const promise = uploadOne(item.key, item.file).then(({ data }) => data)
       currentUploading.value.push({ file: item.file, key: item.key, promise })
       promise
-        .then((obj) => {
-          addToUploadHistory(obj)
-        })
         .catch((error) => {
           console.error('Upload failed', item.key, item.file, error)
           uploadFailedList.value.push({

@@ -349,11 +349,17 @@ const { isOverDropZone } = useDropZone(document.body, {
     })
   },
 })
-watch(bucket.uploadQueue, (queue, oldQueue) => {
-  if (queue.length === 0 && oldQueue.length > 0) {
-    loadFileList()
+watch(
+  computed(() => bucket.currentUploading.length),
+  (newLen, oldLen) => {
+    console.log('Upload queue changed:', `${oldLen} -> ${newLen}`)
+    if (newLen === 0 && oldLen > 0) {
+      console.log('Upload finished', 'reloading file list')
+      nmessage.success('Upload finished')
+      loadFileList()
+    }
   }
-})
+)
 
 function createUploadModal() {
   let isUploaded = false
