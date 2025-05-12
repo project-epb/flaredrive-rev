@@ -1,45 +1,53 @@
 <template lang="pug">
 #browser-view
-  NCard.top-sticky-rail(size='small', mb-4, z-5, sticky, top='[calc(60px+0.5rem)]')
-    .flex(justify-between, lt-sm='flex-col gap-4 items-center')
+  NCard.top-sticky-rail(size='small', mb-4, z-5, sticky, top='[calc(60px+0.25rem)]')
+    .flex(justify-between, gap-4, items-center, lt-sm='flex-col gap-2')
       //- display mode
       NRadioGroup(v-model:value='currentLayout', size='small')
         NRadioButton(v-for='i in layoutOptions', :key='i.value', :value='i.value')
-          NIcon(v-if='i.icon', mr-2): Component(:is='i.icon')
-          | {{ i.label }}
+          NIcon(v-if='i.icon'): Component(:is='i.icon')
+          span(lt-md='hidden', ml-2) {{ i.label }}
+      //- file search
+      .flex-1(lt-sm='w-full')
+        NInput(w-full, size='small', :placeholder='`Search in /${filePath}`', v-model:value='searchInput')
+          NIcon(mr-2): IconSearch
+      //- dir status
+      NText.file-count-info(depth='3')
+        template(v-if='!searchInput') {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }} / {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
+        template(v-if='searchInput')
+          NIcon(mr-2): IconFilter
+          | {{ filteredPayload.objects.length }} in {{ curObjectCount.files }}
       //- file operations
-      .flex.items-center.gap-2
-        NText.file-count-info(depth='3')
-          | {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }}
-          | /
-          | {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
-          template(v-if='payload?.hasMore') / hasMore
-        NButtonGroup(size='small')
-          NButton(
-            v-for='(action, index) in pathActions',
-            :key='index',
-            :type='action.type',
-            secondary,
-            :loading='action.loading',
-            :title='action.tooltip',
-            :render-icon='() => h(action.icon)',
-            @click='action.action'
-          ) {{ action.label }}
+      NButtonGroup(size='small', lt-md='hidden')
+        NButton(
+          v-for='(action, index) in pathActions',
+          :key='index',
+          :type='action.type',
+          secondary,
+          :loading='action.loading',
+          :title='action.tooltip',
+          :render-icon='() => h(action.icon)',
+          @click='action.action'
+        ) {{ action.label }}
 
-  NAlert(v-if='isRandomUploadDir', type='info', title='Random upload', closable, my-4) 
+  //- Alerts
+  NAlert(v-if='bucket.checkIsRandomUploadDir(filePath)', type='info', title='Random upload', closable, my-4) 
     | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
     |
     NA(@click='isShowUploadHistory = true')
       NIcon(mr-1): IconHistory
       | upload history
     | .
+  NAlert(v-if='bucket.checkIsHiddenDir(filePath)', type='warning', title='Hidden directory', closable, my-4)
+    | This hidden directory is for internal use of the FlareDrive application.
+    | It's strongly recommended to not upload or delete files in this directory.
 
   //- file browser
   NSkeleton(v-if='!payload', height='200px')
   NSpin(v-else, :show='isLoading')
     BrowserListView(
       v-if='currentLayout === "list"',
-      :payload,
+      :payload='filteredPayload',
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
@@ -47,7 +55,7 @@
     )
     BrowserGridView(
       v-if='currentLayout === "grid"',
-      :payload,
+      :payload='filteredPayload',
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
@@ -55,7 +63,7 @@
     )
     BrowserGalleryView(
       v-if='currentLayout === "gallery"',
-      :payload,
+      :payload='filteredPayload',
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
@@ -97,7 +105,7 @@
   )
 
   //- floating action button
-  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2)
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2, md='hidden')
     NIcon: IconPlus
     template(#menu)
       NTooltip(v-for='(action, index) in pathActions', :key='index', placement='left', :show-arrow='false')
@@ -117,9 +125,9 @@
 import { type R2BucketListResponse } from '@/models/R2BucketClient'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
+  IconFilter,
   IconFolderPlus,
   IconHistory,
-  IconHomeFilled,
   IconLayout2,
   IconLibraryPhoto,
   IconList,
@@ -159,7 +167,6 @@ const curObjectCount = computed(() => {
     folders: payload.value.folders.length,
   }
 })
-const isRandomUploadDir = computed(() => bucket.checkIsRandomUploadDir(filePath.value))
 
 watch(
   filePath,
@@ -187,6 +194,21 @@ async function loadFileList() {
     isLoading.value = false
   }
 }
+
+const searchInput = ref('')
+const filteredPayload = computed(() => {
+  if (!payload.value) return payload.value!
+  if (!searchInput.value) return payload.value!
+  const searchStr = searchInput.value.toLowerCase()
+  const filteredObjects = payload.value.objects.filter((item) => {
+    return item.key?.toLowerCase().includes(searchStr)
+  })
+  return {
+    ...payload.value,
+    objects: filteredObjects,
+    folders: [],
+  }
+})
 
 const isShowPreview = ref(false)
 const previewItem = ref<R2Object | undefined>()
@@ -413,7 +435,7 @@ const pathActions = computed<
 <style scoped lang="sass">
 .top-sticky-rail
   backdrop-filter: blur(16px)
-  background-color: rgba(255, 255, 255, 0.8)
+  background-color: rgba(245, 245, 245, 0.8)
   html.dark &
-    background-color: rgba(0, 0, 0, 0.8)
+    background-color: rgba(23, 23, 23, 0.8)
 </style>

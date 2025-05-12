@@ -90,7 +90,7 @@ const sortActions = computed(() => {
   return [
     { label: 'Name', key: 'key', onClick: () => changeSort('key') },
     { label: 'Size', key: 'size', onClick: () => changeSort('size') },
-    { label: 'Uploaded', key: 'uploaded', onClick: () => changeSort('uploaded') },
+    { label: 'Date', key: 'uploaded', onClick: () => changeSort('uploaded') },
   ].map((item) => {
     return {
       ...item,

@@ -23,6 +23,12 @@ export const useBucketStore = defineStore('bucket', () => {
       key.startsWith(RANDOM_UPLOAD_DIR)
     )
   }
+  const checkIsHiddenDir = (key: string) => {
+    return FLARE_DRIVE_HIDDEN_KEY && FLARE_DRIVE_HIDDEN_KEY !== '/' && key.startsWith(FLARE_DRIVE_HIDDEN_KEY + '/')
+  }
+  const checkIsHiddenFile = (key: string) => {
+    return FLARE_DRIVE_HIDDEN_KEY && FLARE_DRIVE_HIDDEN_KEY !== '/' && key.endsWith(FLARE_DRIVE_HIDDEN_KEY)
+  }
 
   const list = async (
     prefix: string,
@@ -225,6 +231,8 @@ export const useBucketStore = defineStore('bucket', () => {
   return {
     client,
     checkIsRandomUploadDir,
+    checkIsHiddenDir,
+    checkIsHiddenFile,
     list,
     createFolder,
     uploadOne,
