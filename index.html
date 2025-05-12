@@ -1,54 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FlareDrive</title>
-    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
-    <script src="https://unpkg.com/axios@1.8.4/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/vue3-sfc-loader@0.9.5/dist/vue3-sfc-loader.js"></script>
-    <script src="https://unpkg.com/@vueuse/shared"></script>
-    <script src="https://unpkg.com/@vueuse/core"></script>
-    <link rel="prefetch" href="/assets/main.mjs" />
-    <link rel="stylesheet" href="/assets/main.css" />
+    <title>FlareDrive | Project:EPB</title>
     <!-- <link rel="manifest" href="/assets/manifest.json" /> -->
     <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
   </head>
   <body>
     <div id="app"></div>
-    <script>
-      const { createApp, h, defineComponent, defineAsyncComponent } = Vue
-      const { loadModule } = window['vue3-sfc-loader']
-
-      const options = {
-        moduleCache: { vue: window.Vue, axios, '@vueuse/core': window.VueUse },
-        async getFile(url) {
-          const res = await fetch(url)
-          if (!res.ok)
-            throw Object.assign(new Error(res.statusText + ' ' + url), { res })
-          return {
-            getContentData: (asBinary) =>
-              asBinary ? res.arrayBuffer() : res.text(),
-          }
-        },
-        addStyle(textContent) {
-          const style = document.createElement('style')
-          style.textContent = textContent
-          const ref = document.head.getElementsByTagName('style')[0] || null
-          document.head.insertBefore(style, ref)
-        },
-      }
-
-      const app = createApp(
-        defineComponent(() => {
-          const App = defineAsyncComponent(() =>
-            loadModule('./assets/App.vue', options)
-          )
-          return () => h(App)
-        })
-      )
-
-      app.mount('#app')
-    </script>
+    <script type="module" src="./frontend/main.ts"></script>
   </body>
 </html>

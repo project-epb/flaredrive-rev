@@ -1,7 +1,9 @@
-> [!WARNING]
-> This project is a **derivative work** based on [longern/FlareDrive](https://github.com/longern/FlareDrive). You should not directly fork this repository.
+# FlareDrive: REMASTERED
 
-# FlareDrive
+> [!NOTE]
+> Original project: [longern/FlareDrive](https://github.com/longern/FlareDrive)
+>
+> This is a totally rewritten version of FlareDrive by @dragon-fish
 
 CloudFlare R2 storage manager with Pages and Workers. Free 10 GB storage. Free serverless backend with a limit of 100,000 invocation requests per day. [More about pricing](https://developers.cloudflare.com/r2/platform/pricing/)
 

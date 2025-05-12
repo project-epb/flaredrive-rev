@@ -1,0 +1,204 @@
+<template lang="pug">
+.browser-list-view
+  NDataTable(
+    :columns='columns',
+    :data='tableData',
+    :row-props='(row) => ({ onClick: () => handleRowClick(row), style: row.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" } })',
+    bordered,
+    hoverable,
+    striped
+  )
+</template>
+
+<script setup lang="tsx">
+import type { R2BucketListResponse } from '@/models/R2BucketClient'
+import { FileHelper } from '@/utils/FileHelper'
+import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import { IconDots } from '@tabler/icons-vue'
+import { NButton, NDropdown, NIcon, useMessage } from 'naive-ui'
+import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
+
+const props = defineProps<{
+  payload: R2BucketListResponse
+}>()
+
+const bucket = useBucketStore()
+const nmessage = useMessage()
+
+const emit = defineEmits<{
+  rename: [item: R2Object]
+  delete: [item: R2Object]
+  download: [item: R2Object]
+  navigate: [item: R2Object]
+}>()
+
+const columns = computed(() => {
+  if (!props.payload) return [] as TableColumns<R2Object>
+  return [
+    {
+      title: '',
+      key: '_preview',
+      render: (row: R2Object) => {
+        const FileIcon = FileHelper.getObjectIcon(row)
+        return (
+          <NIcon size={40}>
+            <FileIcon />
+          </NIcon>
+        )
+      },
+      width: 40,
+    },
+    {
+      title: 'Name',
+      key: 'key',
+      render: (row: R2Object) => {
+        if (row.key === '/') return '/(root)'
+        return row.key.replace(props.payload!.prefix, '').replace(/\/$/, '')
+      },
+      defaultSortOrder: 'ascend',
+      sorter: (a: R2Object, b: R2Object) => {
+        // 文件夹不参与排序
+        if (a.key.endsWith('/') || b.key.endsWith('/')) {
+          return 0
+        }
+        return a.key.localeCompare(b.key)
+      },
+    },
+    {
+      title: 'Size',
+      key: 'size',
+      render: (row: R2Object) => {
+        if (row.key.endsWith('/')) return ''
+        let unit = 'B'
+        let size = row.size
+        while (size > 1024) {
+          size /= 1024
+          if (unit === 'B') unit = 'KB'
+          else if (unit === 'KB') unit = 'MB'
+          else if (unit === 'MB') unit = 'GB'
+          else if (unit === 'GB') unit = 'TB'
+          else break
+        }
+        return `${size.toFixed(2)} ${unit}`
+      },
+      sorter: (a: R2Object, b: R2Object) => {
+        // 文件夹不参与排序
+        if (a.key.endsWith('/') || b.key.endsWith('/')) {
+          return 0
+        }
+        return a.size - b.size
+      },
+    },
+    {
+      title: 'Type',
+      key: 'httpMetadata.contentType',
+      render: (row: R2Object) => {
+        if (row.key === '/') return 'Root'
+        if (row.key === '../') return 'Parent'
+        if (row.key.endsWith('/')) return 'Child'
+        return row.httpMetadata?.contentType || '?'
+      },
+      filter(value, row) {
+        return row.httpMetadata?.contentType?.startsWith(value.toString()) || false
+      },
+      defaultFilterOptionValue: null,
+      filterOptions: [
+        {
+          label: 'Images',
+          key: 'image/',
+        },
+      ],
+    },
+    {
+      title: 'Last Modified',
+      key: 'uploaded',
+      render: (row: R2Object) => {
+        if (row.key.endsWith('/')) return ''
+        return new Date(row.uploaded).toLocaleString()
+      },
+      sorter: (a: R2Object, b: R2Object) => {
+        // 文件夹不参与排序
+        if (a.key.endsWith('/') || b.key.endsWith('/')) {
+          return 0
+        }
+        return new Date(a.uploaded).getTime() - new Date(b.uploaded).getTime()
+      },
+    },
+    {
+      title: '',
+      key: 'actions',
+      render: (row: R2Object) => {
+        const onSelect = (key: string) => {
+          switch (key) {
+            case 'copy_url':
+              const url = bucket.getCDNUrl(row)
+              navigator.clipboard
+                .writeText(url)
+                .then(() => {
+                  nmessage.success('URL copied to clipboard')
+                })
+                .catch((err) => {
+                  nmessage.error('Failed to copy URL')
+                })
+              break
+            case 'download':
+              emit('download', row)
+              break
+            case 'rename':
+              emit('rename', row)
+              break
+            case 'delete':
+              emit('delete', row)
+              break
+          }
+        }
+        return (
+          <div>
+            <NDropdown
+              options={[
+                { label: 'Copy URL', key: 'copy_url' },
+                { label: 'Download', key: 'download' },
+                { label: 'Rename', key: 'rename' },
+                { label: 'Delete', key: 'delete' },
+              ]}
+              onSelect={onSelect}
+            >
+              <NButton
+                secondary
+                size="small"
+                circle
+                renderIcon={() => <IconDots></IconDots>}
+                onClick={(e) => e.stopPropagation()}
+              ></NButton>
+            </NDropdown>
+          </div>
+        )
+      },
+      width: 50,
+    },
+  ] as TableColumns<R2Object>
+})
+const isROOT = computed(() => {
+  return props.payload?.prefix === ''
+})
+const tableData = computed(() => {
+  let list = props.payload?.objects || []
+  if (props.payload?.folders) {
+    list = [...props.payload.folders.map(FileHelper.createFolderObject), ...list]
+  }
+  if (isROOT.value) {
+    list = [FileHelper.createFolderObject('/'), ...list]
+  } else {
+    list = [FileHelper.createFolderObject('../'), ...list]
+  }
+  return list
+})
+const handleRowClick = (row: R2Object) => {
+  emit('navigate', row)
+}
+</script>
+
+<style scoped lang="sass">
+:deep(.n-data-table-thead > .n-data-table-tr)
+  white-space: nowrap
+</style>

@@ -1,0 +1,15 @@
+{
+  "name": "flaredrive",
+  "compatibility_date": "2025-05-07",
+  "main": "./backend/index.ts",
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "cloud-epb",
+      "preview_bucket_name": "cloud-epb-preview"
+    }
+  ]
+}
