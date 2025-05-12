@@ -1,7 +1,7 @@
 <template lang="pug">
 NaiveuiProvider#full-app-container
-  NLayout
-    NLayoutContent.main-content-container
+  NLayout.full-layout-container(content-class='min-h-100vh flex flex-col')
+    NLayoutContent.main-content-container(flex-1)
       RouterView.root-router-view(:data-route-name='$route.name')
     GlobalHeader
     GlobalFooter

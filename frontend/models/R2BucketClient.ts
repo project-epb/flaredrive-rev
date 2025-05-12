@@ -48,6 +48,11 @@ export class R2BucketClient {
     const contentType = options?.contentType || (file as File).type || 'application/octet-stream'
     const metaHeaders = Object.entries(metadata).reduce(
       (acc, [key, value]) => {
+        key = this.convertNonAsciiString(key)
+        value = this.convertNonAsciiString(value)
+        if (key.length > 128 || value.length > 128) {
+          throw new Error('Key or value length exceeds 128 characters')
+        }
         acc[`x-amz-meta-${key}`] = value
         return acc
       },
@@ -71,5 +76,14 @@ export class R2BucketClient {
         copySource: oldKey,
       },
     })
+  }
+
+  private convertNonAsciiString(str: string) {
+    const hasNonAscii = /[^\x00-\x7F]/.test(str)
+    if (hasNonAscii) {
+      return encodeURIComponent(str)
+    } else {
+      return str
+    }
   }
 }

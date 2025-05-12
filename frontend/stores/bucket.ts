@@ -1,16 +1,28 @@
 import { R2BucketClient } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import { c } from 'naive-ui'
 
 export const useBucketStore = defineStore('bucket', () => {
   const client = new R2BucketClient()
   const CDN_BASE_URL = new URL(import.meta.env.VITE_CDN_BASE_URL || '', window.location.origin)
   const FLARE_DRIVE_HIDDEN_KEY = import.meta.env.VITE_FLARE_DRIVE_HIDDEN_KEY || '_$flaredrive$'
+  const RANDOM_UPLOAD_DIR = import.meta.env.VITE_RANDOM_UPLOAD_DIR || ''
 
   console.info('FlareDrive Env', {
     CDN_BASE_URL: CDN_BASE_URL.toString(),
     FLARE_DRIVE_HIDDEN_KEY,
+    RANDOM_UPLOAD_DIR,
   })
+
+  const checkIsRandomUploadDir = (key: string) => {
+    return (
+      RANDOM_UPLOAD_DIR &&
+      RANDOM_UPLOAD_DIR.endsWith('/') &&
+      RANDOM_UPLOAD_DIR !== '/' &&
+      key.startsWith(RANDOM_UPLOAD_DIR)
+    )
+  }
 
   const list = async (
     prefix: string,
@@ -126,8 +138,7 @@ export const useBucketStore = defineStore('bucket', () => {
 
   const uploadOne = async (key: string, file: File) => {
     const fileHash = await FileHelper.blobToSha1(file)
-
-    console.info('Now uploading', key, file)
+    const ext = file.name.split('.').pop() || file.type.split('/')[1] || ''
 
     const metadata: Record<string, string> = {}
     if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
@@ -135,10 +146,19 @@ export const useBucketStore = defineStore('bucket', () => {
         const thumbBlob = await FileHelper.generateThumbnail(file)
         await client.upload(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${fileHash}.png`, thumbBlob)
         metadata['thumbnail'] = fileHash
+        console.info('Thumbnail generated', file, fileHash)
       } catch (e) {
         console.error('Error generating thumbnail', file, e)
       }
     }
+    if (checkIsRandomUploadDir(key)) {
+      const hashFirst = fileHash.slice(0, 1)
+      const hashSecond = fileHash.slice(0, 2)
+      key = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
+      metadata['original_name'] = file.name
+    }
+
+    console.info('Now uploading', key, file, { metadata })
 
     return client.upload(key, file, {
       metadata,
@@ -169,6 +189,7 @@ export const useBucketStore = defineStore('bucket', () => {
           addToUploadHistory(obj)
         })
         .catch((error) => {
+          console.error('Upload failed', item.key, item.file, error)
           uploadFailedList.value.push({
             key: item.key,
             file: item.file,
@@ -193,16 +214,14 @@ export const useBucketStore = defineStore('bucket', () => {
   )
 
   const addToUploadQueue = (file: File, key: string) => {
-    const existingIndex = uploadQueue.value.findIndex((i) => i.key === key)
-    if (existingIndex !== -1) {
-      uploadQueue.value.splice(existingIndex, 1)
-    }
-    uploadQueue.value.push({ file, key })
+    uploadQueue.value = uploadQueue.value.filter((i) => i.key !== key)
+    uploadQueue.value = [...uploadQueue.value, { file, key }]
     return uploadQueue.value
   }
 
   return {
     client,
+    checkIsRandomUploadDir,
     list,
     createFolder,
     uploadOne,

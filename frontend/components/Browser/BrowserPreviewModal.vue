@@ -19,7 +19,7 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
         .preview-file-audio(v-else-if='previewType === "audio"', text-center)
           audio(:src='cdnUrl', controls, w-full, h-auto)
         .preview-file-text(v-else-if='previewType === "text"')
-          pre(v-if='rawTextContent', max-h='50vh', overflow-auto) {{ rawTextContent }}
+          pre(v-if='rawTextContent', min-h='200px', max-h='50vh') {{ rawTextContent }}
           NSpin(v-else, :show='isLoading', size='small')
             NP Loading...
         .preview-file-iframe(v-else-if='previewType === "iframe"', text-center)
@@ -52,8 +52,8 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
             td(v-if='!Object.keys(item?.customMetadata || {}).length') No metadata
             NTable(v-else, :bordered='false', size='small')
               tr(v-for='(value, key) in (item.customMetadata || {})')
-                th(width='100') {{ key }}
-                td: code {{ value }}
+                th(width='100') {{ decodeURIComponent(key) }}
+                td: code {{ decodeURIComponent(value) }}
           tr
             th CDN URL
             td: NA(:href='cdnUrl', target='_blank') {{ cdnUrl }}
@@ -133,10 +133,4 @@ watch(
 )
 </script>
 
-<style scoped lang="sass">
-:global(.file-preview-modal)
-  width: 860px
-  max-width: 95vw
-  margin-top: 2rem
-  margin-bottom: 2rem
-</style>
+<style scoped lang="sass"></style>

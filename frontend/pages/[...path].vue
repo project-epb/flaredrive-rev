@@ -17,6 +17,7 @@
           type='default',
           secondary,
           :render-icon='() => h(IconReload)',
+          :loading='isLoading',
           @click='() => { loadFileList().then(() => nmessage.success("Refresh success")) }'
         )
 
@@ -35,6 +36,13 @@
         | {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }}
         | /
         | {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
+
+  NAlert(v-if='isRandomUploadDir', type='info', title='Random upload', closable, my-4) 
+    | This is a random upload directory. Files will be uploaded to this directory with a random name.
+    | You find the final url in the
+    |
+    NA(@click='isShowUploadHistory = true') Upload History
+    | .
 
   //- file browser
   NSkeleton(v-if='!payload', height='200px')
@@ -98,6 +106,17 @@
     @navigate='onNavigate'
   )
 
+  //- floating action button
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem')
+    NIcon: IconPlus
+    template(#menu)
+      NFloatButton(type='primary', @click='createUploadModal'): NIcon: IconUpload
+      NFloatButton(type='default', @click='handleCreateFolder'): NIcon: IconFolderPlus
+      NFloatButton(type='default', @click='isShowUploadHistory = true'): NIcon: IconHistory
+      NFloatButton(type='default', @click='() => { loadFileList().then(() => nmessage.success("Refresh success")) }')
+        NSpin(v-if='isLoading', show, :size='16')
+        NIcon(v-else): IconReload
+
   //- debug info
   details.dev-only.bg-dev.mt-6
     NP filePath: {{ filePath }}
@@ -114,6 +133,7 @@ import {
   IconLayout2,
   IconLibraryPhoto,
   IconList,
+  IconPlus,
   IconReload,
   IconUpload,
 } from '@tabler/icons-vue'
@@ -149,6 +169,7 @@ const curObjectCount = computed(() => {
     folders: payload.value.folders.length,
   }
 })
+const isRandomUploadDir = computed(() => bucket.checkIsRandomUploadDir(filePath.value))
 
 watch(
   filePath,
@@ -220,7 +241,7 @@ async function onDownload(item: R2Object) {
   const url = bucket.getCDNUrl(item)
   const a = document.createElement('a')
   a.href = url
-  a.download = item.key.split('/').pop() || ''
+  a.download = item.key.split('/').pop() || `FlareDrive_download_${Date.now()}`
   a.click()
   nmessage.success('Download started')
 }
@@ -313,7 +334,14 @@ const { isOverDropZone } = useDropZone(document.body, {
   multiple: true,
   onDrop(files) {
     console.log('Dropped files:', files)
-    files?.forEach((file) => {
+    if (!files || !files.length) {
+      return
+    }
+    files = files?.filter((file) => {
+      return !!file.name
+    })
+    nmessage.success(files.length > 1 ? `Uploading ${files.length} files...` : `Uploading ${files[0].name}...`)
+    files.forEach((file) => {
       const fileName = file.name
       if (fileName) {
         bucket.addToUploadQueue(file, `${filePath.value}${fileName}`)

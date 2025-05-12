@@ -38,6 +38,12 @@ const bucket = useBucketStore()
 const customRequest = async (payload: UploadCustomRequestOptions) => {
   console.info('upload', payload)
   payload.file.status = 'uploading'
+  const timer = setInterval(() => {
+    payload.file.percentage = Math.min(90, (payload.file.percentage || 0) + Math.random() * 10)
+    if (payload.file.percentage >= 90) {
+      clearInterval(timer)
+    }
+  }, 50)
   bucket
     .uploadOne(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
     .then(({ data }) => {
@@ -46,6 +52,7 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
       if (payload.file.file?.type.startsWith('image/')) {
         payload.file.thumbnailUrl = bucket.getCDNUrl(data)
       }
+      payload.file.percentage = 100
       nmessage.success(`${payload.file.name} uploaded`)
       payload.onFinish()
       emit('upload', data)
@@ -53,7 +60,11 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
     .catch((err) => {
       nmessage.error('Upload failed', err)
       payload.file.status = 'error'
+      payload.file.percentage = 0
       payload.onError()
+    })
+    .finally(() => {
+      clearInterval(timer)
     })
 }
 const uploaderRef = useTemplateRef('uploaderRef')
