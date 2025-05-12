@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "description": "CloudFlare R2 storage manager with Pages and Workers.",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "^pnpm@10.0.0",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
