@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "deploy": "wrangler deploy"
   },
   "repository": {
     "type": "git",
