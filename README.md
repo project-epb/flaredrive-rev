@@ -1,39 +1,18 @@
-> [!WARNING]
-> This project is a **derivative work** based on [longern/FlareDrive](https://github.com/longern/FlareDrive). You should not directly fork this repository.
+# FlareDrive: REMASTERED
 
-# FlareDrive
+> [!NOTE]
+> Original project: [longern/FlareDrive](https://github.com/longern/FlareDrive)
+>
+> This is a totally rewritten version of FlareDrive by @dragon-fish
 
 CloudFlare R2 storage manager with Pages and Workers. Free 10 GB storage. Free serverless backend with a limit of 100,000 invocation requests per day. [More about pricing](https://developers.cloudflare.com/r2/platform/pricing/)
 
 ## Features
 
 - Drag-and-drop upload
-- Upload large files
-- Create folders
-- Search files
-- Image/video thumbnails
-
-## Derivative features ✨
-
-> [!NOTE]
-> These features are not available in the original project. I implement them because of my needs.
-
-- Custom `baseUrl`
-  - So you can use some domain with CDN to serve files
-- More sorting options
-  - Sort by file size, uploaded date, and file name in both ascending and descending order
-- Random uploads
-  - Upload files to `/-/` folder to make the file name random. This is useful for sharing files without revealing the file name.
-- Touch device improvements
-  - Dot menu button for file actions
-- Style improvements
-  - More modern and clean design
-  - Flexibility for different screen sizes. More for large screens, less for small screens.
-  - Tabler icons
-- Upload history
-  - Keep track of the files you uploaded
-- Refactor with Vue3 setup
-  - More readable and maintainable code
+- Multiple layouts: List, Grid, and Gallery
+- File preview: Image, Video, Audio, PDF, and Text...
+- Upload history (\* currently on local storage)
 
 ## Usage
 
@@ -51,6 +30,16 @@ Steps:
 2. Add a custom domain
 3. Bind your R2 bucket to `BUCKET` varaible
 4. Manually redeploy to make R2 bindings take effect
+
+**Environment Variables:**
+
+Checkout the `.env` file, default values are:
+
+```sh
+VITE_CDN_BASE_URL=/api/raw/ # CDN URL, with trailing slash
+VITE_RANDOM_UPLOAD_DIR=-/ # files uploaded to this directory will be randomly named
+VITE_FLARE_DRIVE_HIDDEN_KEY="_\$flaredrive\$" # used to internally hide files, like thumbnails
+```
 
 ### Authentication
 

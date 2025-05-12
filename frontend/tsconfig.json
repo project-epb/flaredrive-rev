@@ -1,0 +1,15 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "composite": true,
+    "noEmit": true,
+    "types": ["vite/client", "unplugin-vue-router/client"],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "vueCompilerOptions": {
+    "plugins": ["@vue/language-plugin-pug"]
+  }
+}

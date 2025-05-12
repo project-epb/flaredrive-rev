@@ -1,0 +1,66 @@
+<template lang="pug">
+NForm
+  NFormItem(label='File')
+    NUpload(multiple, directory-dnd, :default-upload='false', :custom-request, @finish='onFinish', ref='uploaderRef')
+      NUploadDragger
+        div: NIcon(size='80'): IconUpload
+        NP Click or drag files to this area to upload
+  NFormItem(label='Prefix', v-if='!prefixReadonly')
+    NInput(:placeholder='defaultPrefix', :default-value='defaultPrefix', v-model:value='formData.prefix', clearable)
+  div
+    NButton(type='primary', block, @click='handleStart') Upload
+</template>
+
+<script setup lang="ts">
+import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import { IconUpload } from '@tabler/icons-vue'
+import { NButton, NFormItem, useMessage, type UploadCustomRequestOptions, type UploadFileInfo } from 'naive-ui'
+
+const nmessage = useMessage()
+const props = withDefaults(
+  defineProps<{
+    defaultPrefix?: string
+    prefixReadonly?: boolean
+  }>(),
+  {
+    defaultPrefix: '',
+    prefixReadonly: false,
+  }
+)
+const emit = defineEmits<{
+  upload: [item: R2Object]
+}>()
+const formData = reactive({
+  prefix: props.defaultPrefix,
+})
+const bucket = useBucketStore()
+
+const customRequest = async (payload: UploadCustomRequestOptions) => {
+  console.info('upload', payload)
+  payload.file.status = 'uploading'
+  bucket
+    .uploadOne(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
+    .then(({ data }) => {
+      payload.file.status = 'finished'
+      payload.file.url = bucket.getCDNUrl(data)
+      if (payload.file.file?.type.startsWith('image/')) {
+        payload.file.thumbnailUrl = bucket.getCDNUrl(data)
+      }
+      nmessage.success(`${payload.file.name} uploaded`)
+      payload.onFinish()
+      emit('upload', data)
+    })
+    .catch((err) => {
+      nmessage.error('Upload failed', err)
+      payload.file.status = 'error'
+      payload.onError()
+    })
+}
+const uploaderRef = useTemplateRef('uploaderRef')
+function handleStart() {
+  uploaderRef.value!.submit()
+}
+function onFinish(options: { file: UploadFileInfo; event?: ProgressEvent }) {}
+</script>
+
+<style scoped lang="sass"></style>
