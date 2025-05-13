@@ -82,12 +82,10 @@ export const useBucketStore = defineStore('bucket', () => {
       return ''
     }
     const filePath = typeof payload === 'string' ? payload : payload.key
-    const version = typeof payload === 'string' ? '' : payload.version
     if (!filePath) {
       return ''
     }
     const url = new URL(filePath, CDN_BASE_URL)
-    version && url.searchParams.set('v', version)
     return url.toString()
   }
   const getThumbnailUrls = (
@@ -156,9 +154,18 @@ export const useBucketStore = defineStore('bucket', () => {
     const metadata: Record<string, string> = {}
     if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
       try {
-        const thumbBlob = await FileHelper.generateThumbnail(file)
-        await client.upload(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${fileHash}.png`, thumbBlob)
-        metadata['thumbnail'] = fileHash
+        const mediaMeta = await FileHelper.getMediaFileMetadata(file)
+        await client.upload(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${fileHash}.png`, mediaMeta.thumbnail.blob, {
+          metadata: {
+            width: mediaMeta.thumbnail.width.toString(),
+            height: mediaMeta.thumbnail.height.toString(),
+          },
+        })
+        metadata['width'] = mediaMeta.width.toString()
+        metadata['height'] = mediaMeta.height.toString()
+        metadata['thumbnail'] = mediaMeta.sha1
+        metadata['thumbnail_width'] = mediaMeta.thumbnail.width.toString()
+        metadata['thumbnail_height'] = mediaMeta.thumbnail.height.toString()
         console.info('Thumbnail generated', file, fileHash)
       } catch (e) {
         console.error('Error generating thumbnail', file, e)

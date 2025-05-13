@@ -16,13 +16,13 @@
 pre, code
   font-family: 'Maple Mono NF CN', 'Maple Mono NF', 'Maple Mono', 'JetBrainsMono Nerd Font', 'JetBrains Mono NF', 'JetBrains Mono', Consolas, 'Courier New', monospace
 
-code
+code:not(.n-code)
   font-size: 0.9em
   padding: 0.2em 0.4em
   background-color: rgba(100, 100, 100, 0.25)
   border-radius: 0.25rem
 
-pre
+pre:not(.__code__, .n-code__line-numbers)
   padding: 1em
   background-color: rgba(100, 100, 100, 0.25)
   border-radius: 0.5rem

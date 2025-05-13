@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    BrowserFilePreview: typeof import('./components/Browser/BrowserFilePreview.vue')['default']
     BrowserGalleryView: typeof import('./components/Browser/BrowserGalleryView.vue')['default']
     BrowserGridView: typeof import('./components/Browser/BrowserGridView.vue')['default']
     BrowserListView: typeof import('./components/Browser/BrowserListView.vue')['default']
@@ -15,6 +16,7 @@ declare module 'vue' {
     BrowserUploadHistory: typeof import('./components/Browser/BrowserUploadHistory.vue')['default']
     GlobalFooter: typeof import('./components/Global/GlobalFooter.vue')['default']
     GlobalHeader: typeof import('./components/Global/GlobalHeader.vue')['default']
+    Hljs: typeof import('./components/Hljs.vue')['default']
     NA: typeof import('naive-ui')['NA']
     NaiveuiProvider: typeof import('./components/NaiveuiProvider.vue')['default']
     NAlert: typeof import('naive-ui')['NAlert']
@@ -25,6 +27,9 @@ declare module 'vue' {
     NButtonGroup: typeof import('naive-ui')['NButtonGroup']
     NButtonLink: typeof import('./components/NButtonLink.vue')['default']
     NCard: typeof import('naive-ui')['NCard']
+    NCode: typeof import('naive-ui')['NCode']
+    NCollapseTransition: typeof import('naive-ui')['NCollapseTransition']
+    NConfigProvider: typeof import('naive-ui')['NConfigProvider']
     NDataTable: typeof import('naive-ui')['NDataTable']
     NDrawer: typeof import('naive-ui')['NDrawer']
     NDrawerContent: typeof import('naive-ui')['NDrawerContent']

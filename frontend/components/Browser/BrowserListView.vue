@@ -6,8 +6,7 @@
     :row-key='(row) => row.key',
     :row-props='(row) => ({ onClick: () => handleRowClick(row), style: row.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" } })',
     bordered,
-    hoverable,
-    striped
+    hoverable
   )
 </template>
 
@@ -51,6 +50,7 @@ const columns = computed(() => {
     {
       title: '',
       key: '_preview',
+      width: 40,
       render: (row: R2Object) => {
         const thumbs = bucket.getThumbnailUrls(row, true)
         if (thumbs) {
@@ -63,13 +63,13 @@ const columns = computed(() => {
           </NIcon>
         )
       },
-      width: 40,
     },
     {
       title: 'Name',
       key: 'key',
+      minWidth: 200,
       render: (row: R2Object) => {
-        if (row.key === '/') return '/(root)'
+        if (row.key === '/') return '/'
         return row.key.replace(props.payload!.prefix, '').replace(/\/$/, '')
       },
       sorter: (a: R2Object, b: R2Object) => {
@@ -83,8 +83,10 @@ const columns = computed(() => {
     {
       title: 'Size',
       key: 'size',
+      align: 'center',
+      minWidth: 100,
       render: (row: R2Object) => {
-        if (row.key.endsWith('/')) return ''
+        if (row.key.endsWith('/')) return '-'
         return FileHelper.formatFileSize(row.size)
       },
       sorter: (a: R2Object, b: R2Object) => {
@@ -98,10 +100,12 @@ const columns = computed(() => {
     {
       title: 'Type',
       key: 'httpMetadata.contentType',
+      align: 'center',
+      minWidth: 100,
       render: (row: R2Object) => {
-        if (row.key === '/') return 'Root'
-        if (row.key === '../') return 'Parent'
-        if (row.key.endsWith('/')) return 'Child'
+        if (row.key === '/') return 'root'
+        if (row.key === '../') return 'parent'
+        if (row.key.endsWith('/')) return 'folder'
         return row.httpMetadata?.contentType || '?'
       },
       filter(value, row) {
@@ -118,6 +122,7 @@ const columns = computed(() => {
     {
       title: 'Last Modified',
       key: 'uploaded',
+      align: 'center',
       render: (row: R2Object) => {
         if (row.key.endsWith('/')) return ''
         return new Date(row.uploaded).toLocaleString()
@@ -151,6 +156,7 @@ const columns = computed(() => {
     cols.push({
       title: '',
       key: '_actions',
+      align: 'center',
       cellProps() {
         return {
           onClick(e) {

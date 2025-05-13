@@ -4,6 +4,10 @@
     UploadForm
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+definePage({
+  name: '@upload-standalone',
+})
+</script>
 
 <style scoped lang="sass"></style>

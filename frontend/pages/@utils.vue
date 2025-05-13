@@ -2,6 +2,10 @@
 h1 @utils
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+definePage({
+  name: '@utils',
+})
+</script>
 
 <style scoped lang="sass"></style>

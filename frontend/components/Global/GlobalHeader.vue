@@ -11,7 +11,7 @@ NLayoutHeader.global-header(bordered, fixed, top-0, left-0, right-0, h-60px, z-1
         NBreadcrumbItem(
           v-for='(item, index) in $route.path.split("/").filter(Boolean)',
           :key='index',
-          @click='() => $router.push({ name: "/[...path]", params: { path: $route.path.split("/").slice(0, index + 1).join("/"), }, })'
+          @click='() => $router.push({ name: "@browser", params: { path: $route.path.split("/").slice(0, index + 1).join("/"), }, })'
         )
           | {{ item || '(???)' }}
     .site-configs-container

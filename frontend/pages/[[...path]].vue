@@ -1,34 +1,56 @@
 <template lang="pug">
 #browser-view
-  NCard.top-sticky-rail(size='small', mb-4, z-5, sticky, top='[calc(60px+0.25rem)]')
-    .flex(justify-between, gap-4, items-center, lt-sm='flex-col gap-2')
-      //- display mode
-      NRadioGroup(v-model:value='currentLayout', size='small')
-        NRadioButton(v-for='i in layoutOptions', :key='i.value', :value='i.value')
-          NIcon(v-if='i.icon'): Component(:is='i.icon')
-          span(lt-md='hidden', ml-2) {{ i.label }}
-      //- file search
-      .flex-1(lt-sm='w-full')
-        NInput(w-full, size='small', :placeholder='`Search in /${filePath}`', v-model:value='searchInput')
-          NIcon(mr-2): IconSearch
-      //- dir status
-      NText.file-count-info(depth='3')
-        template(v-if='!searchInput') {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }} / {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
-        template(v-if='searchInput')
-          NIcon(mr-2): IconFilter
-          | {{ filteredPayload.objects.length }} in {{ curObjectCount.files }}
-      //- file operations
-      NButtonGroup(size='small', lt-md='hidden')
-        NButton(
-          v-for='(action, index) in pathActions',
-          :key='index',
-          :type='action.type',
-          secondary,
-          :loading='action.loading',
-          :title='action.tooltip',
-          :render-icon='() => h(action.icon)',
-          @click='action.action'
-        ) {{ action.label }}
+  .top-sticky-rail(mb-8, z-5, sticky, top='[calc(60px+0.25rem)]')
+    NCollapseTransition(:show='isShowTopStickyRail || !!searchInput')
+      NCard(size='small')
+        .flex(justify-between, gap-4, items-center, lt-sm='flex-col gap-2')
+          //- display mode
+          NRadioGroup(v-model:value='currentLayout', size='small')
+            NRadioButton(v-for='i in layoutOptions', :key='i.value', :value='i.value')
+              NIcon(v-if='i.icon'): Component(:is='i.icon')
+              span(lt-md='hidden', ml-2) {{ i.label }}
+          //- file search
+          .flex-1(lt-sm='w-full')
+            NInput(
+              w-full,
+              size='small',
+              :placeholder='`Search files in /${filePath}`',
+              v-model:value='searchInput',
+              clearable
+            )
+              template(#prefix): NIcon(mr-2): IconSearch
+          //- dir status
+          NText.file-count-info(depth='3')
+            template(v-if='!searchInput') {{ curObjectCount.folders }} {{ curObjectCount.folders > 1 ? 'folders' : 'folder' }} / {{ curObjectCount.files }} {{ curObjectCount.files > 1 ? 'files' : 'file' }}
+            template(v-if='searchInput')
+              NIcon(mr-2): IconFilter
+              | {{ filteredPayload.objects.length }} in {{ curObjectCount.files }}
+          //- file operations
+          NButtonGroup(size='small', lt-md='hidden')
+            NButton(
+              v-for='(action, index) in pathActions',
+              :key='index',
+              :type='action.type',
+              secondary,
+              :loading='action.loading',
+              :title='action.tooltip',
+              :render-icon='() => h(action.icon)',
+              @click='action.action'
+            )
+              template(v-if='action.label') {{ action.label }}
+    .top-sticky-rail-trigger(
+      @click='isShowTopStickyRail = !isShowTopStickyRail',
+      absolute,
+      cursor-pointer,
+      top='[calc(100%+1rem)]',
+      left='50%',
+      uno:translate='-50% -50%',
+      p-x-10,
+      p-y='2px',
+      rounded-full,
+      leading-0
+    )
+      NIcon(size='12'): component(:is='isShowTopStickyRail ? IconChevronCompactUp : IconChevronCompactDown')
 
   //- Alerts
   NAlert(v-if='bucket.checkIsRandomUploadDir(filePath)', type='info', title='Random upload', closable, my-4) 
@@ -105,7 +127,7 @@
   )
 
   //- floating action button
-  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2, md='hidden')
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2)
     NIcon: IconPlus
     template(#menu)
       NTooltip(v-for='(action, index) in pathActions', :key='index', placement='left', :show-arrow='false')
@@ -125,6 +147,8 @@
 import { type R2BucketListResponse } from '@/models/R2BucketClient'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
+  IconChevronCompactDown,
+  IconChevronCompactUp,
   IconFilter,
   IconFolderPlus,
   IconHistory,
@@ -133,10 +157,15 @@ import {
   IconList,
   IconPlus,
   IconReload,
+  IconSearch,
   IconUpload,
 } from '@tabler/icons-vue'
-import { NBreadcrumb, NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
+import { NCollapse, NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
 import type { Component } from 'vue'
+
+definePage({
+  name: '@browser',
+})
 
 const UploadForm = defineAsyncComponent(() => import('@/components/UploadForm.vue'))
 
@@ -147,7 +176,7 @@ const route = useRoute()
 const router = useRouter()
 const filePath = computed(() => {
   // @ts-ignore
-  return route.params.path
+  return Array.isArray(route.params.path) ? route.params.path.join('/') : route.params.path
 })
 
 const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
@@ -195,6 +224,8 @@ async function loadFileList() {
   }
 }
 
+const isShowTopStickyRail = useLocalStorage('flaredrive:top-sticky-rail/show', true)
+
 const searchInput = ref('')
 const filteredPayload = computed(() => {
   if (!payload.value) return payload.value!
@@ -229,7 +260,7 @@ function onNavigate(item: R2Object) {
 async function onDelete(item: R2Object) {
   nmodal.create({
     title: 'Delete File',
-    type: 'warning',
+    type: 'error',
     preset: 'confirm',
     content: () => {
       return (
@@ -239,7 +270,7 @@ async function onDelete(item: R2Object) {
       )
     },
     positiveText: 'Delete',
-    negativeText: 'Cancel',
+    negativeText: 'Keep the file',
     onPositiveClick() {
       bucket.deleteFile(item.key).then(() => {
         nmessage.success('File deleted successfully')
@@ -433,9 +464,14 @@ const pathActions = computed<
 </script>
 
 <style scoped lang="sass">
-.top-sticky-rail
+.top-sticky-rail, .top-sticky-rail-trigger
   backdrop-filter: blur(16px)
   background-color: rgba(245, 245, 245, 0.8)
   html.dark &
     background-color: rgba(23, 23, 23, 0.8)
+
+.top-sticky-rail-trigger
+  border: 1px solid rgba(0, 0, 0, 0.1)
+  html.dark &
+    border: 1px solid rgba(255, 255, 255, 0.125)
 </style>

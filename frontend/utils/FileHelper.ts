@@ -2,28 +2,92 @@ import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
   IconFileMusic,
   IconFileTypeBmp,
+  IconFileTypeCss,
   IconFileTypeDocx,
   IconFileTypeJpg,
+  IconFileTypeJs,
+  IconFileTypePdf,
   IconFileTypePng,
   IconFileTypePpt,
   IconFileTypeSvg,
+  IconFileTypeTs,
   IconFileTypeTxt,
   IconFileTypeXls,
-  IconFileTypeZip,
   IconFileUnknown,
   IconFileZip,
-  IconFolder,
   IconFolderFilled,
+  IconFolderRoot,
+  IconFolderUp,
   IconGif,
   IconMovie,
-  IconMusic,
   IconPhoto,
 } from '@tabler/icons-vue'
 
 export namespace FileHelper {
   export const THUMBNAIL_SIZE = 256
 
-  export async function generateThumbnail(file: File) {
+  /**
+   * @returns width, height, sha1, thumbnailBlob
+   */
+  export async function getMediaFileMetadata(file: File) {
+    if (!checkIsMediaFile(file)) {
+      throw new TypeError('Unsupported file type')
+    }
+    const { width, height } = await getMediaFileNaturalSize(file)
+    const thumbnail = await generateMediaFileThumbnail(file)
+    const sha1 = await blobToSha1(file)
+    return {
+      width,
+      height,
+      sha1,
+      thumbnail,
+    }
+  }
+
+  function checkIsMediaFile(file: File) {
+    return file && file.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))
+  }
+
+  const NATURAL_SIZE_CACHES = new WeakMap<File, { width: number; height: number }>()
+  export async function getMediaFileNaturalSize(file: File) {
+    if (NATURAL_SIZE_CACHES.has(file)) {
+      return NATURAL_SIZE_CACHES.get(file)!
+    }
+    if (!checkIsMediaFile(file)) {
+      throw new TypeError('Unsupported file type')
+    }
+    let width = 0
+    let height = 0
+    if (file.type.startsWith('image/')) {
+      const image = await new Promise<HTMLImageElement>((resolve) => {
+        const image = new Image()
+        image.onload = () => resolve(image)
+        image.src = URL.createObjectURL(file)
+      })
+      width = image.naturalWidth
+      height = image.naturalHeight
+    } else if (file.type.startsWith('video/')) {
+      const video = await new Promise<HTMLVideoElement>((resolve) => {
+        const video = document.createElement('video')
+        video.muted = true
+        video.src = URL.createObjectURL(file)
+        video.onloadedmetadata = () => resolve(video)
+      })
+      width = video.videoWidth
+      height = video.videoHeight
+    }
+    NATURAL_SIZE_CACHES.set(file, { width, height })
+    return {
+      width,
+      height,
+    }
+  }
+
+  const THUMB_CACHES = new WeakMap<File, { blob: Blob; width: number; height: number }>()
+  export async function generateMediaFileThumbnail(file: File) {
+    if (THUMB_CACHES.has(file)) {
+      return THUMB_CACHES.get(file)!
+    }
     const canvas = document.createElement('canvas')
     canvas.width = THUMBNAIL_SIZE
     canvas.height = THUMBNAIL_SIZE
@@ -81,8 +145,14 @@ export namespace FileHelper {
       }
 
       const thumbnailBlob = await new Promise<Blob>((resolve) => canvas.toBlob((blob) => resolve(blob!), 'image/png'))
+      const payload = {
+        blob: thumbnailBlob!,
+        width: canvas.width,
+        height: canvas.height,
+      }
 
-      return thumbnailBlob
+      THUMB_CACHES.set(file, payload)
+      return payload
     } finally {
       URL.revokeObjectURL(objectUrl)
       canvas.remove()
@@ -119,10 +189,15 @@ export namespace FileHelper {
     }
   }
 
+  const SHA1_CACHES = new WeakMap<Blob, string>()
   export async function blobToSha1(blob: Blob) {
+    if (SHA1_CACHES.has(blob)) {
+      return SHA1_CACHES.get(blob)!
+    }
     const digest = await crypto.subtle.digest('SHA-1', await blob.arrayBuffer())
     const digestArray = Array.from(new Uint8Array(digest))
     const digestHex = digestArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+    SHA1_CACHES.set(blob, digestHex)
     return digestHex
   }
 
@@ -146,8 +221,11 @@ export namespace FileHelper {
   }
 
   export function getObjectIcon(item: R2Object) {
-    if (item.key === '/' || item.key === '../') {
-      return IconFolder
+    if (item.key === '/') {
+      return IconFolderRoot
+    }
+    if (item.key === '../') {
+      return IconFolderUp
     }
     if (item.key.endsWith('/')) {
       return IconFolderFilled
@@ -194,6 +272,22 @@ export namespace FileHelper {
       return IconFileTypePpt
     }
 
+    // adobe files
+    if (['pdf'].includes(ext)) {
+      return IconFileTypePdf
+    }
+
+    // codes
+    if (['js', 'jsx'].includes(ext) && contentType.startsWith('text/')) {
+      return IconFileTypeJs
+    }
+    if (['ts', 'tsx'].includes(ext) && contentType.startsWith('text/')) {
+      return IconFileTypeTs
+    }
+    if (['css', 'sass', 'less', 'scss'].includes(ext) && contentType.startsWith('text/')) {
+      return IconFileTypeCss
+    }
+
     // archive files zip/rar/7z/tar/...
     if (
       contentType.startsWith('application/zip') ||
@@ -216,7 +310,7 @@ export namespace FileHelper {
   export function formatFileSize(size: number = 0) {
     size = parseFloat(size as any)
     if (isNaN(size) || size < 0) {
-      return '0 B'
+      return '0.00 B'
     }
     let unit = 'B'
     while (size > 1024) {
@@ -228,5 +322,30 @@ export namespace FileHelper {
       else break
     }
     return `${size.toFixed(2)} ${unit}`
+  }
+
+  export function parseFileName(item: R2Object | null | undefined) {
+    if (!item) {
+      return {
+        key: '',
+        path: '',
+        name: '',
+        shortName: '',
+        ext: '',
+        contentType: '',
+      }
+    }
+    const fullName = item.key.split('/').pop() || ''
+    const contentType = item.httpMetadata?.contentType || 'application/octet-stream'
+    const ext = fullName.split('.').pop() || contentType.split('/').pop()?.split('-').pop() || ''
+    const shortName = fullName.slice(0, fullName.length - ext.length - 1)
+    return {
+      key: item.key,
+      path: item.key.split('/').slice(0, -1).join('/'),
+      name: fullName,
+      shortName,
+      ext,
+      contentType,
+    }
   }
 }

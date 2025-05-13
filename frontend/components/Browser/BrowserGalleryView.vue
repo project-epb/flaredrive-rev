@@ -17,7 +17,7 @@
     ref='waterfallRef',
     v-if='list.length > 0',
     :list='list',
-    :breakpoints='{ 9999: { rowPerView: 6 }, 1600: { rowPerView: 5 }, 1200: { rowPerView: 4 }, 750: { rowPerView: 3 }, 640: { rowPerView: 2 }, 360: { rowPerView: 1 } }'
+    :breakpoints='{ 1200: { rowPerView: 5 }, 900: { rowPerView: 4 }, 750: { rowPerView: 3 }, 640: { rowPerView: 2 }, 360: { rowPerView: 1 } }'
   )
     template(#item='{ item, url, index }')
       NCard(
@@ -40,13 +40,13 @@
           component(v-else, :is='item.icon', w='full', h='auto')
         .p-4
           NEllipsis(text-4, max-w-full) {{ item.key.split('/').slice(item.key.endsWith('/') ? -2 : -1).join('/') }}
-          .flex(items-end)
+          .flex(items-center)
             .file-info.flex-1
-              .text-3(v-if='!item.key.endsWith("/")') {{ FileHelper.formatFileSize(item.size) }}
-              .text-3(v-if='!item.key.endsWith("/")') {{ new Date(item.uploaded || 0).toLocaleString() }}
+              NText(v-if='!item.key.endsWith("/")', depth='3', text-3) {{ FileHelper.formatFileSize(item.size) }}
+              NText(v-if='!item.key.endsWith("/")', depth='3', text-3) {{ new Date(item.uploaded || 0).toLocaleString() }}
             .file-actions(v-if='!item.key.endsWith("/")', @click.stop)
               NDropdown(:options='fileActionOptions', @select='(action) => onSelectAction(action, item)')
-                NButton(secondary, :render-icon='() => h(IconDots)', circle, size='tiny')
+                NButton(secondary, :render-icon='() => h(IconDots)', circle, size='small')
 
   NSkeleton(v-if='list.length === 0', h-200px)
 </template>
