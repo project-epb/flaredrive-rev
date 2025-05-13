@@ -21,9 +21,24 @@ code:not(.n-code)
   padding: 0.2em 0.4em
   background-color: rgba(100, 100, 100, 0.25)
   border-radius: 0.25rem
+pre code[class*="language-"]
+  font-size: inherit
+  padding: 0
+  background-color: unset
+  border-radius: unset
 
 pre:not(.__code__, .n-code__line-numbers)
   padding: 1em
   background-color: rgba(100, 100, 100, 0.25)
   border-radius: 0.5rem
   overflow: auto
+
+.n-config-provider
+  ol
+    list-style: decimal
+  ul
+    list-style: disc
+    ul
+      list-style: circle
+      ul
+        list-style: square

@@ -12,6 +12,7 @@ declare global {
   const asyncComputed: typeof import('@vueuse/core')['asyncComputed']
   const autoResetRef: typeof import('@vueuse/core')['autoResetRef']
   const blobToSha1: typeof import('./utils/FileHelper')['blobToSha1']
+  const checkIsMediaFile: typeof import('./utils/FileHelper')['checkIsMediaFile']
   const computed: typeof import('vue')['computed']
   const computedAsync: typeof import('@vueuse/core')['computedAsync']
   const computedEager: typeof import('@vueuse/core')['computedEager']
@@ -24,6 +25,7 @@ declare global {
   const createFolderObject: typeof import('./utils/FileHelper')['createFolderObject']
   const createGlobalState: typeof import('@vueuse/core')['createGlobalState']
   const createInjectionState: typeof import('@vueuse/core')['createInjectionState']
+  const createNullObject: typeof import('./utils/FileHelper')['createNullObject']
   const createPinia: typeof import('pinia')['createPinia']
   const createReactiveFn: typeof import('@vueuse/core')['createReactiveFn']
   const createRef: typeof import('@vueuse/core')['createRef']
@@ -41,11 +43,17 @@ declare global {
   const effectScope: typeof import('vue')['effectScope']
   const extendRef: typeof import('@vueuse/core')['extendRef']
   const formatFileSize: typeof import('./utils/FileHelper')['formatFileSize']
+  const generateMediaFileThumbnail: typeof import('./utils/FileHelper')['generateMediaFileThumbnail']
   const generateThumbnail: typeof import('./utils/FileHelper')['generateThumbnail']
   const getActivePinia: typeof import('pinia')['getActivePinia']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getMediaFileMetadata: typeof import('./utils/FileHelper')['getMediaFileMetadata']
+  const getMediaFileNaturalSize: typeof import('./utils/FileHelper')['getMediaFileNaturalSize']
   const getObjectIcon: typeof import('./utils/FileHelper')['getObjectIcon']
+  const getPreviewType: typeof import('./utils/FileHelper')['getPreviewType']
+  const getSimpleFileInfoByFile: typeof import('./utils/FileHelper')['getSimpleFileInfoByFile']
+  const getSimpleFileInfoByObject: typeof import('./utils/FileHelper')['getSimpleFileInfoByObject']
   const h: typeof import('vue')['h']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
   const inject: typeof import('vue')['inject']
@@ -332,6 +340,7 @@ declare module 'vue' {
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>
     readonly blobToSha1: UnwrapRef<typeof import('./utils/FileHelper')['blobToSha1']>
+    readonly checkIsMediaFile: UnwrapRef<typeof import('./utils/FileHelper')['checkIsMediaFile']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly computedAsync: UnwrapRef<typeof import('@vueuse/core')['computedAsync']>
     readonly computedEager: UnwrapRef<typeof import('@vueuse/core')['computedEager']>
@@ -341,9 +350,9 @@ declare module 'vue' {
     readonly controlledRef: UnwrapRef<typeof import('@vueuse/core')['controlledRef']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createEventHook: UnwrapRef<typeof import('@vueuse/core')['createEventHook']>
-    readonly createFolderObject: UnwrapRef<typeof import('./utils/FileHelper')['createFolderObject']>
     readonly createGlobalState: UnwrapRef<typeof import('@vueuse/core')['createGlobalState']>
     readonly createInjectionState: UnwrapRef<typeof import('@vueuse/core')['createInjectionState']>
+    readonly createNullObject: UnwrapRef<typeof import('./utils/FileHelper')['createNullObject']>
     readonly createPinia: UnwrapRef<typeof import('pinia')['createPinia']>
     readonly createReactiveFn: UnwrapRef<typeof import('@vueuse/core')['createReactiveFn']>
     readonly createRef: UnwrapRef<typeof import('@vueuse/core')['createRef']>
@@ -361,11 +370,16 @@ declare module 'vue' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
     readonly formatFileSize: UnwrapRef<typeof import('./utils/FileHelper')['formatFileSize']>
-    readonly generateThumbnail: UnwrapRef<typeof import('./utils/FileHelper')['generateThumbnail']>
+    readonly generateMediaFileThumbnail: UnwrapRef<typeof import('./utils/FileHelper')['generateMediaFileThumbnail']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getMediaFileMetadata: UnwrapRef<typeof import('./utils/FileHelper')['getMediaFileMetadata']>
+    readonly getMediaFileNaturalSize: UnwrapRef<typeof import('./utils/FileHelper')['getMediaFileNaturalSize']>
     readonly getObjectIcon: UnwrapRef<typeof import('./utils/FileHelper')['getObjectIcon']>
+    readonly getPreviewType: UnwrapRef<typeof import('./utils/FileHelper')['getPreviewType']>
+    readonly getSimpleFileInfoByFile: UnwrapRef<typeof import('./utils/FileHelper')['getSimpleFileInfoByFile']>
+    readonly getSimpleFileInfoByObject: UnwrapRef<typeof import('./utils/FileHelper')['getSimpleFileInfoByObject']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>

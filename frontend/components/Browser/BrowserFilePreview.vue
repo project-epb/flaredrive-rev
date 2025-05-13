@@ -16,10 +16,15 @@
         video(:src='cdnUrl', controls, w-full, h-auto)
       .preview-file-audio(v-else-if='previewType === "audio"', text-center)
         audio(:src='cdnUrl', controls, w-full, h-auto)
+      .preview-file-markdown(v-else-if='previewType === "markdown"')
+        div(v-if='rawTextContent !== null', min-h='200px', max-h='50vh', overflow-auto)
+          MarkdownRender(:value='rawTextContent', tag='div')
+        NSpin(v-else, show, size='small')
+          NP Loading...
       .preview-file-text(v-else-if='previewType === "text"')
         div(v-if='rawTextContent !== null', min-h='200px', max-h='50vh', overflow-auto)
           Hljs(:code='rawTextContent', :lang='fileNameParts.ext')
-        NSpin(v-else, :show='isLoading', size='small')
+        NSpin(v-else, show, size='small')
           NP Loading...
       .preview-file-iframe(v-else-if='previewType === "iframe"', text-center)
         iframe(:src='cdnUrl', w-full, h-50vh, onerror='this.replaceWith("Error loading file")')
@@ -72,6 +77,7 @@ import { IconFileUnknown, IconTrash } from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 
 const Hljs = defineAsyncComponent(() => import('@/components/Hljs.vue'))
+const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 
 const props = defineProps<{
   item?: R2Object | null
@@ -91,19 +97,8 @@ const cdnUrl = computed(() => {
   return bucket.getCDNUrl(props.item)
 })
 
-const getPreviewType = (item?: R2Object | null) => {
-  if (!item) return 'unknown'
-  const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
-  if (contentType.startsWith('image/') && !contentType.includes('pdf')) return 'image'
-  if (contentType.startsWith('video/')) return 'video'
-  if (contentType.startsWith('audio/')) return 'audio'
-  if (contentType.startsWith('text/') || ['md', 'json', 'yml', 'yaml', 'toml'].includes(ext)) return 'text'
-  if (['pdf'].includes(ext)) return 'iframe'
-  return 'unknown'
-}
-const previewType = computed(() => getPreviewType(props.item))
+const previewType = computed(() => FileHelper.getPreviewType(props.item))
 
-const isLoading = ref(false)
 const rawTextContent = ref<string | null>(null)
 watch(
   computed(() => props.item),
@@ -112,8 +107,8 @@ watch(
       return
     }
     rawTextContent.value = null
-    const previewType = getPreviewType(item)
-    if (previewType === 'text') {
+    const previewType = FileHelper.getPreviewType(item)
+    if (['text', 'markdown'].includes(previewType)) {
       fetch(bucket.getCDNUrl(item))
         .then((response) => {
           if (response.ok) {

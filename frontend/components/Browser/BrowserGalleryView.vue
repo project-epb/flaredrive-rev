@@ -17,7 +17,8 @@
     ref='waterfallRef',
     v-if='list.length > 0',
     :list='list',
-    :breakpoints='{ 9999: { rowPerView: 5 }, 1160: { rowPerView: 4 }, 900: { rowPerView: 3 }, 580: { rowPerView: 2 }, 360: { rowPerView: 1 } }'
+    :breakpoints='{ 9999: { rowPerView: 5 }, 1160: { rowPerView: 4 }, 900: { rowPerView: 3 }, 580: { rowPerView: 2 }, 360: { rowPerView: 1 } }',
+    min-h='200px'
   )
     template(#item='{ item, url, index }')
       NCard(

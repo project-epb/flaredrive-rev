@@ -387,4 +387,17 @@ export namespace FileHelper {
       lastModified,
     } as SimpleFileInfo
   }
+
+  export function getPreviewType(item?: R2Object | null) {
+    if (!item) return 'unknown'
+    const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
+    if (ext === 'md') return 'markdown'
+    if (contentType.startsWith('image/') && !contentType.includes('pdf')) return 'image'
+    if (contentType.startsWith('video/')) return 'video'
+    if (contentType.startsWith('audio/')) return 'audio'
+    if (contentType.startsWith('text/html') || ['html', 'htm'].includes(ext)) return 'html'
+    if (contentType.startsWith('text/') || ['json', 'yml', 'yaml', 'toml', 'py'].includes(ext)) return 'text'
+    if (['pdf'].includes(ext)) return 'iframe'
+    return 'unknown'
+  }
 }

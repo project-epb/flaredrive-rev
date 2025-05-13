@@ -54,7 +54,7 @@ const columns = computed(() => {
       render: (row: R2Object) => {
         const thumbs = bucket.getThumbnailUrls(row, true)
         if (thumbs) {
-          return <NImage width={40} height={40} objectFit="cover" src={thumbs.square} previewDisabled={true} />
+          return <NImage width={40} height={40} objectFit="cover" lazy src={thumbs.square} previewDisabled={true} />
         }
         const FileIcon = FileHelper.getObjectIcon(row)
         return (

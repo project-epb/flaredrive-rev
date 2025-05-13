@@ -5,10 +5,22 @@
       NCard(size='small')
         .flex(justify-between, gap-4, items-center, lt-sm='flex-col gap-2')
           //- display mode
-          NRadioGroup(v-model:value='currentLayout', size='small')
-            NRadioButton(v-for='i in layoutOptions', :key='i.value', :value='i.value')
-              NIcon(v-if='i.icon'): Component(:is='i.icon')
-              span(lt-md='hidden', ml-2) {{ i.label }}
+          NButtonGroup(v-model:value='currentLayout', size='small')
+            NTooltip(
+              v-for='item in layoutOptions',
+              :key='item.value',
+              placement='bottom',
+              :show-arrow='false',
+              :keep-alive-on-hover='false'
+            )
+              template(#default) {{ item.tooltip || item.label }}
+              template(#trigger)
+                NButton(
+                  @click='currentLayout = item.value',
+                  :type='item.value === currentLayout ? "primary" : "default"'
+                )
+                  NIcon(v-if='item.icon'): Component(:is='item.icon')
+                  span(lt-md='hidden', ml-2) {{ item.label }}
           //- file search
           .flex-1(lt-sm='w-full')
             NInput(
@@ -27,17 +39,24 @@
               | {{ filteredPayload.objects.length }} in {{ curObjectCount.files }}
           //- file operations
           NButtonGroup(size='small', lt-md='hidden')
-            NButton(
+            NTooltip(
               v-for='(action, index) in pathActions',
               :key='index',
-              :type='action.type',
-              secondary,
-              :loading='action.loading',
-              :title='action.tooltip',
-              :render-icon='() => h(action.icon)',
-              @click='action.action'
+              placement='bottom',
+              :show-arrow='false',
+              :keep-alive-on-hover='false'
             )
-              template(v-if='action.label') {{ action.label }}
+              template(#default) {{ action.tooltip || action.label }}
+              template(#trigger)
+                NButton(
+                  :type='action.type',
+                  secondary,
+                  :loading='action.loading',
+                  :title='action.tooltip',
+                  :render-icon='() => h(action.icon)',
+                  @click='action.action'
+                )
+                  template(v-if='action.label') {{ action.label }}
     .top-sticky-rail-trigger(
       @click='isShowTopStickyRail = !isShowTopStickyRail',
       absolute,
@@ -75,14 +94,14 @@
       @download='onDownload',
       @rename='onRename'
     )
-    BrowserGridView(
-      v-if='currentLayout === "grid"',
-      :payload='filteredPayload',
-      @navigate='onNavigate',
-      @delete='onDelete',
-      @download='onDownload',
-      @rename='onRename'
-    )
+    //- BrowserGridView(
+    //-   v-if='currentLayout === "grid"',
+    //-   :payload='filteredPayload',
+    //-   @navigate='onNavigate',
+    //-   @delete='onDelete',
+    //-   @download='onDownload',
+    //-   @rename='onRename'
+    //- )
     BrowserGalleryView(
       v-if='currentLayout === "gallery"',
       :payload='filteredPayload',
@@ -91,6 +110,23 @@
       @download='onDownload',
       @rename='onRename'
     )
+    BrowserBookView(
+      v-if='currentLayout === "book"',
+      :payload='payload',
+      @navigate='onNavigate',
+      @delete='onDelete',
+      @download='onDownload',
+      @rename='onRename'
+    )
+
+  //- readme
+  BrowserReadmeCard#readme(
+    v-if='readmeItem && currentLayout !== "book"',
+    :item='readmeItem',
+    :content='readmeContent',
+    my-4,
+    @navigate='onNavigate'
+  )
 
   //- drop zone
   .drop-zone-tips(
@@ -130,7 +166,13 @@
   NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2)
     NIcon: IconPlus
     template(#menu)
-      NTooltip(v-for='(action, index) in pathActions', :key='index', placement='left', :show-arrow='false')
+      NTooltip(
+        v-for='(action, index) in pathActions',
+        :key='index',
+        placement='left',
+        :show-arrow='false',
+        :keep-alive-on-hover='false'
+      )
         template(#default) {{ action.tooltip }}
         template(#trigger)
           NFloatButton(:type='action.type', @click='action.action')
@@ -147,6 +189,7 @@
 import { type R2BucketListResponse } from '@/models/R2BucketClient'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
+  IconBook,
   IconChevronCompactDown,
   IconChevronCompactUp,
   IconFilter,
@@ -160,7 +203,7 @@ import {
   IconSearch,
   IconUpload,
 } from '@tabler/icons-vue'
-import { NCollapse, NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
+import { NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
 import type { Component } from 'vue'
 
 definePage({
@@ -168,6 +211,7 @@ definePage({
 })
 
 const UploadForm = defineAsyncComponent(() => import('@/components/UploadForm.vue'))
+const BrowserReadmeCard = defineAsyncComponent(() => import('@/components/Browser/BrowserReadmeCard.vue'))
 
 const nmodal = useModal()
 const nmessage = useMessage()
@@ -180,11 +224,27 @@ const filePath = computed(() => {
 })
 
 const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
-const layoutOptions = ref<{ label: string; value: string; icon?: Component }[]>([
-  { label: 'List', value: 'list', icon: IconList },
-  { label: 'Grid', value: 'grid', icon: IconLayout2 },
-  { label: 'Gallery', value: 'gallery', icon: IconLibraryPhoto },
+const layoutOptions = ref<{ label: string; value: string; icon?: Component; tooltip?: string }[]>([
+  { label: 'List', value: 'list', icon: IconList, tooltip: `Basic data list. Easy to organize files.` },
+  {
+    label: 'Gallery',
+    value: 'gallery',
+    icon: IconLibraryPhoto,
+    tooltip: `Very good for folders with lots of pictures and movies.`,
+  },
+  {
+    label: 'Book',
+    value: 'book',
+    icon: IconBook,
+    tooltip: `Browse this folder as a book. Helpful when reading comics, mangas or novels.`,
+  },
 ])
+watch(currentLayout, (newLayout) => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+})
 
 const isLoading = ref(false)
 const payload = ref<R2BucketListResponse>()
@@ -349,7 +409,14 @@ async function handleCreateFolder() {
           <NFormItem label="Folder Name">
             <NInput value={folderNameInput.value} onUpdateValue={(e) => (folderNameInput.value = e)} clearable>
               {{
-                prefix: <>/{filePath.value}</>,
+                prefix: (
+                  <>
+                    /
+                    {filePath.value.length > 12
+                      ? filePath.value.slice(0, 6) + '...' + filePath.value.slice(-6)
+                      : filePath.value}
+                  </>
+                ),
               }}
             </NInput>
           </NFormItem>
@@ -362,7 +429,7 @@ async function handleCreateFolder() {
       let folderName = folderNameInput.value.replace(/\/+$/, '')
       if (!folderName) {
         nmessage.error('Folder name cannot be empty')
-        return
+        return false
       }
       if (folderName.startsWith('.') || folderName.startsWith('/')) {
         nmessage.error('Invalid folder name')
@@ -461,6 +528,55 @@ const pathActions = computed<
     },
   ]
 })
+
+const cachedReadme = new Map<string, string>()
+const readmeContent = ref('')
+const readmeItem = computed(() => {
+  return payload?.value?.objects?.find(
+    (item) => item.key.toLowerCase() === 'readme.md' || item.key.toLowerCase().endsWith('/readme.md')
+  )
+})
+watch(
+  readmeItem,
+  (item, prevItem) => {
+    if (!item) {
+      readmeContent.value = ''
+      return
+    }
+    if (item.key === prevItem?.key) {
+      return
+    }
+    readmeContent.value = ''
+    if (cachedReadme.get(item.key)) {
+      readmeContent.value = cachedReadme.get(item.key)!
+    } else {
+      fetchPlainText(item)
+        .then((text) => {
+          readmeContent.value = text
+          cachedReadme.set(item.key, text)
+        })
+        .catch((error) => {
+          console.error('Error fetching readme:', error)
+        })
+    }
+  },
+  { immediate: true }
+)
+const fetchPlainText = async (item: R2Object) => {
+  if (!item) return ''
+  const url = bucket.getCDNUrl(item)
+  try {
+    const response = await fetch(url)
+    if (response.ok) {
+      return response.text()
+    } else {
+      throw new Error('Network response was not ok')
+    }
+  } catch (error) {
+    console.error('Error fetching readme:', error)
+    return ''
+  }
+}
 </script>
 
 <style scoped lang="sass">
