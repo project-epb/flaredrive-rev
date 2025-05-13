@@ -17,7 +17,7 @@
     ref='waterfallRef',
     v-if='list.length > 0',
     :list='list',
-    :breakpoints='{ 1200: { rowPerView: 5 }, 900: { rowPerView: 4 }, 750: { rowPerView: 3 }, 640: { rowPerView: 2 }, 360: { rowPerView: 1 } }'
+    :breakpoints='{ 9999: { rowPerView: 5 }, 1160: { rowPerView: 4 }, 900: { rowPerView: 3 }, 580: { rowPerView: 2 }, 360: { rowPerView: 1 } }'
   )
     template(#item='{ item, url, index }')
       NCard(
@@ -39,11 +39,12 @@
           )
           component(v-else, :is='item.icon', w='full', h='auto')
         .p-4
-          NEllipsis(text-4, max-w-full) {{ item.key.split('/').slice(item.key.endsWith('/') ? -2 : -1).join('/') }}
+          NEllipsis(text-4, max-w-full) {{ item.key === '/' ? '/(root)' : item.key.replace(payload.prefix, '').replace(/\/$/, '') }}
           .flex(items-center)
             .file-info.flex-1
-              NText(v-if='!item.key.endsWith("/")', depth='3', text-3) {{ FileHelper.formatFileSize(item.size) }}
-              NText(v-if='!item.key.endsWith("/")', depth='3', text-3) {{ new Date(item.uploaded || 0).toLocaleString() }}
+              NText(v-if='item.key.endsWith("/")', depth='3', block, text-3) {{ item.key === '/' ? 'root' : item.key === '../' ? 'parent' : 'folder' }}
+              NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ new Date(item.uploaded || 0).toLocaleString() }}
+              NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ FileHelper.formatFileSize(item.size) }}
             .file-actions(v-if='!item.key.endsWith("/")', @click.stop)
               NDropdown(:options='fileActionOptions', @select='(action) => onSelectAction(action, item)')
                 NButton(secondary, :render-icon='() => h(IconDots)', circle, size='small')
@@ -108,8 +109,8 @@ const list = computed<
   })[]
 >(() => {
   return [
-    props.payload.prefix === '' ? FileHelper.createFolderObject('/') : FileHelper.createFolderObject('../'),
-    ...props.payload.folders.map(FileHelper.createFolderObject),
+    props.payload.prefix === '' ? FileHelper.createNullObject('/') : FileHelper.createNullObject('../'),
+    ...props.payload.folders.map(FileHelper.createNullObject),
     ...props.payload.objects.sort((a, b) => {
       if (sortBy.value === 'key') {
         return sortOrder.value === 'ascend' ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key)

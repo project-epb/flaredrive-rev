@@ -17,7 +17,7 @@
       .preview-file-audio(v-else-if='previewType === "audio"', text-center)
         audio(:src='cdnUrl', controls, w-full, h-auto)
       .preview-file-text(v-else-if='previewType === "text"')
-        div(v-if='rawTextContent', min-h='200px', max-h='50vh', overflow-auto)
+        div(v-if='rawTextContent !== null', min-h='200px', max-h='50vh', overflow-auto)
           Hljs(:code='rawTextContent', :lang='fileNameParts.ext')
         NSpin(v-else, :show='isLoading', size='small')
           NP Loading...
@@ -84,7 +84,7 @@ const emit = defineEmits<{
 const bucket = useBucketStore()
 
 const fileNameParts = computed(() => {
-  return FileHelper.parseFileName(props.item)
+  return FileHelper.getSimpleFileInfoByObject(props.item)
 })
 const cdnUrl = computed(() => {
   if (!props.item) return ''
@@ -93,7 +93,7 @@ const cdnUrl = computed(() => {
 
 const getPreviewType = (item?: R2Object | null) => {
   if (!item) return 'unknown'
-  const { contentType, ext } = FileHelper.parseFileName(item)
+  const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
   if (contentType.startsWith('image/') && !contentType.includes('pdf')) return 'image'
   if (contentType.startsWith('video/')) return 'video'
   if (contentType.startsWith('audio/')) return 'audio'
@@ -104,14 +104,14 @@ const getPreviewType = (item?: R2Object | null) => {
 const previewType = computed(() => getPreviewType(props.item))
 
 const isLoading = ref(false)
-const rawTextContent = ref('')
+const rawTextContent = ref<string | null>(null)
 watch(
   computed(() => props.item),
   (item, prevItem) => {
     if (!item || item?.key === prevItem?.key) {
       return
     }
-    rawTextContent.value = ''
+    rawTextContent.value = null
     const previewType = getPreviewType(item)
     if (previewType === 'text') {
       fetch(bucket.getCDNUrl(item))

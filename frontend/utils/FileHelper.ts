@@ -44,8 +44,8 @@ export namespace FileHelper {
     }
   }
 
-  function checkIsMediaFile(file: File) {
-    return file && file.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))
+  export function checkIsMediaFile(file: File) {
+    return file?.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))
   }
 
   const NATURAL_SIZE_CACHES = new WeakMap<File, { width: number; height: number }>()
@@ -201,13 +201,10 @@ export namespace FileHelper {
     return digestHex
   }
 
-  export function createFolderObject(key: string) {
+  export function createNullObject(key?: string) {
     return {
-      key,
-      customMetadata: {
-        __is_dir__: true,
-        __is_folder__: true,
-      },
+      key: key || '',
+      customMetadata: {},
       httpMetadata: {},
       uploaded: new Date(0).toISOString(),
       size: 0,
@@ -216,7 +213,7 @@ export namespace FileHelper {
       version: '',
       storageClass: '',
       checksums: null as any,
-      _isDir: true,
+      __is_dir__: !!key?.endsWith('/'),
     } as unknown as R2Object
   }
 
@@ -324,28 +321,70 @@ export namespace FileHelper {
     return `${size.toFixed(2)} ${unit}`
   }
 
-  export function parseFileName(item: R2Object | null | undefined) {
+  interface SimpleFileInfo {
+    key: string
+    path: string
+    name: string
+    /** file name without ext */
+    pureName: string
+    ext: string
+    contentType: string
+    size: number
+    lastModified: Date | null
+  }
+
+  const createNullFileInfo = () =>
+    ({
+      key: '',
+      path: '',
+      name: '',
+      pureName: '',
+      ext: '',
+      contentType: '',
+      size: 0,
+      lastModified: null,
+    }) as SimpleFileInfo
+
+  export function getSimpleFileInfoByObject(item: R2Object | null | undefined): SimpleFileInfo {
     if (!item) {
-      return {
-        key: '',
-        path: '',
-        name: '',
-        shortName: '',
-        ext: '',
-        contentType: '',
-      }
+      return createNullFileInfo()
     }
     const fullName = item.key.split('/').pop() || ''
     const contentType = item.httpMetadata?.contentType || 'application/octet-stream'
-    const ext = fullName.split('.').pop() || contentType.split('/').pop()?.split('-').pop() || ''
-    const shortName = fullName.slice(0, fullName.length - ext.length - 1)
+    const ext = fullName.toLowerCase().split('.').pop() || contentType.split('/').pop()?.split('-').pop() || ''
+    const pureName = fullName.slice(0, fullName.length - ext.length - 1)
+    const size = item.size || 0
+    const lastModified = new Date(item.uploaded || 0)
     return {
       key: item.key,
       path: item.key.split('/').slice(0, -1).join('/'),
       name: fullName,
-      shortName,
+      pureName,
       ext,
       contentType,
+      size,
+      lastModified,
+    } as SimpleFileInfo
+  }
+
+  export function getSimpleFileInfoByFile(file: File): SimpleFileInfo {
+    if (!file || !(file instanceof File)) {
+      return createNullFileInfo()
     }
+    const ext = file.name.toLowerCase().split('.').pop() || file.type.split('/').pop()?.split('-').pop() || ''
+    const contentType = file.type || ''
+    const size = file.size || 0
+    const pureName = file.name.slice(0, file.name.length - ext.length - 1)
+    const lastModified = file.lastModified ? new Date(file.lastModified) : null
+    return {
+      key: file.name,
+      path: '',
+      name: file.name,
+      pureName,
+      ext,
+      contentType,
+      size,
+      lastModified,
+    } as SimpleFileInfo
   }
 }

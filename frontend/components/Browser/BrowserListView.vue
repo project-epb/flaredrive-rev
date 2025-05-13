@@ -225,12 +225,12 @@ const tableData = computed(() => {
   let list = props.payload?.objects || []
   if (!props.noFolder) {
     if (props.payload?.folders) {
-      list = [...props.payload.folders.map(FileHelper.createFolderObject), ...list]
+      list = [...props.payload.folders.map(FileHelper.createNullObject), ...list]
     }
     if (isROOT.value) {
-      list = [FileHelper.createFolderObject('/'), ...list]
+      list = [FileHelper.createNullObject('/'), ...list]
     } else {
-      list = [FileHelper.createFolderObject('../'), ...list]
+      list = [FileHelper.createNullObject('../'), ...list]
     }
   }
   return list

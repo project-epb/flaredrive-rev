@@ -147,12 +147,19 @@ export const useBucketStore = defineStore('bucket', () => {
     }
   }
 
-  const uploadOne = async (key: string, file: File) => {
+  const uploadOne = async (key: string, file: File, metadata: Record<string, string> = {}) => {
     const fileHash = await FileHelper.blobToSha1(file)
-    const ext = file.name.split('.').pop() || file.type.split('/')[1] || ''
+    const { ext } = FileHelper.getSimpleFileInfoByFile(file)
+    const isMediaFile = FileHelper.checkIsMediaFile(file)
 
-    const metadata: Record<string, string> = {}
-    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+    if (isMediaFile) {
+      try {
+        const size = await FileHelper.getMediaFileNaturalSize(file)
+        metadata['width'] = size.width.toString()
+        metadata['height'] = size.height.toString()
+      } catch (e) {
+        console.warn('Error getting media file size', file, e)
+      }
       try {
         const mediaMeta = await FileHelper.getMediaFileMetadata(file)
         await client.upload(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${fileHash}.png`, mediaMeta.thumbnail.blob, {
@@ -161,12 +168,9 @@ export const useBucketStore = defineStore('bucket', () => {
             height: mediaMeta.thumbnail.height.toString(),
           },
         })
-        metadata['width'] = mediaMeta.width.toString()
-        metadata['height'] = mediaMeta.height.toString()
         metadata['thumbnail'] = mediaMeta.sha1
         metadata['thumbnail_width'] = mediaMeta.thumbnail.width.toString()
         metadata['thumbnail_height'] = mediaMeta.thumbnail.height.toString()
-        console.info('Thumbnail generated', file, fileHash)
       } catch (e) {
         console.error('Error generating thumbnail', file, e)
       }
@@ -178,12 +182,11 @@ export const useBucketStore = defineStore('bucket', () => {
       metadata['original_name'] = file.name
     }
 
-    console.info('Now uploading', key, file, { metadata })
-
+    console.info('Upload start', key, file, { metadata })
     const res = await client.upload(key, file, {
       metadata,
     })
-    console.info('Upload complete', res)
+    console.info('Upload finish', key, file, res)
     if (res.data) {
       addToUploadHistory(res.data)
     }
