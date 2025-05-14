@@ -29,12 +29,12 @@ app.get('*', async (ctx) => {
   const fileName = filePath.split('/').pop() || ''
   const headers = {
     'Content-Type': contentType,
-    'Content-Disposition': `inline; filename="${fileName}"`,
+    'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"`,
     'Cache-Control': 'max-age=31536000',
     Etag: item.etag,
   }
   if (isDownload) {
-    headers['Content-Disposition'] = `attachment; filename="${fileName}"`
+    headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(fileName)}"`
   }
   return ctx.body(item.body, {
     status: 200,
