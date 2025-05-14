@@ -1,5 +1,5 @@
 /** @type {import('prettier').Config} */
-module.exports = {
+export default {
   printWidth: 120,
   useTabs: false,
   tabWidth: 2,
@@ -9,5 +9,5 @@ module.exports = {
   arrowParens: 'always',
   quoteProps: 'as-needed',
   endOfLine: 'auto',
-  plugins: [require.resolve('@prettier/plugin-pug')],
+  plugins: ['@prettier/plugin-pug'],
 }
