@@ -9,6 +9,7 @@ NForm
     NInput(:placeholder='defaultPrefix', :default-value='defaultPrefix', v-model:value='formData.prefix', clearable)
   //- div
   //-   NButton(type='primary', block, @click='handleStart') Upload
+  UploadProgress
 </template>
 
 <script setup lang="ts">
@@ -56,9 +57,15 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
         payload.file.thumbnailUrl = bucket.getCDNUrl(data)
       }
       payload.file.percentage = 100
-      nmessage.success(`${payload.file.name} uploaded`)
       payload.onFinish()
       emit('uploaded', data)
+      if (bucket.currentBatchTotal > 1) {
+        if (bucket.currentBatchFinished === bucket.currentBatchTotal) {
+          nmessage.success(`${bucket.currentBatchTotal} files uploaded successfully`)
+        }
+      } else {
+        nmessage.success(`${payload.file.name} uploaded successfully`)
+      }
     })
     .catch((err) => {
       nmessage.error('Upload failed', err)

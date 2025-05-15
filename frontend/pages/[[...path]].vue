@@ -202,6 +202,7 @@
 
 <script setup lang="tsx">
 import { type R2BucketListResponse } from '@/models/R2BucketClient'
+import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
   IconBook,
@@ -449,61 +450,66 @@ async function handleCreateFolder() {
   })
 }
 
+function handleUploadInput(files: FileList | File[] | null) {
+  if (!files || !files.length) {
+    return
+  }
+  files = Array.isArray(files) ? files : Array.from(files)
+  files = files?.filter((file) => {
+    return !!file.name
+  })
+  nmessage.info(
+    files.length > 1 || bucket.currentBatchTotal
+      ? `Added ${files.length} files to queue...`
+      : `Uploading ${files[0].name}...`
+  )
+  files.forEach((file) => {
+    const fileName = file.name
+    if (fileName) {
+      const { promise } = bucket.addToUploadQueue(`${currentPath.value}${fileName}`, file)
+      promise.then((item) => {
+        if (!item) {
+          nmessage.error(`Failed to upload file ${fileName}`)
+        }
+      })
+    }
+  })
+}
 const { isOverDropZone } = useDropZone(document.body, {
   multiple: true,
   onDrop(files) {
-    console.log('Dropped files:', files)
-    if (!files || !files.length) {
-      return
-    }
-    const fileCount = files.length
-    files = files?.filter((file) => {
-      return !!file.name
-    })
-    nmessage.success(
-      files.length > 1 || bucket.currentBatchTotal
-        ? `Added ${files.length} files to queue...`
-        : `Uploading ${files[0].name}...`
-    )
-    files.forEach((file) => {
-      const fileName = file.name
-      if (fileName) {
-        const { promise } = bucket.addToUploadQueue(`${currentPath.value}${fileName}`, file)
-        promise.then((item) => {
-          if (!item) {
-            nmessage.error(`Failed to upload file ${fileName}`)
-          }
-        })
-      }
-    })
+    handleUploadInput(files)
   },
 })
+const fileDialog = useFileDialog({
+  multiple: true,
+  accept: '*',
+})
+function createUploadModal() {
+  fileDialog.reset()
+  fileDialog.open()
+}
+fileDialog.onChange((files) => {
+  handleUploadInput(files)
+})
+
+// Reload file list when upload finished
 watch(
   computed(() => bucket.isUploading),
   (newState, oldState) => {
-    console.log('Queue state change:', `${oldState} -> ${newState}`)
     if (oldState && !newState) {
-      console.log('Upload finished', 'reloading file list')
+      loadFileList()
       if (bucket.currentBatchTotal > 1) {
         nmessage.success(`Upload finished, ${bucket.currentBatchTotal} files uploaded`)
+      } else {
+        const item = bucket.uploadHistory[0]
+        if (!item) return
+        const { name } = FileHelper.getSimpleFileInfoByObject(item)
+        nmessage.success(`Successfully uploaded ${name}`)
       }
-      loadFileList()
     }
   }
 )
-
-function createUploadModal() {
-  let isUploaded = false
-  nmodal.create({
-    title: 'Upload Files',
-    preset: 'card',
-    content: () => {
-      return (
-        <UploadForm defaultPrefix={currentPath.value} prefixReadonly={true} onUploaded={() => (isUploaded = true)} />
-      )
-    },
-  })
-}
 
 const isShowUploadHistory = ref(false)
 
