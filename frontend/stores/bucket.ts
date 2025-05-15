@@ -2,7 +2,7 @@ import { R2BucketClient } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import PQueue from 'p-queue'
-import { CDN_BASE_URL, FLARE_DRIVE_HIDDEN_KEY, RANDOM_UPLOAD_DIR, BATCH_UPLOAD_CONCURRENCY } from './constants'
+import { CDN_BASE_URL, FLARE_DRIVE_HIDDEN_KEY, RANDOM_UPLOAD_DIR, BATCH_UPLOAD_CONCURRENCY } from '../../app-env'
 
 export const useBucketStore = defineStore('bucket', () => {
   const client = new R2BucketClient()

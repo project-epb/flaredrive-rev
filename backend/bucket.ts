@@ -49,9 +49,6 @@ bucket.get('*', async (ctx) => {
     const hasMore = list.truncated
     const moreAfter = hasMore ? list.objects.at(-1)?.key || null : null
     return ctx.json({
-      // objects: list.objects.filter(
-      //   (obj) => !obj.key.endsWith(`/${FOLDER_MAGIC_STRING}`)
-      // ),
       objects: list.objects,
       folders: list.delimitedPrefixes,
       prefix: path,
