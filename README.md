@@ -44,7 +44,7 @@ Check out the [`.env.sample`](.env.sample) file for all the environment variable
 
 **Configuration example:**
 
-![](https://github.com/user-attachments/assets/0f806845-5327-472e-83e9-b14da76aece0)
+![](https://github.com/user-attachments/assets/b7a0f279-69ed-4232-a784-4845a9975cd3)
 
 ### Authentication
 
