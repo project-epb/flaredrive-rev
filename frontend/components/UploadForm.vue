@@ -14,7 +14,7 @@ NForm
 <script setup lang="ts">
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import { IconUpload } from '@tabler/icons-vue'
-import { NButton, NFormItem, useMessage, type UploadCustomRequestOptions, type UploadFileInfo } from 'naive-ui'
+import { NFormItem, useMessage, type UploadCustomRequestOptions, type UploadFileInfo } from 'naive-ui'
 
 const nmessage = useMessage()
 const props = withDefaults(
@@ -28,7 +28,7 @@ const props = withDefaults(
   }
 )
 const emit = defineEmits<{
-  upload: [item: R2Object]
+  uploaded: [item: R2Object]
 }>()
 const formData = reactive({
   prefix: props.defaultPrefix,
@@ -45,8 +45,11 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
     }
   }, 100)
   bucket
-    .uploadOne(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
-    .then(({ data }) => {
+    .addToUploadQueue(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
+    .promise.then((data) => {
+      if (!data) {
+        throw new Error('No data returned from upload')
+      }
       payload.file.status = 'finished'
       payload.file.url = bucket.getCDNUrl(data)
       if (payload.file.file?.type.startsWith('image/')) {
@@ -55,7 +58,7 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
       payload.file.percentage = 100
       nmessage.success(`${payload.file.name} uploaded`)
       payload.onFinish()
-      emit('upload', data)
+      emit('uploaded', data)
     })
     .catch((err) => {
       nmessage.error('Upload failed', err)

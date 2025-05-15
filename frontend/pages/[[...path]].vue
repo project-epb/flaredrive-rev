@@ -26,7 +26,7 @@
             NInput(
               w-full,
               size='small',
-              :placeholder='`Search files in /${filePath}`',
+              :placeholder='`Search files in /${currentPath}`',
               v-model:value='searchInput',
               clearable
             )
@@ -72,14 +72,14 @@
       NIcon(size='12'): component(:is='isShowTopStickyRail ? IconChevronCompactUp : IconChevronCompactDown')
 
   //- Alerts
-  NAlert(v-if='bucket.checkIsRandomUploadDir(filePath)', type='info', title='Random upload', closable, my-4) 
+  NAlert(v-if='bucket.checkIsRandomUploadDir(currentPath)', type='info', title='Random upload', closable, my-4) 
     | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
     |
     NA(@click='isShowUploadHistory = true')
       NIcon(mr-1): IconHistory
       | upload history
     | .
-  NAlert(v-if='bucket.checkIsHiddenDir(filePath)', type='warning', title='Hidden directory', closable, my-4)
+  NAlert(v-if='bucket.checkIsHiddenDir(currentPath)', type='warning', title='Hidden directory', closable, my-4)
     | This hidden directory is for internal use of the FlareDrive application.
     | It's strongly recommended to not upload or delete files in this directory.
 
@@ -162,8 +162,23 @@
     @navigate='onNavigate'
   )
 
+  //- upload progress
+  NCard(
+    :content-style='{ padding: "0.5rem" }',
+    size='small',
+    fixed,
+    left='50%',
+    w-860px,
+    max-w-90vw,
+    translate-x='-50%',
+    z-50,
+    transition='all ease-in-out',
+    :style='bucket.isUploading ? { top: "calc(100vh - 4rem)", opacity: "1", transitionDuration: "0.25s" } : { top: "calc(100vh + 4rem)", opacity: "0", transitionDelay: "3s", transitionDuration: "0.5s" }'
+  )
+    UploadProgress
+
   //- floating action button
-  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='2rem', right='2rem', z-2)
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='3rem', right='2rem', z-2)
     NIcon: IconPlus
     template(#menu)
       NTooltip(
@@ -181,7 +196,7 @@
 
   //- debug info
   details.dev-only.bg-dev.mt-6
-    NP filePath: {{ filePath }}
+    NP path: {{ currentPath }}
     pre {{ payload }}
 </template>
 
@@ -195,7 +210,6 @@ import {
   IconFilter,
   IconFolderPlus,
   IconHistory,
-  IconLayout2,
   IconLibraryPhoto,
   IconList,
   IconPlus,
@@ -218,9 +232,14 @@ const nmessage = useMessage()
 
 const route = useRoute()
 const router = useRouter()
-const filePath = computed(() => {
-  // @ts-ignore
-  return Array.isArray(route.params.path) ? route.params.path.join('/') : route.params.path
+/** route path without leading slash */
+const currentPath = computed(() => {
+  const paramPath: string[] | string = (route.params as any).path || ''
+  if (Array.isArray(paramPath)) {
+    return paramPath.join('/')
+  } else {
+    return decodeURIComponent(paramPath)
+  }
 })
 
 const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
@@ -258,7 +277,7 @@ const curObjectCount = computed(() => {
 })
 
 watch(
-  filePath,
+  currentPath,
   (newPath) => {
     if (newPath && !newPath.endsWith('/')) {
       router.replace(`/${newPath}/`)
@@ -274,7 +293,7 @@ watch(
 async function loadFileList() {
   isLoading.value = true
   try {
-    const { data } = await bucket.list(filePath.value)
+    const { data } = await bucket.list(currentPath.value)
     payload.value = data
   } catch (error) {
     console.error('Error fetching data:', error)
@@ -308,7 +327,7 @@ function onNavigate(item: R2Object) {
   if (path === '/' || path === '') {
     router.push('/')
   } else if (path === '../') {
-    const parentPath = filePath.value.split('/').slice(0, -2).join('/')
+    const parentPath = currentPath.value.split('/').slice(0, -2).join('/')
     router.push(`/${parentPath}/`)
   } else if (path.endsWith('/')) {
     router.push(`/${path}`)
@@ -350,24 +369,15 @@ async function onDownload(item: R2Object) {
 }
 async function onRename(item: R2Object) {
   const toPathInput = ref(item.key)
-  const modal = nmodal.create({
+  nmodal.create({
     title: 'Rename File',
     preset: 'confirm',
+    autoFocus: true,
     content: () => {
       return (
-        <NForm>
-          <NFormItem label="New Name (including path)">
-            <NInput
-              value={toPathInput.value}
-              onUpdateValue={(e) => (toPathInput.value = e)}
-              clearable
-              onKeydown={(e) => {
-                if (e.key === 'Enter') {
-                }
-              }}
-            />
-          </NFormItem>
-        </NForm>
+        <NFormItem label="New Name (including path)">
+          <NInput value={toPathInput.value} onUpdateValue={(e) => (toPathInput.value = e)} clearable />
+        </NFormItem>
       )
     },
     positiveText: 'OK',
@@ -403,24 +413,23 @@ async function handleCreateFolder() {
   nmodal.create({
     title: 'Create Folder',
     preset: 'confirm',
+    autoFocus: true,
     content: () => {
       return (
-        <NForm>
-          <NFormItem label="Folder Name">
-            <NInput value={folderNameInput.value} onUpdateValue={(e) => (folderNameInput.value = e)} clearable>
-              {{
-                prefix: (
-                  <>
-                    /
-                    {filePath.value.length > 12
-                      ? filePath.value.slice(0, 6) + '...' + filePath.value.slice(-6)
-                      : filePath.value}
-                  </>
-                ),
-              }}
-            </NInput>
-          </NFormItem>
-        </NForm>
+        <NFormItem label="Folder Name">
+          <NInput value={folderNameInput.value} onUpdateValue={(e) => (folderNameInput.value = e)} clearable>
+            {{
+              prefix: () => (
+                <>
+                  /
+                  {currentPath.value.length > 12
+                    ? currentPath.value.slice(0, 6) + '...' + currentPath.value.slice(-6)
+                    : currentPath.value}
+                </>
+              ),
+            }}
+          </NInput>
+        </NFormItem>
       )
     },
     positiveText: 'Create',
@@ -435,7 +444,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      router.push(`/${filePath.value}${folderName}/`)
+      router.push(`/${currentPath.value}${folderName}/`)
     },
   })
 }
@@ -447,25 +456,37 @@ const { isOverDropZone } = useDropZone(document.body, {
     if (!files || !files.length) {
       return
     }
+    const fileCount = files.length
     files = files?.filter((file) => {
       return !!file.name
     })
-    nmessage.success(files.length > 1 ? `Uploading ${files.length} files...` : `Uploading ${files[0].name}...`)
+    nmessage.success(
+      files.length > 1 || bucket.currentBatchTotal
+        ? `Added ${files.length} files to queue...`
+        : `Uploading ${files[0].name}...`
+    )
     files.forEach((file) => {
       const fileName = file.name
       if (fileName) {
-        bucket.addToUploadQueue(file, `${filePath.value}${fileName}`)
+        const { promise } = bucket.addToUploadQueue(`${currentPath.value}${fileName}`, file)
+        promise.then((item) => {
+          if (!item) {
+            nmessage.error(`Failed to upload file ${fileName}`)
+          }
+        })
       }
     })
   },
 })
 watch(
-  computed(() => bucket.currentUploading.length),
-  (newLen, oldLen) => {
-    console.log('Upload queue changed:', `${oldLen} -> ${newLen}`)
-    if (newLen === 0 && oldLen > 0) {
+  computed(() => bucket.isUploading),
+  (newState, oldState) => {
+    console.log('Queue state change:', `${oldState} -> ${newState}`)
+    if (oldState && !newState) {
       console.log('Upload finished', 'reloading file list')
-      nmessage.success('Upload finished')
+      if (bucket.currentBatchTotal > 1) {
+        nmessage.success(`Upload finished, ${bucket.currentBatchTotal} files uploaded`)
+      }
       loadFileList()
     }
   }
@@ -477,10 +498,9 @@ function createUploadModal() {
     title: 'Upload Files',
     preset: 'card',
     content: () => {
-      return <UploadForm defaultPrefix={filePath.value} prefixReadonly={true} onUpload={() => (isUploaded = true)} />
-    },
-    onAfterLeave() {
-      isUploaded && loadFileList()
+      return (
+        <UploadForm defaultPrefix={currentPath.value} prefixReadonly={true} onUploaded={() => (isUploaded = true)} />
+      )
     },
   })
 }

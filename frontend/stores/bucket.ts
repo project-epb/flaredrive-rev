@@ -1,16 +1,14 @@
 import { R2BucketClient } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
-import { c } from 'naive-ui'
+import PQueue from 'p-queue'
+import { CDN_BASE_URL, FLARE_DRIVE_HIDDEN_KEY, RANDOM_UPLOAD_DIR, BATCH_UPLOAD_CONCURRENCY } from './constants'
 
 export const useBucketStore = defineStore('bucket', () => {
   const client = new R2BucketClient()
-  const CDN_BASE_URL = new URL(import.meta.env.VITE_CDN_BASE_URL || '', window.location.origin)
-  const FLARE_DRIVE_HIDDEN_KEY = import.meta.env.VITE_FLARE_DRIVE_HIDDEN_KEY || '_$flaredrive$'
-  const RANDOM_UPLOAD_DIR = import.meta.env.VITE_RANDOM_UPLOAD_DIR || ''
 
   console.info('FlareDrive Env', {
-    CDN_BASE_URL: CDN_BASE_URL.toString(),
+    CDN_BASE_URL,
     FLARE_DRIVE_HIDDEN_KEY,
     RANDOM_UPLOAD_DIR,
   })
@@ -193,9 +191,57 @@ export const useBucketStore = defineStore('bucket', () => {
     return res
   }
 
-  const MAX_UPLOAD_BATCH = 10
-  const uploadQueue = ref<{ file: File; key: string }[]>([])
-  const currentUploading = ref<{ file: File; key: string; promise: Promise<R2Object> }[]>([])
+  // ---- Upload Queue ----
+  const uploadQueue = new PQueue({
+    concurrency: BATCH_UPLOAD_CONCURRENCY,
+    interval: 500,
+  })
+  const isUploading = ref(false)
+  const pendingUploadCount = ref(0)
+  const currentBatchTotal = ref(0)
+  const currentBatchFinished = ref(0)
+  const currentBatchPercentage = computed(() => {
+    if (currentBatchTotal.value === 0) {
+      return 0
+    }
+    return Math.floor((currentBatchFinished.value / currentBatchTotal.value) * 100)
+  })
+  uploadQueue.on('add', () => {
+    console.info('[queue] add')
+    pendingUploadCount.value = uploadQueue.size
+    // 添加队列时，如果不处于活跃状态，则重置当前批次的总数和完成数
+    if (!isUploading.value) {
+      currentBatchTotal.value = 0
+      currentBatchFinished.value = 0
+    }
+    currentBatchTotal.value++
+  })
+  uploadQueue.on('active', () => {
+    console.info('[queue] active')
+    pendingUploadCount.value = uploadQueue.size
+    isUploading.value = true
+  })
+  uploadQueue.on('idle', () => {
+    console.info('[queue] idle')
+    pendingUploadCount.value = 0
+    isUploading.value = false
+  })
+  uploadQueue.on('next', () => {
+    pendingUploadCount.value = uploadQueue.size
+  })
+  uploadQueue.on('completed', () => {
+    pendingUploadCount.value = uploadQueue.size
+    currentBatchFinished.value++
+  })
+  uploadQueue.on('error', (ctx) => {
+    console.error('[queue] error', ctx)
+    pendingUploadCount.value = uploadQueue.size
+  })
+  uploadQueue.on('empty', () => {
+    pendingUploadCount.value = 0
+  })
+
+  const pendinUploadList = ref<{ key: string; abort?: () => void }[]>([])
   const uploadFailedList = ref<
     {
       key: string
@@ -203,45 +249,43 @@ export const useBucketStore = defineStore('bucket', () => {
       error: Error
     }[]
   >([])
-  // Process the upload queue
-  const processUploadQueue = () => {
-    while (uploadQueue.value.length > 0 && currentUploading.value.length < MAX_UPLOAD_BATCH) {
-      const item = uploadQueue.value.shift()
-      if (!item) {
-        break
-      }
-      const promise = uploadOne(item.key, item.file).then(({ data }) => data)
-      currentUploading.value.push({ file: item.file, key: item.key, promise })
-      promise
-        .catch((error) => {
-          console.error('Upload failed', item.key, item.file, error)
-          uploadFailedList.value.push({
-            key: item.key,
-            file: item.file,
-            error,
-          })
-        })
-        .finally(() => {
-          currentUploading.value = currentUploading.value.filter((i) => i.key !== item.key)
-          // Process more items when one completes
-          processUploadQueue()
-        })
-    }
-  }
-  // Watch the queue and start processing when items are added
-  watch(
-    computed(() => uploadQueue.value.length),
-    (newLength, oldLength) => {
-      if (newLength > oldLength) {
-        processUploadQueue()
-      }
-    }
-  )
 
-  const addToUploadQueue = (file: File, key: string) => {
-    uploadQueue.value = uploadQueue.value.filter((i) => i.key !== key)
-    uploadQueue.value = [...uploadQueue.value, { file, key }]
-    return uploadQueue.value
+  const addToUploadQueue = (key: string, file: File) => {
+    const existing = pendinUploadList.value.find((item) => item.key === key)
+    if (existing) {
+      console.info('Upload already in queue', key, file)
+      existing.abort?.()
+    }
+    const abortController = new AbortController()
+    const abort = () => {
+      console.info('Upload aborted', key, file)
+      abortController.abort()
+      pendinUploadList.value = pendinUploadList.value.filter((item) => item.key !== key)
+    }
+    pendinUploadList.value.push({
+      key,
+      abort,
+    })
+    const handler = async () => {
+      if (abortController.signal.aborted) {
+        throw new Error('Upload aborted')
+      }
+      const { data } = await uploadOne(key, file).catch((error) => {
+        console.error('Upload failed', key, file, error)
+        uploadFailedList.value.push({
+          key: key,
+          file: file,
+          error,
+        })
+        throw error
+      })
+      return data
+    }
+    const promise = uploadQueue.add(handler, { signal: abortController.signal })
+    return {
+      promise,
+      abort,
+    }
   }
 
   return {
@@ -257,9 +301,13 @@ export const useBucketStore = defineStore('bucket', () => {
     getCDNUrl,
     getThumbnailUrls,
     uploadHistory,
-    uploadQueue,
-    currentUploading,
-    uploadFailedList,
+    // uploadQueue: uploadQueue as PQueue, // 类型问题！！
     addToUploadQueue,
+    isUploading,
+    pendingUploadCount,
+    currentBatchTotal,
+    currentBatchFinished,
+    currentBatchPercentage,
+    uploadFailedList,
   }
 })

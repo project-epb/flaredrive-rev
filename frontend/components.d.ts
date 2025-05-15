@@ -61,6 +61,7 @@ declare module 'vue' {
     NModal: typeof import('naive-ui')['NModal']
     NOl: typeof import('naive-ui')['NOl']
     NP: typeof import('naive-ui')['NP']
+    NProgress: typeof import('naive-ui')['NProgress']
     NRadioButton: typeof import('naive-ui')['NRadioButton']
     NRadioGroup: typeof import('naive-ui')['NRadioGroup']
     NRouterLink: typeof import('./components/NRouterLink.vue')['default']
@@ -76,5 +77,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     UploadForm: typeof import('./components/UploadForm.vue')['default']
+    UploadProgress: typeof import('./components/UploadProgress.vue')['default']
   }
 }
