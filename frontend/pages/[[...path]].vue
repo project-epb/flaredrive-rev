@@ -94,14 +94,6 @@
       @download='onDownload',
       @rename='onRename'
     )
-    //- BrowserGridView(
-    //-   v-if='currentLayout === "grid"',
-    //-   :payload='filteredPayload',
-    //-   @navigate='onNavigate',
-    //-   @delete='onDelete',
-    //-   @download='onDownload',
-    //-   @rename='onRename'
-    //- )
     BrowserGalleryView(
       v-if='currentLayout === "gallery"',
       :payload='filteredPayload',
@@ -218,12 +210,18 @@ import {
   IconSearch,
   IconUpload,
 } from '@tabler/icons-vue'
-import { NForm, NFormItem, NInput, useMessage, useModal } from 'naive-ui'
+import { NFormItem, NInput, NSkeleton, useMessage, useModal } from 'naive-ui'
 import type { Component } from 'vue'
 
 definePage({
   name: '@browser',
 })
+
+// Async components
+const BrowserReadmeCard = defineAsyncComponent(() => import('@/components/Browser/BrowserReadmeCard.vue'))
+const BrowserPreviewModal = defineAsyncComponent(() => import('@/components/Browser/BrowserPreviewModal.vue'))
+const BrowserUploadHistory = defineAsyncComponent(() => import('@/components/Browser/BrowserUploadHistory.vue'))
+const UploadProgress = defineAsyncComponent(() => import('@/components/UploadProgress.vue'))
 
 const route = useRoute()
 const router = useRouter()
@@ -240,8 +238,6 @@ onBeforeRouteUpdate((to) => {
     lastRoute.value = to.fullPath
   }
 })
-
-const BrowserReadmeCard = defineAsyncComponent(() => import('@/components/Browser/BrowserReadmeCard.vue'))
 
 const nmodal = useModal()
 const nmessage = useMessage()
