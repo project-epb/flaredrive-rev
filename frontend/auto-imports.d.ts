@@ -6,13 +6,14 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const BATCH_UPLOAD_CONCURRENCY: typeof import('../app-env')['BATCH_UPLOAD_CONCURRENCY']
-  const CDN_BASE_URL: typeof import('../app-env')['CDN_BASE_URL']
+  const BATCH_UPLOAD_CONCURRENCY: typeof import('../common/app-env')['BATCH_UPLOAD_CONCURRENCY']
+  const CDN_BASE_URL: typeof import('../common/app-env')['CDN_BASE_URL']
   const EffectScope: typeof import('vue')['EffectScope']
-  const FLARE_DRIVE_HIDDEN_KEY: typeof import('../app-env')['FLARE_DRIVE_HIDDEN_KEY']
-  const RANDOM_UPLOAD_DIR: typeof import('../app-env')['RANDOM_UPLOAD_DIR']
+  const FLARE_DRIVE_HIDDEN_KEY: typeof import('../common/app-env')['FLARE_DRIVE_HIDDEN_KEY']
+  const PREVIEW_SIZE_LIMIT_TEXT: typeof import('../common/app-env')['PREVIEW_SIZE_LIMIT_TEXT']
+  const RANDOM_UPLOAD_DIR: typeof import('../common/app-env')['RANDOM_UPLOAD_DIR']
   const THUMBNAIL_SIZE: typeof import('./utils/FileHelper')['THUMBNAIL_SIZE']
-  const UPLOAD_HISORY_LIMIT: typeof import('../app-env')['UPLOAD_HISORY_LIMIT']
+  const UPLOAD_HISORY_LIMIT: typeof import('../common/app-env')['UPLOAD_HISORY_LIMIT']
   const acceptHMRUpdate: typeof import('pinia')['acceptHMRUpdate']
   const asyncComputed: typeof import('@vueuse/core')['asyncComputed']
   const autoResetRef: typeof import('@vueuse/core')['autoResetRef']
@@ -339,13 +340,14 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
-    readonly BATCH_UPLOAD_CONCURRENCY: UnwrapRef<typeof import('../app-env')['BATCH_UPLOAD_CONCURRENCY']>
-    readonly CDN_BASE_URL: UnwrapRef<typeof import('../app-env')['CDN_BASE_URL']>
+    readonly BATCH_UPLOAD_CONCURRENCY: UnwrapRef<typeof import('../common/app-env')['BATCH_UPLOAD_CONCURRENCY']>
+    readonly CDN_BASE_URL: UnwrapRef<typeof import('../common/app-env')['CDN_BASE_URL']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
-    readonly FLARE_DRIVE_HIDDEN_KEY: UnwrapRef<typeof import('../app-env')['FLARE_DRIVE_HIDDEN_KEY']>
-    readonly RANDOM_UPLOAD_DIR: UnwrapRef<typeof import('../app-env')['RANDOM_UPLOAD_DIR']>
+    readonly FLARE_DRIVE_HIDDEN_KEY: UnwrapRef<typeof import('../common/app-env')['FLARE_DRIVE_HIDDEN_KEY']>
+    readonly PREVIEW_SIZE_LIMIT_TEXT: UnwrapRef<typeof import('../common/app-env')['PREVIEW_SIZE_LIMIT_TEXT']>
+    readonly RANDOM_UPLOAD_DIR: UnwrapRef<typeof import('../common/app-env')['RANDOM_UPLOAD_DIR']>
     readonly THUMBNAIL_SIZE: UnwrapRef<typeof import('./utils/FileHelper')['THUMBNAIL_SIZE']>
-    readonly UPLOAD_HISORY_LIMIT: UnwrapRef<typeof import('../app-env')['UPLOAD_HISORY_LIMIT']>
+    readonly UPLOAD_HISORY_LIMIT: UnwrapRef<typeof import('../common/app-env')['UPLOAD_HISORY_LIMIT']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly asyncComputed: UnwrapRef<typeof import('@vueuse/core')['asyncComputed']>
     readonly autoResetRef: UnwrapRef<typeof import('@vueuse/core')['autoResetRef']>

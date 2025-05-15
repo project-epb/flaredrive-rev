@@ -26,7 +26,7 @@ export default defineConfig({
       imports: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
       vueTemplate: true,
       vueDirectives: true,
-      dirs: ['frontend/composables', 'frontend/stores', 'frontend/utils'],
+      dirs: ['frontend/composables', 'frontend/stores', 'frontend/utils', 'common/'],
     }),
     Components({
       dts: 'frontend/components.d.ts',

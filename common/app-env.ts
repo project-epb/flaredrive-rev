@@ -1,15 +1,12 @@
 const readEnv = <T = string>(key: string, defaultValue?: T, transform?: (value: string) => T) => {
-  const rawValue = import.meta.env[key] || import.meta.env[`VITE_${key}`]
+  let rawValue = import.meta.env[key] || import.meta.env[`VITE_${key}`]
   if (typeof rawValue === 'undefined') {
     if (typeof defaultValue === 'undefined') {
       return void 0 as T
     }
-    return defaultValue as T
+    rawValue = defaultValue
   }
-  if (typeof transform === 'function') {
-    return transform(rawValue)
-  }
-  return rawValue as T
+  return transform ? transform(rawValue) : rawValue
 }
 
 /**
