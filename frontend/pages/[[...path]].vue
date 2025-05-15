@@ -173,7 +173,7 @@
     translate-x='-50%',
     z-50,
     transition='all ease-in-out',
-    :style='bucket.isUploading ? { top: "calc(100vh - 4rem)", opacity: "1", transitionDuration: "0.25s" } : { top: "calc(100vh + 4rem)", opacity: "0", transitionDelay: "3s", transitionDuration: "0.5s" }'
+    :style='bucket.isUploading ? { bottom: "1rem", opacity: "1", transitionDuration: "0.25s" } : { bottom: "-10rem", opacity: "0", transitionDelay: "3s", transitionDuration: "0.75s" }'
   )
     UploadProgress
 
