@@ -30,17 +30,17 @@ Before starting, you should make sure that
 
 - you have created a [CloudFlare](https://dash.cloudflare.com/) account
 - your payment method is added
-- R2 service is activated and at least one bucket is created
 
-Steps:
+FlareDrive is almost ready to use out of the box. It only takes a few simple steps to install:
 
-1. Fork this project and connect your fork with CloudFlare Pages
-2. Add a custom domain
-3. Bind your R2 bucket to `BUCKET` varaible
-4. (optional) Set environment variables in workers dashboard:
-   Checkout the [`.env.sample`](.env.sample) file for all available variables.
-   Or: you can directly copy the file to `.env` in the root directory and edit it.
-5. Manually redeploy to make all changes take effect
+1. [Click this link to start the installation](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/deploy-to-workers)
+2. Paste `https://github.com/project-epb/flaredrive-rev` into the "Git repository URL" box and click Next.
+3. Follow the prompts in the form to create a new project.
+4. Done!
+
+(Optional) If you want a custom domain or CDN, check the control panel of the workers and the control panel of the R2 bucket you created in the previous step.
+
+Check out the [`.env.sample`](.env.sample) file for all the environment variables available for configuration!
 
 **Configuration example:**
 
