@@ -73,6 +73,8 @@ There is no built-in authentication support, yet. By default everyone can read a
 
 ![](https://github.com/user-attachments/assets/f8e5c6ab-7d16-48f3-972c-49ef109549b8)
 
-```
+---
 
-```
+> MIT License
+>
+> Copyright (c) 2022 Siyu Long<br>Copyright (c) 2025 Dragon Fish
