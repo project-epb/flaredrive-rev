@@ -225,14 +225,27 @@ definePage({
   name: '@browser',
 })
 
-const UploadForm = defineAsyncComponent(() => import('@/components/UploadForm.vue'))
+const route = useRoute()
+const router = useRouter()
+const lastRoute = useLocalStorage('flaredrive:last-route', '/')
+
+onMounted(async () => {
+  await nextTick()
+  if (lastRoute.value && route.path === '/' && route.fullPath !== lastRoute.value) {
+    router.replace(lastRoute.value)
+  }
+})
+onBeforeRouteUpdate((to) => {
+  if (to.name === '@browser') {
+    lastRoute.value = to.fullPath
+  }
+})
+
 const BrowserReadmeCard = defineAsyncComponent(() => import('@/components/Browser/BrowserReadmeCard.vue'))
 
 const nmodal = useModal()
 const nmessage = useMessage()
 
-const route = useRoute()
-const router = useRouter()
 /** route path without leading slash */
 const currentPath = computed(() => {
   const paramPath: string[] | string = (route.params as any).path || ''

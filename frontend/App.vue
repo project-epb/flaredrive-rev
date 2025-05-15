@@ -7,22 +7,7 @@ NaiveuiProvider#full-app-container
     GlobalFooter
 </template>
 
-<script setup lang="ts">
-const route = useRouter()
-const router = useRouter()
-const lastRoute = useLocalStorage('flaredrive:last-route', '/')
-
-onMounted(() => {
-  if (lastRoute.value) {
-    router.replace(lastRoute.value)
-  }
-})
-router.afterEach((to) => {
-  if (!to.path.startsWith('/@')) {
-    lastRoute.value = to.fullPath
-  }
-})
-</script>
+<script setup lang="ts"></script>
 
 <style scoped lang="sass">
 #full-app-container
