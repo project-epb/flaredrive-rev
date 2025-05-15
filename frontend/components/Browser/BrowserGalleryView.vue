@@ -1,6 +1,6 @@
 <template lang="pug">
 .browser-gallery-view
-  .sort-actions(flex, justify-center)
+  .sort-actions(flex, justify-center, mb-4)
     NButtonGroup
       NButton(
         v-for='item in sortActions',
@@ -14,11 +14,16 @@
         | {{ item.label }}
 
   Waterfall(
-    ref='waterfallRef',
     v-if='list.length > 0',
+    ref='waterfallRef',
     :list='list',
     :breakpoints='{ 9999: { rowPerView: 5 }, 1160: { rowPerView: 4 }, 900: { rowPerView: 3 }, 580: { rowPerView: 2 }, 360: { rowPerView: 1 } }',
-    min-h='200px'
+    :has-around-gutter='false',
+    :delay='100',
+    :animation-delay='150',
+    :animation-duration='500',
+    :pos-duration='150',
+    min-h='50vh'
   )
     template(#item='{ item, url, index }')
       NCard(
@@ -36,7 +41,9 @@
             :alt='item.key',
             w-full,
             h-auto,
-            loading='lazy'
+            loading='lazy',
+            :width='item?.customMetadata?.width || undefined',
+            :height='item?.customMetadata?.height || undefined',
           )
           component(v-else, :is='item.icon', w='full', h='auto')
         .p-4
@@ -142,34 +149,18 @@ const list = computed<
 })
 
 const waterfallRef = useTemplateRef('waterfallRef')
-let abortController: AbortController | null = null
-async function resizeWaterfall() {
-  if (abortController) {
-    abortController.abort()
-    abortController = null
-  }
-  abortController = new AbortController()
-  const { signal } = abortController
-  await new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (signal.aborted) {
-        reject(new Error('aborted'))
-      } else {
-        resolve(true)
-      }
-    }, 100)
-  })
-    .then(() => {
-      console.info('resizeWaterfall')
-      return waterfallRef.value?.renderer()
-    })
-    .catch(() => {})
-}
-watch(list, async () => {
-  await nextTick()
+const resizeWaterfall = () => {
   waterfallRef.value?.renderer()
-})
+}
 useEventListener('resize', resizeWaterfall)
+watch(
+  computed(() => list.value.length),
+  () => {
+    nextTick(() => {
+      resizeWaterfall()
+    })
+  }
+)
 
 function onClickItem(item: R2Object) {
   emit('navigate', item)
