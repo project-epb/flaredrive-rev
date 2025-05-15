@@ -361,11 +361,16 @@ async function onDelete(item: R2Object) {
     positiveText: 'Delete',
     negativeText: 'Keep the file',
     onPositiveClick() {
-      bucket.deleteFile(item.key).then(() => {
-        nmessage.success('File deleted successfully')
-        payload.value?.objects.splice(payload.value.objects.indexOf(item), 1)
-        isShowPreview.value = false
-      })
+      bucket
+        .deleteFile(item)
+        .then(() => {
+          nmessage.success('File deleted successfully')
+          payload.value?.objects.splice(payload.value.objects.indexOf(item), 1)
+          isShowPreview.value = false
+        })
+        .catch((err) => {
+          nmessage.error(`Failed to delete file: ${err}`)
+        })
     },
   })
 }

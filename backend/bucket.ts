@@ -1,6 +1,9 @@
 import { Context, Hono } from 'hono'
 import { HonoEnv } from '.'
 
+// @ts-ignore prevent bundler from removing this
+const console: Console = globalThis['con'.concat('sole')]
+
 export const bucket = new Hono<HonoEnv>()
 
 const getFilePath = (ctx: Context) => {
@@ -137,7 +140,7 @@ bucket.delete('*', async (ctx) => {
     console.info('Deleting file', path)
     await BUCKET.delete(path)
     return ctx.json({
-      error: 'Deletion successful',
+      message: 'Deletion successful',
       path,
     })
   } catch (e) {

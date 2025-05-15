@@ -56,10 +56,17 @@ export const useBucketStore = defineStore('bucket', () => {
     })
     return response
   }
-  const deleteFile = async (key: string) => {
-    await client.delete(key)
+  const deleteFile = async (item: R2Object) => {
+    await client.delete(item.key)
     // Remove from upload history
-    uploadHistory.value = uploadHistory.value.filter((item) => item.key !== key)
+    uploadHistory.value = uploadHistory.value.filter((h) => item.key !== h.key)
+    // delete thumbnail if needed
+    if (item.customMetadata?.thumbnail) {
+      client.delete(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${item.customMetadata.thumbnail}.png`).catch((e) => {
+        // ignore error, this is not critical
+        console.error('Error deleting thumbnail', item, e)
+      })
+    }
   }
   const rename = client.rename.bind(client)
 
