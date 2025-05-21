@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
-import { routes } from 'vue-router/auto-routes'
+import { routes, handleHotUpdate } from 'vue-router/auto-routes'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -12,3 +12,7 @@ export const router = createRouter({
     }
   },
 })
+
+if (import.meta.hot) {
+  handleHotUpdate(router)
+}

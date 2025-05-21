@@ -4,7 +4,6 @@ NDrawer(v-model:show='show', placement='bottom', default-height='75vh', resizabl
     template(#header) Upload History
     BrowserListView(
       :payload='payload',
-      no-actions,
       no-folder,
       default-sort-by='uploaded',
       default-sort-order='descend',

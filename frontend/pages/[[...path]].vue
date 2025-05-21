@@ -200,6 +200,8 @@ import {
   IconBook,
   IconChevronCompactDown,
   IconChevronCompactUp,
+  IconCloudBolt,
+  IconCloudUpload,
   IconFilter,
   IconFolderPlus,
   IconHistory,
@@ -408,14 +410,10 @@ async function onRename(item: R2Object) {
         .rename(item.key, toPath)
         .then(() => {
           nmessage.success('File renamed successfully')
-          if (fromFolder !== toFolder) {
-            router.push(`/${toFolder}/`)
-          } else {
-            // @ts-ignore
-            item.key = toPath
-            // @ts-ignore
-            item.uploaded = new Date().toISOString()
-          }
+          // @ts-ignore
+          item.key = toPath
+          // @ts-ignore
+          item.uploaded = new Date().toISOString()
         })
         .catch((err) => {
           nmessage.error(`Failed to rename file: ${err}`)
@@ -464,7 +462,7 @@ async function handleCreateFolder() {
   })
 }
 
-function handleUploadInput(files: FileList | File[] | null) {
+function handleUploadInput(files: FileList | File[] | null, prefix = currentPath.value) {
   if (!files || !files.length) {
     return
   }
@@ -480,7 +478,7 @@ function handleUploadInput(files: FileList | File[] | null) {
   files.forEach((file) => {
     const fileName = file.name
     if (fileName) {
-      const { promise } = bucket.addToUploadQueue(`${currentPath.value}${fileName}`, file)
+      const { promise } = bucket.addToUploadQueue(`${prefix.replace(/\/+$/, '')}/${fileName}`, file)
       promise.then((item) => {
         if (!item) {
           nmessage.error(`Failed to upload file ${fileName}`)
@@ -499,12 +497,14 @@ const fileDialog = useFileDialog({
   multiple: true,
   accept: '*',
 })
-function createUploadModal() {
+let __markAsRandomMode = false
+function createUploadModal(randomMode = false) {
+  typeof randomMode === 'boolean' && (__markAsRandomMode = randomMode)
   fileDialog.reset()
   fileDialog.open()
 }
 fileDialog.onChange((files) => {
-  handleUploadInput(files)
+  handleUploadInput(files, __markAsRandomMode ? RANDOM_UPLOAD_DIR : currentPath.value)
 })
 
 // Reload file list when upload finished
@@ -542,8 +542,15 @@ const pathActions = computed<
       label: 'Upload',
       type: 'primary',
       tooltip: 'Upload files',
-      icon: IconUpload,
-      action: createUploadModal,
+      icon: IconCloudUpload,
+      action: () => createUploadModal(false),
+    },
+    {
+      label: '',
+      type: 'primary',
+      tooltip: 'Upload files with random name',
+      icon: IconCloudBolt,
+      action: () => createUploadModal(true),
     },
     {
       label: '',
@@ -620,7 +627,7 @@ const fetchPlainText = async (item: R2Object) => {
 </script>
 
 <style scoped lang="sass">
-.top-sticky-rail, .top-sticky-rail-trigger
+.top-sticky-rail .n-card, .top-sticky-rail-trigger
   backdrop-filter: blur(16px)
   background-color: rgba(245, 245, 245, 0.8)
   html.dark &
