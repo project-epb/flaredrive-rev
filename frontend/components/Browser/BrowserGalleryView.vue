@@ -41,9 +41,10 @@
             :alt='item.key',
             w-full,
             h-auto,
+            max-h-60vh,
             loading='lazy',
             :width='item?.customMetadata?.width || undefined',
-            :height='item?.customMetadata?.height || undefined',
+            :height='item?.customMetadata?.height || undefined'
           )
           component(v-else, :is='item.icon', w='full', h='auto')
         .p-4
