@@ -4,6 +4,8 @@
 
 # FlareDrive: REMASTERED
 
+[<img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">](https://deploy.workers.cloudflare.com/?url=https://github.com/project-epb/flaredrive-rev)
+
 </div>
 
 > [!NOTE]
