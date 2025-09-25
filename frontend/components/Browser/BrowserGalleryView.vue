@@ -28,6 +28,7 @@
     template(#item='{ item, url, index }')
       NCard.file-item-card(
         :key='item.key',
+        @click='onClickItem(item)',
         :content-style='{ padding: 0 }',
         :style='item.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" }',
         overflow-hidden
@@ -35,6 +36,7 @@
         template(#cover)
           NImage(
             v-if='item.thumbUrl',
+            @click.stop,
             @load='resizeWaterfall',
             :src='item.thumbUrl',
             :preview-src='item.cdnUrl',
@@ -51,7 +53,7 @@
           )
           component(v-else, :is='item.icon', w='full', h='auto')
         template(#default)
-          .p-4(@click='onClickItem(item)')
+          .p-4
             NEllipsis(text-4, max-w-full) {{ item.key === '/' ? '/(root)' : item.key.replace(payload.prefix, '').replace(/\/$/, '') }}
             .flex(items-center)
               .file-info.flex-1
