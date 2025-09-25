@@ -26,37 +26,41 @@
     min-h='50vh'
   )
     template(#item='{ item, url, index }')
-      NCard(
+      NCard.file-item-card(
         :key='item.key',
-        @click='onClickItem(item)',
         :content-style='{ padding: 0 }',
         :style='item.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" }',
         overflow-hidden
       )
-        .file-thumbnail
-          img(
-            v-if='item.thumbnailUrl',
+        template(#cover)
+          NImage(
+            v-if='item.thumbUrl',
             @load='resizeWaterfall',
-            :src='item.thumbnailUrl',
+            :src='item.thumbUrl',
+            :preview-src='item.cdnUrl',
             :alt='item.key',
             w-full,
             h-auto,
             max-h-60vh,
             loading='lazy',
+            lazy,
+            inline-flex,
+            leading-0,
             :width='item?.customMetadata?.width || undefined',
             :height='item?.customMetadata?.height || undefined'
           )
           component(v-else, :is='item.icon', w='full', h='auto')
-        .p-4
-          NEllipsis(text-4, max-w-full) {{ item.key === '/' ? '/(root)' : item.key.replace(payload.prefix, '').replace(/\/$/, '') }}
-          .flex(items-center)
-            .file-info.flex-1
-              NText(v-if='item.key.endsWith("/")', depth='3', block, text-3) {{ item.key === '/' ? 'root' : item.key === '../' ? 'parent' : 'folder' }}
-              NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ new Date(item.uploaded || 0).toLocaleString() }}
-              NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ FileHelper.formatFileSize(item.size) }}
-            .file-actions(v-if='!item.key.endsWith("/")', @click.stop)
-              NDropdown(:options='fileActionOptions', @select='(action) => onSelectAction(action, item)')
-                NButton(secondary, :render-icon='() => h(IconDots)', circle, size='small')
+        template(#default)
+          .p-4(@click='onClickItem(item)')
+            NEllipsis(text-4, max-w-full) {{ item.key === '/' ? '/(root)' : item.key.replace(payload.prefix, '').replace(/\/$/, '') }}
+            .flex(items-center)
+              .file-info.flex-1
+                NText(v-if='item.key.endsWith("/")', depth='3', block, text-3) {{ item.key === '/' ? 'root' : item.key === '../' ? 'parent' : 'folder' }}
+                NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ new Date(item.uploaded || 0).toLocaleString() }}
+                NText(v-if='!item.key.endsWith("/")', depth='3', block, text-3) {{ FileHelper.formatFileSize(item.size) }}
+              .file-actions(v-if='!item.key.endsWith("/")', @click.stop)
+                NDropdown(:options='fileActionOptions', @select='(action) => onSelectAction(action, item)')
+                  NButton(secondary, :render-icon='() => h(IconDots)', circle, size='small')
 
   NSkeleton(v-if='list.length === 0', h-200px)
 </template>
@@ -113,7 +117,8 @@ const sortActions = computed(() => {
 
 const list = computed<
   (R2Object & {
-    thumbnailUrl?: string
+    thumbUrl?: string
+    cdnUrl?: string
     icon?: Component
   })[]
 >(() => {
@@ -135,13 +140,15 @@ const list = computed<
   ].map(
     (
       item: R2Object & {
-        thumbnailUrl?: string
+        cdnUrl?: string
+        thumbUrl?: string
         icon?: Component
       }
     ) => {
+      item.cdnUrl = bucket.getCDNUrl(item)
       const thumb = bucket.getThumbnailUrls(item)
       if (thumb) {
-        item.thumbnailUrl = thumb.medium
+        item.thumbUrl = thumb.medium
       }
       item.icon = FileHelper.getObjectIcon(item)
       return item
@@ -201,11 +208,12 @@ const onSelectAction = (action: string, item: R2Object) => {
 :deep(.waterfall-list)
   background-color: transparent
 
-:deep(.file-thumbnail)
-  overflow: hidden
-  img
-    transition: transform 0.25s ease-in-out
-  &:hover
+.file-item-card
+  :deep(.n-card-cover)
+    line-height: 0
     img
-      transform: scale(1.1)
+      transition: transform 0.25s ease-in-out
+    &:hover
+      img
+        transform: scale(1.05)
 </style>
