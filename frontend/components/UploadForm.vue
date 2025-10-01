@@ -46,7 +46,11 @@ const customRequest = async (payload: UploadCustomRequestOptions) => {
     }
   }, 100)
   bucket
-    .addToUploadQueue(`${formData.prefix.replace(/\/$/, '')}/${payload.file.name}`, payload.file.file!)
+    .addToUploadQueue(
+      `${formData.prefix.replace(/\/$/, '')}/${(payload.file.file as any)?.webkitRelativePath || payload.file.name}`,
+      payload.file.file!,
+      { ignoreRandom: !!(payload.file.file as any)?.webkitRelativePath }
+    )
     .promise.then((data) => {
       if (!data) {
         throw new Error('No data returned from upload')

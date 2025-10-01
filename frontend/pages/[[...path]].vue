@@ -462,7 +462,11 @@ async function handleCreateFolder() {
   })
 }
 
-function handleUploadInput(files: FileList | File[] | null, prefix = currentPath.value) {
+function handleUploadInput(
+  files: FileList | File[] | null,
+  prefix = currentPath.value,
+  options?: { isDirectory?: boolean }
+) {
   if (!files || !files.length) {
     return
   }
@@ -476,12 +480,20 @@ function handleUploadInput(files: FileList | File[] | null, prefix = currentPath
       : `Uploading ${files[0].name}...`
   )
   files.forEach((file) => {
-    const fileName = file.name
-    if (fileName) {
-      const { promise } = bucket.addToUploadQueue(`${prefix.replace(/\/+$/, '')}/${fileName}`, file)
+    const maybeRelativePath = (file as any).webkitRelativePath as string | undefined
+    const isDirectoryUpload = !!maybeRelativePath || !!options?.isDirectory
+    const normalizedPrefix = `${prefix}`.replace(/\/+$/, '')
+    const relativePath = (maybeRelativePath || file.name)
+      .replace(/^\\+/, '')
+      .replace(/^\/+/, '')
+      .replace(/^\.\//, '')
+      .replace(/\\/g, '/')
+    const targetKey = `${normalizedPrefix}/${relativePath}`
+    if (relativePath) {
+      const { promise } = bucket.addToUploadQueue(targetKey, file, { ignoreRandom: isDirectoryUpload })
       promise.then((item) => {
         if (!item) {
-          nmessage.error(`Failed to upload file ${fileName}`)
+          nmessage.error(`Failed to upload file ${relativePath}`)
         }
       })
     }
@@ -490,7 +502,7 @@ function handleUploadInput(files: FileList | File[] | null, prefix = currentPath
 const { isOverDropZone } = useDropZone(document.body, {
   multiple: true,
   onDrop(files) {
-    handleUploadInput(files)
+    handleUploadInput(files, currentPath.value)
   },
 })
 const fileDialog = useFileDialog({
@@ -498,13 +510,23 @@ const fileDialog = useFileDialog({
   accept: '*',
 })
 let __markAsRandomMode = false
+let __markAsDirectoryMode = false
 function createUploadModal(randomMode = false) {
   typeof randomMode === 'boolean' && (__markAsRandomMode = randomMode)
+  __markAsDirectoryMode = false
   fileDialog.reset()
   fileDialog.open()
 }
+function createUploadFolderModal() {
+  __markAsRandomMode = false
+  __markAsDirectoryMode = true
+  fileDialog.reset()
+  fileDialog.open({ directory: true, multiple: true })
+}
 fileDialog.onChange((files) => {
-  handleUploadInput(files, __markAsRandomMode ? RANDOM_UPLOAD_DIR : currentPath.value)
+  handleUploadInput(files, __markAsRandomMode ? RANDOM_UPLOAD_DIR : currentPath.value, {
+    isDirectory: __markAsDirectoryMode,
+  })
 })
 
 // Reload file list when upload finished
@@ -544,6 +566,13 @@ const pathActions = computed<
       tooltip: 'Upload files',
       icon: IconCloudUpload,
       action: () => createUploadModal(false),
+    },
+    {
+      label: '',
+      type: 'primary',
+      tooltip: 'Upload folder',
+      icon: IconFolderPlus,
+      action: () => createUploadFolderModal(),
     },
     {
       label: '',

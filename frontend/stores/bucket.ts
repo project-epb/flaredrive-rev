@@ -152,7 +152,12 @@ export const useBucketStore = defineStore('bucket', () => {
     }
   }
 
-  const uploadOne = async (key: string, file: File, metadata: Record<string, string> = {}) => {
+  const uploadOne = async (
+    key: string,
+    file: File,
+    metadata: Record<string, string> = {},
+    options?: { ignoreRandom?: boolean }
+  ) => {
     const fileHash = await FileHelper.blobToSha1(file)
     const { ext } = FileHelper.getSimpleFileInfoByFile(file)
     const isMediaFile = FileHelper.checkIsMediaFile(file)
@@ -180,7 +185,7 @@ export const useBucketStore = defineStore('bucket', () => {
         console.error('Error generating thumbnail', file, e)
       }
     }
-    if (checkIsRandomUploadDir(key)) {
+    if (checkIsRandomUploadDir(key) && !options?.ignoreRandom) {
       const hashFirst = fileHash.slice(0, 1)
       const hashSecond = fileHash.slice(0, 2)
       key = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
@@ -257,7 +262,7 @@ export const useBucketStore = defineStore('bucket', () => {
     }[]
   >([])
 
-  const addToUploadQueue = (key: string, file: File) => {
+  const addToUploadQueue = (key: string, file: File, options?: { ignoreRandom?: boolean }) => {
     const existing = pendinUploadList.value.find((item) => item.key === key)
     if (existing) {
       console.info('Upload already in queue', key, file)
@@ -277,7 +282,7 @@ export const useBucketStore = defineStore('bucket', () => {
       if (abortController.signal.aborted) {
         throw new Error('Upload aborted')
       }
-      const { data } = await uploadOne(key, file).catch((error) => {
+      const { data } = await uploadOne(key, file, {}, options).catch((error) => {
         console.error('Upload failed', key, file, error)
         uploadFailedList.value.push({
           key: key,
