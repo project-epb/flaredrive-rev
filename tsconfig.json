@@ -1,19 +1,21 @@
 {
-  "compilerOptions": {
-    "rootDir": "./",
-    "baseUrl": "./",
-    "noEmit": true,
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true
-  },
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "files": [],
   "references": [
     {
-      "path": "./frontend/tsconfig.json"
+      "path": "./.nuxt/tsconfig.app.json"
     },
     {
-      "path": "./backend/tsconfig.json"
+      "path": "./.nuxt/tsconfig.server.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.shared.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.vue.json"
     }
   ],
   "vueCompilerOptions": {

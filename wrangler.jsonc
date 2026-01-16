@@ -1,17 +1,20 @@
 {
-  "name": "flaredrive",
   "compatibility_date": "2025-05-07",
-  "main": "./backend/index.ts",
-  "assets": {
-    "not_found_handling": "single-page-application",
-  },
-  "r2_buckets": [
+  "name": "flaredrive",
+  "main": ".output/server/index.mjs",
+  "compatibility_flags": ["nodejs_compat", "no_nodejs_compat_v2"],
+  "d1_databases": [
     {
-      "binding": "BUCKET",
-      "bucket_name": "cloud-epb",
-      "preview_bucket_name": "cloud-epb-preview",
+      "binding": "DB",
+      "database_name": "flaredrive",
+      "database_id": "REPLACE_WITH_D1_ID",
+      "migrations_dir": "drizzle",
     },
   ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".output/public",
+  },
   "observability": {
     "logs": {
       "enabled": true,

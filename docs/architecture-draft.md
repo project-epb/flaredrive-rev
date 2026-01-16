@@ -5,9 +5,16 @@
 - 目标：将当前 R2 绑定式存储管理器改造为“通用 S3-compatible 存储桶管理工具”，并支持简单的用户注册/登录、桶配置与管理。
 - 关键要求：
   - D1 作为元数据存储（用户、桶配置、会话等）
+  - KV 作为缓存（可选）
   - S3-compatible 后端（R2、AWS S3、MinIO、Wasabi 等）
-  - 前端改为 Nuxt（3.x）
+  - 全栈改为 Nuxt（4.x）
   - ORM 使用 Drizzle
+- 向前兼容：
+  - 由于设计思路完全改变，不考虑向前兼容现有数据与配置
+  - 但保留现有前端设计风格与用户体验
+- 旧文件处理：
+  - backend 文件夹中是旧的 Hono 后端代码，可作为参考，但最终不再使用
+  - frontend 文件夹中是旧的 Vue SPA 代码，需迁移至 Nuxt 结构，可复用的组件可以搬运到 Nuxt 项目中，无用的删掉
 
 ## 2. 现状与耦合点
 
@@ -25,7 +32,7 @@ Nuxt (Web UI)
   ├── Bucket Config UI
   └── Object Browser / Upload
 
-API (Workers + Hono)
+API (Workers + Nitro)
   ├── Auth
   ├── Bucket Config
   ├── S3 Adapter (List/Put/Get/Delete)
@@ -47,6 +54,7 @@ S3-compatible Providers
 
 - 主路径：预签名 URL + 前端直传
 - 备选：小文件可通过 Worker 代理直传
+- 用户提供 cdn_base_url：用于 public-read 桶的前端渲染与下载加速
 
 ### 4.2 认证
 
@@ -64,18 +72,19 @@ S3-compatible Providers
 
 - id (text, pk)
 - email (text, unique)
+- password_salt (text)
 - password_hash (text)
 - created_at (integer)
-- status (text)
+- authorization_level (integer, 0=未登录, 1=普通用户, 2=管理员，为降低心智负担，匿名用户不存表但是总是被当做0级用户处理)
 
 ### buckets
 
 - id (text, pk)
 - owner_user_id (text, fk users)
 - name (text)
-- cdn_base_url (text, 可选，用于前端渲染与下载加速)
+- cdn_base_url (text, 可由用户提供，用于 public-read 存储桶的前端渲染与下载加速，否则使用预签名 URL)
 - endpoint_url (text)
-- region (text)
+- region (text，可选，否则使用 "auto")
 - access_key_id (text)
 - secret_access_key (text, 建议加密存储)
 - bucket_name (text)
@@ -87,12 +96,15 @@ S3-compatible Providers
 - id (text, pk)
 - user_id (text, fk users)
 - token_hash (text)
+- login_xff (text, 可选，记录登录时的 X-Forwarded-For 以防盗用)
+- login_ua (text, 可选，记录登录时的 User-Agent 以防盗用)
+- created_at (integer)
 - expires_at (integer)
 
 ### audit_logs（可选）
 
 - id (text, pk)
-- user_id (text)
+- user_id (text, fk users)
 - action (text)
 - target (text)
 - created_at (integer)
@@ -113,9 +125,10 @@ S3-compatible Providers
 - user_id (text, fk users)
 - bucket_id (text, fk buckets)
 - path (text, 目录或对象前缀)
-- is_public (integer: 0/1)
-- access_password_hash (text, 可选)
-- extra_metadata (text/json, 可选)
+- is_public (integer: 0/1，可选，目录是否公开读取)
+- tags (text, 以逗号分隔的标签列表)
+- password_hash (text, 可选，为保护目录设置的密码哈希)
+- extra_metadata (text/json, 可存储简单的自定义元数据，后期可以扩展)
 - created_at (integer)
 - updated_at (integer)
 
@@ -159,18 +172,9 @@ S3-compatible Providers
 
 ## 9. 分阶段实施建议
 
-1. **基础架构迁移**：Nuxt 结构与 Hono API 骨架 + D1 接入
+1. **基础架构迁移**：Nuxt 结构与 Nitro API 骨架 + D1 接入
 2. **认证系统**：注册/登录 + sessions
 3. **桶配置管理**：CRUD + 连接测试
 4. **S3 访问层**：list/get/put/delete + presign
 5. **前端功能恢复**：列表/预览/上传/删除
 6. **高级功能**：审计、权限、共享等
-
----
-
-如需我继续输出：
-
-- Drizzle schema 具体代码
-- Nuxt 页面与 API 目录结构
-- S3 adapter 的接口与实现建议
-  请直接告诉我。
