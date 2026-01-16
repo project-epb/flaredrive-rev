@@ -1,5 +1,6 @@
 import { Context, Hono } from 'hono'
 import { HonoEnv } from '.'
+import { resolveBucketRequest } from './bucket-utils.js'
 
 // @ts-ignore prevent bundler from removing this
 const console: Console = globalThis['con'.concat('sole')]
@@ -7,7 +8,7 @@ const console: Console = globalThis['con'.concat('sole')]
 export const bucket = new Hono<HonoEnv>()
 
 const getFilePath = (ctx: Context) => {
-  const path = ctx.req.path.split('/bucket/').slice(1).join('/bucket/')
+  const { path } = resolveBucketRequest(ctx, 'bucket')
   return path
 }
 const getFileName = (ctx: Context) => {
@@ -27,13 +28,16 @@ const getMetadataFromHeaders = (ctx: Context) => {
 }
 
 bucket.get('*', async (ctx) => {
-  const { BUCKET } = ctx.env
+  const { bucket } = resolveBucketRequest(ctx, 'bucket')
+  if (!bucket) {
+    return ctx.json({ error: 'Bucket not found' }, 404)
+  }
   const path = getFilePath(ctx)
   const limit = Math.min(1000, ctx.req.query('limit') ? parseInt(ctx.req.query('limit')) : 1000)
   const startAfter = ctx.req.query('startAfter') || ''
 
   try {
-    const list = await BUCKET.list({
+    const list = await bucket.list({
       prefix: path,
       delimiter: '/',
       limit,
@@ -67,7 +71,10 @@ bucket.get('*', async (ctx) => {
 })
 
 bucket.put('*', async (ctx) => {
-  const { BUCKET } = ctx.env
+  const { bucket } = resolveBucketRequest(ctx, 'bucket')
+  if (!bucket) {
+    return ctx.json({ error: 'Bucket not found' }, 404)
+  }
   const path = getFilePath(ctx)
   const fileName = getFileName(ctx)
   if (!fileName) {
@@ -88,7 +95,7 @@ bucket.put('*', async (ctx) => {
         contentType,
         customMetadata,
       })
-      const item = await handleRenameFile(BUCKET, copySource, path, customMetadata)
+      const item = await handleRenameFile(bucket, copySource, path, customMetadata)
       return ctx.json(item)
     } catch (e) {
       console.error('Error renaming file', e)
@@ -109,7 +116,7 @@ bucket.put('*', async (ctx) => {
       contentType,
       customMetadata,
     })
-    const item = await handleUploadFile(BUCKET, fileBody, path, fileName, contentType, customMetadata)
+    const item = await handleUploadFile(bucket, fileBody, path, fileName, contentType, customMetadata)
     return ctx.json(item)
   } catch (e) {
     console.error('Error uploading file', e)
@@ -128,7 +135,10 @@ bucket.post('*', async (ctx) => {
 })
 
 bucket.delete('*', async (ctx) => {
-  const { BUCKET } = ctx.env
+  const { bucket } = resolveBucketRequest(ctx, 'bucket')
+  if (!bucket) {
+    return ctx.json({ error: 'Bucket not found' }, 404)
+  }
   const path = getFilePath(ctx)
   if (!path) {
     return ctx.json({ error: 'No file path provided' }, 400)
@@ -138,7 +148,7 @@ bucket.delete('*', async (ctx) => {
   }
   try {
     console.info('Deleting file', path)
-    await BUCKET.delete(path)
+    await bucket.delete(path)
     return ctx.json({
       message: 'Deletion successful',
       path,

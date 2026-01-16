@@ -27,7 +27,6 @@
   )
     template(#item='{ item, url, index }')
       NCard.file-item-card(
-        :key='item.key',
         @click='onClickItem(item)',
         :content-style='{ padding: 0 }',
         :style='item.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" }',
@@ -51,7 +50,8 @@
             :width='item?.customMetadata?.width || undefined',
             :height='item?.customMetadata?.height || undefined'
           )
-          component(v-else, :is='item.icon', w='full', h='auto')
+          .folder-icon-wrapper(v-else, flex, items-center, justify-center, py-6, bg='gray-100 dark:gray-800')
+            component(:is='item.icon', w='64px', h='64px', opacity-60)
         template(#default)
           .p-4
             NEllipsis(text-4, max-w-full) {{ item.key === '/' ? '/(root)' : item.key.replace(payload.prefix, '').replace(/\/$/, '') }}

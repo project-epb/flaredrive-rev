@@ -27,9 +27,14 @@ import {
 
 const theme = useThemeStore()
 
+// Cloudflare Orange Theme
 const themeOverrides: GlobalThemeOverrides = {
   common: {
     borderRadius: '0.5rem',
+    primaryColor: '#F6821F',
+    primaryColorHover: '#FF9A3C',
+    primaryColorPressed: '#E06E0A',
+    primaryColorSuppl: '#FF8C2A',
   },
 }
 </script>

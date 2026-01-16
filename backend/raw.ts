@@ -1,11 +1,12 @@
 import { Hono } from 'hono'
 import { HonoEnv } from '.'
+import { resolveBucketRequest } from './bucket-utils.js'
 
 const app = new Hono<HonoEnv>()
 export { app as raw }
 
 app.get('*', async (ctx) => {
-  const filePath = ctx.req.path.split('/raw/').slice(1).join('/raw/')
+  const { bucket, path: filePath } = resolveBucketRequest(ctx, 'raw')
   if (filePath.endsWith('/')) {
     return ctx.json(
       {
@@ -14,8 +15,10 @@ app.get('*', async (ctx) => {
       400
     )
   }
-  const { BUCKET } = ctx.env
-  const item = await BUCKET.get(filePath)
+  if (!bucket) {
+    return ctx.json({ error: 'Bucket not found' }, 404)
+  }
+  const item = await bucket.get(filePath)
   if (!item) {
     return ctx.json(
       {

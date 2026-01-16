@@ -1,10 +1,11 @@
 import { Hono } from 'hono'
 import { bucket } from './bucket.js'
+import { getBucketInfoList } from './bucket-utils.js'
 import { raw } from './raw.js'
 
 export interface HonoEnv {
   Bindings: {
-    BUCKET: R2Bucket
+    [key: string]: unknown
   }
 }
 
@@ -14,6 +15,11 @@ app.get('/').all((ctx) => {
   return ctx.json({
     message: 'hello, world',
   })
+})
+
+app.get('/list_buckets', (ctx) => {
+  const buckets = getBucketInfoList(ctx.env)
+  return ctx.json(buckets)
 })
 
 app.route('/bucket', bucket)

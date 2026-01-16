@@ -11,6 +11,11 @@ export interface R2BucketListResponse {
   moreAfter: string | null
 }
 
+export interface BucketInfo {
+  name: string
+  cdnBaseUrl: string
+}
+
 export class R2BucketClient {
   readonly request: Axios
   constructor(private baseURL: string = '/api/bucket') {

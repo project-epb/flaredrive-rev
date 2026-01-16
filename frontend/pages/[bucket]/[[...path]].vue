@@ -26,7 +26,7 @@
             NInput(
               w-full,
               size='small',
-              :placeholder='`Search files in /${currentPath}`',
+              :placeholder='`Search files in ${displayPath}`',
               v-model:value='searchInput',
               clearable
             )
@@ -72,14 +72,26 @@
       NIcon(size='12'): component(:is='isShowTopStickyRail ? IconChevronCompactUp : IconChevronCompactDown')
 
   //- Alerts
-  NAlert(v-if='bucket.checkIsRandomUploadDir(currentPath)', type='info', title='Random upload', closable, my-4) 
+  NAlert(
+    v-if='bucket.checkIsRandomUploadDir(currentPath)',
+    type='info',
+    title='Random upload',
+    closable,
+    my-4
+  ) 
     | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
     |
     NA(@click='isShowUploadHistory = true')
       NIcon(mr-1): IconHistory
       | upload history
     | .
-  NAlert(v-if='bucket.checkIsHiddenDir(currentPath)', type='warning', title='Hidden directory', closable, my-4)
+  NAlert(
+    v-if='bucket.checkIsHiddenDir(currentPath)',
+    type='warning',
+    title='Hidden directory',
+    closable,
+    my-4
+  )
     | This hidden directory is for internal use of the FlareDrive application.
     | It's strongly recommended to not upload or delete files in this directory.
 
@@ -170,7 +182,14 @@
     UploadProgress
 
   //- floating action button
-  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='3rem', right='2rem', z-2)
+  NFloatButton(
+    type='primary',
+    menu-trigger='hover',
+    position='fixed',
+    bottom='3rem',
+    right='2rem',
+    z-2
+  )
     NIcon: IconPlus
     template(#menu)
       NTooltip(
@@ -229,12 +248,34 @@ const route = useRoute()
 const router = useRouter()
 const lastRoute = useLocalStorage('flaredrive:last-route', '/')
 
-onMounted(async () => {
-  await nextTick()
-  if (lastRoute.value && route.path === '/' && route.fullPath !== lastRoute.value) {
-    router.replace(lastRoute.value)
-  }
+const bucket = useBucketStore()
+
+// Get bucket name from route param
+const currentBucketName = computed(() => {
+  const bucketParam = route.params.bucket
+  return typeof bucketParam === 'string' ? bucketParam : ''
 })
+
+// Get path within bucket from route param
+const currentPath = computed(() => {
+  const pathParam: string[] | string | undefined = (route.params as any).path
+  if (!pathParam) return ''
+  if (Array.isArray(pathParam)) {
+    return pathParam.map((segment) => decodeURIComponent(segment)).join('/')
+  }
+  return decodeURIComponent(pathParam)
+})
+
+const displayPath = computed(() => {
+  const suffix = currentPath.value ? `${currentPath.value}` : ''
+  const full = `/${currentBucketName.value}/${suffix}`
+  return full.endsWith('/') ? full : `${full}/`
+})
+
+onMounted(async () => {
+  await bucket.fetchBucketList()
+})
+
 onBeforeRouteUpdate((to) => {
   if (to.name === '@browser') {
     lastRoute.value = to.fullPath
@@ -243,16 +284,6 @@ onBeforeRouteUpdate((to) => {
 
 const nmodal = useModal()
 const nmessage = useMessage()
-
-/** route path without leading slash */
-const currentPath = computed(() => {
-  const paramPath: string[] | string = (route.params as any).path || ''
-  if (Array.isArray(paramPath)) {
-    return paramPath.join('/')
-  } else {
-    return decodeURIComponent(paramPath)
-  }
-})
 
 const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
 const layoutOptions = ref<{ label: string; value: string; icon?: Component; tooltip?: string }[]>([
@@ -270,7 +301,7 @@ const layoutOptions = ref<{ label: string; value: string; icon?: Component; tool
     tooltip: `Browse this folder as a book. Helpful when reading comics, mangas or novels.`,
   },
 ])
-watch(currentLayout, (newLayout) => {
+watch(currentLayout, () => {
   window.scrollTo({
     top: 0,
     behavior: 'smooth',
@@ -279,7 +310,6 @@ watch(currentLayout, (newLayout) => {
 
 const isLoading = ref(false)
 const payload = ref<R2BucketListResponse>()
-const bucket = useBucketStore()
 const curObjectCount = computed(() => {
   if (!payload.value) return { files: 0, folders: 0 }
   return {
@@ -289,20 +319,33 @@ const curObjectCount = computed(() => {
 })
 
 watch(
-  currentPath,
-  (newPath) => {
-    if (newPath && !newPath.endsWith('/')) {
-      router.replace(`/${newPath}/`)
-    } else if (newPath === '/') {
+  [currentBucketName, currentPath],
+  ([bucketName, bucketPath]) => {
+    bucket.setCurrentBucket(bucketName)
+    if (!bucketName) {
+      payload.value = undefined
       router.replace('/')
-    } else {
-      loadFileList()
+      return
     }
+    if (bucketPath && !bucketPath.endsWith('/')) {
+      router.replace(`/${bucketName}/${bucketPath}/`)
+      return
+    }
+    const rootPath = `/${bucketName}/`
+    if (!bucketPath && route.path !== rootPath) {
+      router.replace(rootPath)
+      return
+    }
+    loadFileList()
   },
   { immediate: true }
 )
 
 async function loadFileList() {
+  if (!currentBucketName.value) {
+    payload.value = undefined
+    return
+  }
   isLoading.value = true
   try {
     const { data } = await bucket.list(currentPath.value)
@@ -337,12 +380,12 @@ const previewItem = ref<R2Object | undefined>()
 function onNavigate(item: R2Object) {
   const path = item.key || ''
   if (path === '/' || path === '') {
-    router.push('/')
+    router.push(`/${currentBucketName.value}/`)
   } else if (path === '../') {
     const parentPath = currentPath.value.split('/').slice(0, -2).join('/')
-    router.push(`/${parentPath}/`)
+    router.push(parentPath ? `/${currentBucketName.value}/${parentPath}/` : `/${currentBucketName.value}/`)
   } else if (path.endsWith('/')) {
-    router.push(`/${path}`)
+    router.push(`/${currentBucketName.value}/${path}`)
   } else {
     previewItem.value = item
     isShowPreview.value = true
@@ -401,8 +444,6 @@ async function onRename(item: R2Object) {
     negativeText: 'Cancel',
     onPositiveClick() {
       const toPath = toPathInput.value
-      const fromFolder = item.key.split('/').slice(0, -1).join('/')
-      const toFolder = toPath.split('/').slice(0, -1).join('/')
       if (toPath === item.key) {
         return
       }
@@ -457,7 +498,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      router.push(`/${currentPath.value}${folderName}/`)
+      router.push(`/${currentBucketName.value}/${currentPath.value}${folderName}/`)
     },
   })
 }
@@ -467,19 +508,25 @@ function handleUploadInput(
   prefix = currentPath.value,
   options?: { isDirectory?: boolean }
 ) {
+  if (!currentBucketName.value) {
+    return
+  }
   if (!files || !files.length) {
     return
   }
-  files = Array.isArray(files) ? files : Array.from(files)
-  files = files?.filter((file) => {
+  const filteredFiles = (Array.isArray(files) ? files : Array.from(files)).filter((file) => {
     return !!file.name
   })
+  if (!filteredFiles.length) {
+    return
+  }
+  const firstFileName = filteredFiles[0]?.name || 'file'
   nmessage.info(
-    files.length > 1 || bucket.currentBatchTotal
-      ? `Added ${files.length} files to queue...`
-      : `Uploading ${files[0].name}...`
+    filteredFiles.length > 1 || bucket.currentBatchTotal
+      ? `Added ${filteredFiles.length} files to queue...`
+      : `Uploading ${firstFileName}...`
   )
-  files.forEach((file) => {
+  filteredFiles.forEach((file) => {
     const maybeRelativePath = (file as any).webkitRelativePath as string | undefined
     const isDirectoryUpload = !!maybeRelativePath || !!options?.isDirectory
     const normalizedPrefix = `${prefix}`.replace(/\/+$/, '')

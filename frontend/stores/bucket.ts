@@ -1,6 +1,7 @@
-import { R2BucketClient } from '@/models/R2BucketClient'
+import { type BucketInfo, R2BucketClient } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import axios from 'axios'
 import PQueue from 'p-queue'
 
 export const useBucketStore = defineStore('bucket', () => {
@@ -26,6 +27,54 @@ export const useBucketStore = defineStore('bucket', () => {
   }
   const checkIsHiddenFile = (key: string) => {
     return FLARE_DRIVE_HIDDEN_KEY && FLARE_DRIVE_HIDDEN_KEY !== '/' && key.endsWith(FLARE_DRIVE_HIDDEN_KEY)
+  }
+
+  const currentBucketName = ref('')
+  const availableBuckets = ref<BucketInfo[]>([])
+  const isBucketListLoading = ref(false)
+  const bucketCdnMap = ref<Record<string, string>>({})
+
+  const normalizeCdnBaseUrl = (value: string) => {
+    if (!value) return ''
+    let normalized = value
+    if (typeof window !== 'undefined') {
+      normalized = new URL(value, window.location.origin).toString()
+    }
+    return normalized.endsWith('/') ? normalized : `${normalized}/`
+  }
+
+  const setCurrentBucket = (bucketName: string) => {
+    currentBucketName.value = bucketName || ''
+    const baseUrl = bucketName ? `/api/bucket/${bucketName}` : '/api/bucket'
+    client.setBaseURL(baseUrl)
+  }
+
+  const fetchBucketList = async () => {
+    if (isBucketListLoading.value) {
+      return availableBuckets.value
+    }
+    isBucketListLoading.value = true
+    try {
+      const { data } = await axios.get<BucketInfo[]>('/api/list_buckets')
+      availableBuckets.value = data || []
+      bucketCdnMap.value = (data || []).reduce(
+        (acc, item) => {
+          if (item?.name) {
+            acc[item.name] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
+          }
+          return acc
+        },
+        {} as Record<string, string>
+      )
+      return availableBuckets.value
+    } catch (error) {
+      console.error('Failed to fetch bucket list', error)
+      availableBuckets.value = []
+      bucketCdnMap.value = {}
+      return availableBuckets.value
+    } finally {
+      isBucketListLoading.value = false
+    }
   }
 
   const list = async (
@@ -82,7 +131,7 @@ export const useBucketStore = defineStore('bucket', () => {
     })
   }
 
-  const getCDNUrl = (payload: R2Object | string) => {
+  const getCDNUrl = (payload: R2Object | string, bucketName = currentBucketName.value) => {
     if (!payload) {
       return ''
     }
@@ -90,7 +139,9 @@ export const useBucketStore = defineStore('bucket', () => {
     if (!filePath) {
       return ''
     }
-    const url = new URL(filePath, CDN_BASE_URL)
+    const cdnBaseUrl =
+      bucketCdnMap.value[bucketName] || (bucketName ? normalizeCdnBaseUrl(`/api/raw/${bucketName}/`) : CDN_BASE_URL)
+    const url = new URL(filePath, cdnBaseUrl)
     return url.toString()
   }
   const getThumbnailUrls = (
@@ -302,6 +353,11 @@ export const useBucketStore = defineStore('bucket', () => {
 
   return {
     client,
+    currentBucketName,
+    availableBuckets,
+    isBucketListLoading,
+    setCurrentBucket,
+    fetchBucketList,
     checkIsRandomUploadDir,
     checkIsHiddenDir,
     checkIsHiddenFile,
