@@ -72,26 +72,14 @@
       NIcon(size='12'): component(:is='isShowTopStickyRail ? IconChevronCompactUp : IconChevronCompactDown')
 
   //- Alerts
-  NAlert(
-    v-if='bucket.checkIsRandomUploadDir(currentPath)',
-    type='info',
-    title='Random upload',
-    closable,
-    my-4
-  ) 
+  NAlert(v-if='bucket.checkIsRandomUploadDir(currentPath)', type='info', title='Random upload', closable, my-4) 
     | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
     |
     NA(@click='isShowUploadHistory = true')
       NIcon(mr-1): IconHistory
       | upload history
     | .
-  NAlert(
-    v-if='bucket.checkIsHiddenDir(currentPath)',
-    type='warning',
-    title='Hidden directory',
-    closable,
-    my-4
-  )
+  NAlert(v-if='bucket.checkIsHiddenDir(currentPath)', type='warning', title='Hidden directory', closable, my-4)
     | This hidden directory is for internal use of the FlareDrive application.
     | It's strongly recommended to not upload or delete files in this directory.
 
@@ -182,14 +170,7 @@
     UploadProgress
 
   //- floating action button
-  NFloatButton(
-    type='primary',
-    menu-trigger='hover',
-    position='fixed',
-    bottom='3rem',
-    right='2rem',
-    z-2
-  )
+  NFloatButton(type='primary', menu-trigger='hover', position='fixed', bottom='3rem', right='2rem', z-2)
     NIcon: IconPlus
     template(#menu)
       NTooltip(
@@ -246,9 +227,8 @@ const UploadProgress = defineAsyncComponent(() => import('@/components/UploadPro
 
 const route = useRoute()
 const router = useRouter()
-const lastRoute = useLocalStorage('flaredrive:last-route', '/')
-
 const bucket = useBucketStore()
+const navigation = useNavigationStore()
 
 // Get bucket name from route param
 const currentBucketName = computed(() => {
@@ -278,7 +258,7 @@ onMounted(async () => {
 
 onBeforeRouteUpdate((to) => {
   if (to.name === '@browser') {
-    lastRoute.value = to.fullPath
+    navigation.saveCurrentRoute(to.fullPath)
   }
 })
 

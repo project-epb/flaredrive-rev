@@ -33,13 +33,11 @@ import { IconBucket, IconChevronRight, IconCloud } from '@tabler/icons-vue'
 
 const router = useRouter()
 const bucket = useBucketStore()
+const navigation = useNavigationStore()
 
 onMounted(async () => {
   const list = await bucket.fetchBucketList()
-  // Auto redirect if only one bucket
-  if (import.meta.env.PROD && list.length === 1 && list[0]?.name) {
-    router.replace(`/${list[0].name}/`)
-  }
+  await navigation.handleInitialNavigation(list)
 })
 
 const goToBucket = (bucketName: string) => {
