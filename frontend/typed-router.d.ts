@@ -39,16 +39,9 @@ declare module 'vue-router/auto-routes' {
     >,
     '@upload-standalone': RouteRecordInfo<
       '@upload-standalone',
-      '/@upload',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '@utils': RouteRecordInfo<
-      '@utils',
-      '/@utils',
-      Record<never, never>,
-      Record<never, never>,
+      '/:bucket/@upload',
+      { bucket: ParamValue<true> },
+      { bucket: ParamValue<false> },
       | never
     >,
   }
@@ -76,15 +69,9 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'frontend/pages/@upload.vue': {
+    'frontend/pages/[bucket]/@upload.vue': {
       routes:
         | '@upload-standalone'
-      views:
-        | never
-    }
-    'frontend/pages/@utils.vue': {
-      routes:
-        | '@utils'
       views:
         | never
     }
