@@ -46,15 +46,15 @@
           UButton(color='info', variant='ghost', size='sm', icon='i-lucide-pencil', @click.stop='handleEdit(bucket)') 编辑
           UButton(color='error', variant='ghost', size='sm', icon='i-lucide-trash', @click.stop='handleDelete(bucket)') 删除
 
-  UModal(v-model:open='showAddModal', :ui='{ width: "sm:max-w-2xl" }', :dismissible='false')
+  UModal(v-model:open='showAddModal', :ui='{ content: "sm:max-w-2xl" }', :dismissible='false')
     template(#header) 添加存储桶
     template(#body)
       BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
 
-  UModal(v-model:open='showEditModal', :ui='{ width: "sm:max-w-2xl" }', :dismissible='false')
+  UModal(v-model:open='showEditModal', :ui='{ content: "sm:max-w-2xl" }', :dismissible='false')
     template(#header) 编辑存储桶
     template(#body)
-      BucketForm(:bucket='currentBucket', @success='handleFormSuccess', @cancel='showEditModal = false')
+      BucketForm(:bucket='currentBucket || undefined', @success='handleFormSuccess', @cancel='showEditModal = false')
 
   UModal(v-model:open='showDeleteModal')
     template(#header)
@@ -71,6 +71,8 @@
 </template>
 
 <script setup lang="ts">
+import type { BucketInfo } from '~/composables/bucket'
+
 definePageMeta({
   middleware: 'auth',
 })
@@ -80,20 +82,20 @@ const toast = useToast()
 const bucketStore = useBucketStore()
 
 const loading = ref(false)
-const buckets = ref<any[]>([])
+const buckets = ref<BucketInfo[]>([])
 const showAddModal = ref(false)
 const showEditModal = ref(false)
-const currentBucket = ref<any>(null)
+const currentBucket = ref<BucketInfo | null>(null)
 
 const showDeleteModal = ref(false)
-const bucketToDelete = ref<any>(null)
+const bucketToDelete = ref<BucketInfo | null>(null)
 const deleting = ref(false)
 
 const fetchBuckets = async (force = false) => {
   loading.value = true
   try {
     buckets.value = await bucketStore.fetchBuckets(force)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to fetch buckets:', error)
     toast.add({ title: '获取存储桶列表失败', color: 'error' })
   } finally {
@@ -101,16 +103,16 @@ const fetchBuckets = async (force = false) => {
   }
 }
 
-const goToBucket = (bucket: any) => {
+const goToBucket = (bucket: BucketInfo) => {
   router.push(`/buckets/${bucket.id}/`)
 }
 
-const handleEdit = (bucket: any) => {
+const handleEdit = (bucket: BucketInfo) => {
   currentBucket.value = bucket
   showEditModal.value = true
 }
 
-const handleDelete = (bucket: any) => {
+const handleDelete = (bucket: BucketInfo) => {
   bucketToDelete.value = bucket
   showDeleteModal.value = true
 }

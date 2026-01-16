@@ -1,7 +1,7 @@
 <template lang="pug">
 .upload-form.space-y-6
   UCard.cursor-pointer.transition-all(
-    :ui='{ body: { padding: "" } }',
+    :ui='{ body: "p-0" }',
     :class='{ "ring-2 ring-primary": isDragOver }',
     @dragenter.prevent='onDragEnter',
     @dragover.prevent='onDragOver',
@@ -124,7 +124,7 @@ const uploadOne = async (file: File) => {
   const prefix = props.prefixReadonly ? normalizePrefix(props.prefix) : normalizePrefix(uploadPrefix.value)
   const key = `${prefix}${file.name}`
 
-  const presignResponse: any = await $fetch(`/api/objects/${props.bucketId}/presign`, {
+  const presignResponse = await $fetch<{ url: string }>(`/api/objects/${props.bucketId}/presign`, {
     method: 'POST',
     body: {
       key,

@@ -8,7 +8,7 @@
             UButton(
               v-if='currentPrefix',
               icon='i-lucide-arrow-left',
-              color='gray',
+              color='neutral',
               variant='ghost',
               @click='$emit("navigate", "..")'
             )
@@ -16,7 +16,7 @@
           .flex.items-center.gap-2
             UBadge(color='primary', variant='soft')
               | {{ imageItems.length }} 张图片
-            UBadge(v-if='textItems.length', color='blue', variant='soft')
+            UBadge(v-if='textItems.length', color='info', variant='soft')
               | {{ textItems.length }} 个文档
 
     .book-pages.space-y-8
@@ -68,13 +68,15 @@
       UIcon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
       p.text-gray-500(class='dark:text-gray-400') 加载中...
 
-  UAlert(v-else, icon='i-lucide-book-open', color='gray', variant='subtle', title='无可显示内容')
+  UAlert(v-else, icon='i-lucide-book-open', color='neutral', variant='subtle', title='无可显示内容')
     template(#description='')
       | 漫画视图仅显示图片和文本文件，当前目录暂无此类内容
 </template>
 
 <script setup lang="ts">
 import type { S3ObjectInfo } from '~/composables/bucket'
+
+type BookViewItem = S3ObjectInfo & { displayName: string; cdnUrl: string }
 
 interface Props {
   objects: S3ObjectInfo[]
@@ -123,7 +125,7 @@ const imageItems = computed(() => {
     })
     .map((obj) => ({
       ...obj,
-      displayName: obj.key.split('/').slice(-1)[0],
+      displayName: obj.key.split('/').slice(-1)[0] || '',
       cdnUrl: getCDNUrl(obj),
     }))
     .sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'))
@@ -140,7 +142,7 @@ const textItems = computed(() => {
     })
     .map((obj) => ({
       ...obj,
-      displayName: obj.key.split('/').slice(-1)[0],
+      displayName: obj.key.split('/').slice(-1)[0] || '',
       cdnUrl: getCDNUrl(obj),
     }))
     .sort((a, b) => a.key.localeCompare(b.key, 'zh-CN'))
@@ -155,7 +157,7 @@ const folders = computed(() => {
 const textContents = ref<Record<string, string>>({})
 
 // 加载文本内容
-async function loadTextContent(item: any) {
+async function loadTextContent(item: BookViewItem) {
   if (textContents.value[item.key]) return
 
   try {
@@ -190,7 +192,7 @@ function getFolderName(folder: string): string {
   return folder.split('/').filter(Boolean).slice(-1)[0] || folder
 }
 
-function handleImageClick(item: any, index: number) {
+function handleImageClick(item: BookViewItem, index: number) {
   // TODO: 可以实现图片预览功能
   console.log('Image clicked:', item, index)
 }

@@ -15,7 +15,7 @@
 
   .gallery-grid(v-if='!loading && sortedItems.length > 0')
     .gallery-item(v-for='item in sortedItems', :key='item.key', @click='handleItemClick(item)')
-      UCard.h-full.cursor-pointer.transition-all(class='hover:shadow-lg hover:scale-102', :ui='{ body: { padding: "p-0" } }')
+      UCard.h-full.cursor-pointer.transition-all(class='hover:shadow-lg hover:scale-102', :ui='{ body: "p-0" }')
         .item-preview.relative.overflow-hidden
           img.w-full.h-auto.object-cover.transition-transform(
             v-if='item.thumbnailUrl',
@@ -47,11 +47,11 @@
   .flex.justify-center.py-20(v-else-if='loading')
     UIcon.size-8.text-gray-400.animate-spin(name='i-lucide-loader')
 
-  UAlert(v-else, icon='i-lucide-image-off', color='gray', variant='subtle', title='暂无内容')
+  UAlert(v-else, icon='i-lucide-image-off', color='neutral', variant='subtle', title='暂无内容')
 </template>
 
 <script setup lang="ts">
-import type { S3ObjectInfo } from '~/composables/bucket'
+import type { S3ObjectInfo, BrowserItem, UIBadgeColor } from '~/composables/bucket'
 
 interface Props {
   objects: S3ObjectInfo[]
@@ -93,7 +93,7 @@ function setSortBy(key: 'name' | 'size' | 'date') {
 }
 
 const sortedItems = computed(() => {
-  const items: any[] = []
+  const items: BrowserItem[] = []
 
   // 返回上级目录
   if (props.currentPrefix) {
@@ -102,9 +102,9 @@ const sortedItems = computed(() => {
       displayName: '..',
       isFolder: true,
       icon: 'i-lucide-corner-up-left',
-      iconColor: 'gray',
+      iconColor: 'neutral',
       typeLabel: '上级',
-      badgeColor: 'gray',
+      badgeColor: 'neutral',
       sortKey: '',
     })
   }
@@ -117,16 +117,16 @@ const sortedItems = computed(() => {
       displayName: folderName,
       isFolder: true,
       icon: 'i-lucide-folder',
-      iconColor: 'amber',
+      iconColor: 'warning',
       typeLabel: '文件夹',
-      badgeColor: 'amber',
+      badgeColor: 'warning',
       sortKey: folderName,
     })
   })
 
   // 文件
   props.objects.forEach((obj) => {
-    const fileName = obj.key.split('/').slice(-1)[0]
+    const fileName = obj.key.split('/').slice(-1)[0] || ''
     const { icon, color } = getFileIcon(obj)
 
     items.push({
@@ -161,7 +161,7 @@ const sortedItems = computed(() => {
     // 根据选择的排序方式
     let compareValue = 0
     if (sortBy.value === 'name') {
-      compareValue = a.sortKey.localeCompare(b.sortKey, 'zh-CN')
+      compareValue = (a.sortKey || '').localeCompare(b.sortKey || '', 'zh-CN')
     } else if (sortBy.value === 'size' && !a.isFolder && !b.isFolder) {
       compareValue = (a.size || 0) - (b.size || 0)
     } else if (sortBy.value === 'date' && !a.isFolder && !b.isFolder) {
@@ -178,7 +178,7 @@ function getFileExtension(filename: string): string {
   return filename.split('.').pop()?.toLowerCase() || ''
 }
 
-function getFileIcon(obj: S3ObjectInfo) {
+function getFileIcon(obj: S3ObjectInfo): { icon: string; color: UIBadgeColor } {
   const ext = getFileExtension(obj.key)
 
   const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico']
@@ -187,25 +187,25 @@ function getFileIcon(obj: S3ObjectInfo) {
   const textExts = ['txt', 'md', 'json', 'xml', 'yml', 'yaml', 'css', 'html', 'js', 'ts']
 
   if (imageExts.includes(ext)) {
-    return { icon: 'i-lucide-image', color: 'green' }
+    return { icon: 'i-lucide-image', color: 'success' }
   }
   if (videoExts.includes(ext)) {
-    return { icon: 'i-lucide-video', color: 'purple' }
+    return { icon: 'i-lucide-video', color: 'primary' }
   }
   if (audioExts.includes(ext)) {
-    return { icon: 'i-lucide-music', color: 'pink' }
+    return { icon: 'i-lucide-music', color: 'primary' }
   }
   if (textExts.includes(ext)) {
-    return { icon: 'i-lucide-file-text', color: 'blue' }
+    return { icon: 'i-lucide-file-text', color: 'info' }
   }
   if (ext === 'pdf') {
-    return { icon: 'i-lucide-file-type', color: 'red' }
+    return { icon: 'i-lucide-file-type', color: 'error' }
   }
   if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-    return { icon: 'i-lucide-file-archive', color: 'orange' }
+    return { icon: 'i-lucide-file-archive', color: 'warning' }
   }
 
-  return { icon: 'i-lucide-file', color: 'gray' }
+  return { icon: 'i-lucide-file', color: 'neutral' }
 }
 
 function getFileType(obj: S3ObjectInfo): string {
@@ -231,31 +231,31 @@ function getThumbnailUrl(obj: S3ObjectInfo): string | undefined {
   return undefined
 }
 
-function handleItemClick(item: any) {
+function handleItemClick(item: BrowserItem) {
   if (item.isFolder) {
     emit('navigate', item.key === '../' ? '..' : item.key)
   } else {
-    emit('navigate', item)
+    emit('navigate', item as S3ObjectInfo)
   }
 }
 
-function getActionItems(item: any) {
+function getActionItems(item: BrowserItem) {
   return [
     [
       {
         label: '下载',
         icon: 'i-lucide-download',
-        click: () => emit('download', item),
+        click: () => emit('download', item as S3ObjectInfo),
       },
       {
         label: '重命名',
         icon: 'i-lucide-pencil',
-        click: () => emit('rename', item),
+        click: () => emit('rename', item as S3ObjectInfo),
       },
       {
         label: '删除',
         icon: 'i-lucide-trash',
-        click: () => emit('delete', item),
+        click: () => emit('delete', item as S3ObjectInfo),
       },
     ],
   ]

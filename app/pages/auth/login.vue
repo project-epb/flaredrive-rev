@@ -79,7 +79,7 @@ const handleSubmit = async () => {
         email: formValue.email,
         password: formValue.password,
       },
-    })) as any
+    }) as unknown) as { message?: string }
 
     if (response.message) {
       toast.add({
@@ -91,9 +91,9 @@ const handleSubmit = async () => {
 
     toast.add({ title: '登录成功', color: 'success' })
     router.push('/buckets')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Login error:', error)
-    toast.add({ title: error.data?.message || '登录失败，请稍后重试', color: 'error' })
+    toast.add({ title: (error as any).data?.message || '登录失败，请稍后重试', color: 'error' })
   } finally {
     loading.value = false
   }

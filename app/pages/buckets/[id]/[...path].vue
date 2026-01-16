@@ -68,7 +68,7 @@
       @navigate='handleNavigate'
     )
 
-  UModal(v-model:open='showUploadModal', :ui='{ width: "sm:max-w-2xl" }', title='上传文件')
+  UModal(v-model:open='showUploadModal', :ui='{ content: "sm:max-w-2xl" }', title='上传文件')
     template(#body)
       UploadForm(:bucket-id='bucketId', :prefix='currentPrefix', @success='handleUploadSuccess')
 
@@ -185,12 +185,12 @@ const fetchObjects = async () => {
     // 但我们的后端处理的是 [...path]
     // 更好的方式是直接拼接，让 fetch/浏览器处理，只需确保末尾有斜杠
 
-    const response = await $fetch<ObjectListResponse>(`/api/objects/${bucketId.value}/${requestPath}` as any, {
+    const response = await $fetch<ObjectListResponse>(`/api/objects/${bucketId.value}/${requestPath}` as string, {
       params: { delimiter: '/' },
     })
     objects.value = response.objects || []
     prefixes.value = response.prefixes || []
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to fetch objects:', error)
     toast.add({ title: '获取文件列表失败', color: 'error' })
   } finally {
@@ -254,7 +254,7 @@ const handleFileClick = (obj: S3ObjectInfo) => {
 
 const handleDownload = async (obj: S3ObjectInfo) => {
   try {
-    const response = await $fetch<{ url?: string }>(`/api/objects/${bucketId.value}/presign` as any, {
+    const response = await $fetch<{ url?: string }>(`/api/objects/${bucketId.value}/presign` as string, {
       method: 'POST',
       body: {
         key: obj.key,
@@ -280,8 +280,8 @@ const confirmDelete = async () => {
 
   deleting.value = true
   try {
-    await $fetch(`/api/objects/${bucketId.value}/${fileToDelete.value.key}` as any, {
-      method: 'DELETE' as any,
+    await $fetch(`/api/objects/${bucketId.value}/${fileToDelete.value.key}` as string, {
+      method: 'DELETE',
     })
     toast.add({ title: '删除成功', color: 'success' })
     showDeleteModal.value = false

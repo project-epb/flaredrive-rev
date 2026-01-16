@@ -48,8 +48,10 @@ UForm.space-y-4(@submit.prevent='handleSubmit')
 </template>
 
 <script setup lang="ts">
+import type { BucketInfo } from '~/composables/bucket'
+
 const props = defineProps<{
-  bucket?: any
+  bucket?: BucketInfo
 }>()
 
 const emit = defineEmits(['success', 'cancel'])
@@ -61,8 +63,8 @@ const formValue = reactive({
   bucketName: props.bucket?.bucketName || '',
   endpointUrl: props.bucket?.endpointUrl || '',
   region: props.bucket?.region || 'auto',
-  accessKeyId: props.bucket ? '' : '',
-  secretAccessKey: props.bucket ? '' : '',
+  accessKeyId: '',
+  secretAccessKey: '',
   cdnBaseUrl: props.bucket?.cdnBaseUrl || '',
   forcePathStyle: props.bucket?.forcePathStyle === 1,
 })
@@ -132,9 +134,9 @@ const handleSubmit = async () => {
     }
 
     emit('success')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to save bucket:', error)
-    toast.add({ title: error.data?.message || '操作失败', color: 'error' })
+    toast.add({ title: (error as any).data?.message || '操作失败', color: 'error' })
   } finally {
     loading.value = false
   }

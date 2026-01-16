@@ -9,12 +9,31 @@ export interface BucketInfo {
   createdAt: number
 }
 
+export type UIBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+
 export interface S3ObjectInfo {
   key: string
   size: number
   lastModified: string
   etag?: string
   contentType?: string
+}
+
+export interface BrowserItem extends Partial<S3ObjectInfo> {
+  key: string
+  displayName: string
+  isFolder: boolean
+  icon: string
+  typeLabel: string
+  badgeColor: UIBadgeColor
+  name?: string
+  formattedSize?: string
+  formattedDate?: string
+  thumbnailUrl?: string
+  type?: string
+  iconColor?: UIBadgeColor
+  sortKey?: string
+  cdnUrl?: string
 }
 
 export interface ObjectListResponse {

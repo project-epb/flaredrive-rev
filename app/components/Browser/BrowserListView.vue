@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import type { S3ObjectInfo } from '~/composables/bucket'
+import type { S3ObjectInfo, BrowserItem, UIBadgeColor } from '~/composables/bucket'
 
 interface Props {
   objects: S3ObjectInfo[]
@@ -77,7 +77,7 @@ const columns = [
 ]
 
 const tableData = computed(() => {
-  const items: any[] = []
+  const items: BrowserItem[] = []
 
   // 返回上级目录
   if (props.currentPrefix) {
@@ -87,7 +87,7 @@ const tableData = computed(() => {
       isFolder: true,
       icon: 'i-lucide-corner-up-left',
       typeLabel: '上级目录',
-      badgeColor: 'gray',
+      badgeColor: 'neutral',
     })
   }
 
@@ -100,13 +100,13 @@ const tableData = computed(() => {
       isFolder: true,
       icon: 'i-lucide-folder',
       typeLabel: '文件夹',
-      badgeColor: 'amber',
+      badgeColor: 'warning',
     })
   })
 
   // 文件
   props.objects.forEach((obj) => {
-    const fileName = obj.key.split('/').slice(-1)[0]
+    const fileName = obj.key.split('/').slice(-1)[0] || ''
     const { icon, color } = getFileIcon(obj)
 
     items.push({
@@ -131,7 +131,7 @@ function getFileExtension(filename: string): string {
   return filename.split('.').pop()?.toLowerCase() || ''
 }
 
-function getFileIcon(obj: S3ObjectInfo) {
+function getFileIcon(obj: S3ObjectInfo): { icon: string; color: UIBadgeColor } {
   // 由于列表 API 不返回 content-type，我们需要根据扩展名推断
   const ext = getFileExtension(obj.key)
 
@@ -141,25 +141,25 @@ function getFileIcon(obj: S3ObjectInfo) {
   const textExts = ['txt', 'md', 'json', 'xml', 'yml', 'yaml', 'css', 'html', 'js', 'ts']
 
   if (imageExts.includes(ext)) {
-    return { icon: 'i-lucide-image', color: 'green' }
+    return { icon: 'i-lucide-image', color: 'success' }
   }
   if (videoExts.includes(ext)) {
-    return { icon: 'i-lucide-video', color: 'purple' }
+    return { icon: 'i-lucide-video', color: 'primary' }
   }
   if (audioExts.includes(ext)) {
-    return { icon: 'i-lucide-music', color: 'pink' }
+    return { icon: 'i-lucide-music', color: 'primary' }
   }
   if (textExts.includes(ext)) {
-    return { icon: 'i-lucide-file-text', color: 'blue' }
+    return { icon: 'i-lucide-file-text', color: 'info' }
   }
   if (ext === 'pdf') {
-    return { icon: 'i-lucide-file-type', color: 'red' }
+    return { icon: 'i-lucide-file-type', color: 'error' }
   }
   if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
-    return { icon: 'i-lucide-file-archive', color: 'orange' }
+    return { icon: 'i-lucide-file-archive', color: 'warning' }
   }
 
-  return { icon: 'i-lucide-file', color: 'gray' }
+  return { icon: 'i-lucide-file', color: 'neutral' }
 }
 
 function getFileType(obj: S3ObjectInfo): string {
@@ -185,31 +185,31 @@ function getThumbnailUrl(obj: S3ObjectInfo): string | undefined {
   return undefined
 }
 
-function handleRowClick(row: any) {
+function handleRowClick(row: BrowserItem) {
   if (row.isFolder) {
     emit('navigate', row.key === '../' ? '..' : row.key)
   } else {
-    emit('navigate', row)
+    emit('navigate', row as S3ObjectInfo)
   }
 }
 
-function getActionItems(row: any) {
+function getActionItems(row: BrowserItem) {
   return [
     [
       {
         label: '下载',
         icon: 'i-lucide-download',
-        onSelect: () => emit('download', row),
+        onSelect: () => emit('download', row as S3ObjectInfo),
       },
       {
         label: '重命名',
         icon: 'i-lucide-pencil',
-        onSelect: () => emit('rename', row),
+        onSelect: () => emit('rename', row as S3ObjectInfo),
       },
       {
         label: '删除',
         icon: 'i-lucide-trash',
-        onSelect: () => emit('delete', row),
+        onSelect: () => emit('delete', row as S3ObjectInfo),
       },
     ],
   ]

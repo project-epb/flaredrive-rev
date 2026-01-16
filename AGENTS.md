@@ -10,7 +10,7 @@
 
 重构进度请参考 [迁移 TODO 列表](./docs/migration-todos.md)
 
-## 环境信息
+## 基本环境与相关文档
 
 - Node.js 版本：24.x LTS
 - 包管理器：bun
@@ -60,7 +60,7 @@ const data = ref('Hello, FlareDrive Rev!')
 
 ---
 
-## 残留文件夹说明
+## 附录：残留文件夹说明
 
 - `backend/`：旧的 Hono 后端代码，仅供参考，最终不再使用
 - `frontend/`：旧的 Vue 3 SPA 代码，需迁移至 Nuxt 结构，可复用的组件可以搬运到 Nuxt 项目中，无用的删掉
