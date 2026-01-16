@@ -1,2 +1,32 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+:root {
+  /* Cloudflare 品牌橙色作为主色调 */
+  --color-primary-50: #fff7ed;
+  --color-primary-100: #ffedd5;
+  --color-primary-200: #fed7aa;
+  --color-primary-300: #fdba74;
+  --color-primary-400: #fb923c;
+  --color-primary-500: #f97316; /* Cloudflare 橙色核心色 */
+  --color-primary-600: #ea580c;
+  --color-primary-700: #c2410c;
+  --color-primary-800: #9a3412;
+  --color-primary-900: #7c2d12;
+  --color-primary-950: #431407;
+}
+
+.dark {
+  /* 深色模式下稍微调亮一点以保持对比度 */
+  --color-primary-50: #431407;
+  --color-primary-100: #7c2d12;
+  --color-primary-200: #9a3412;
+  --color-primary-300: #c2410c;
+  --color-primary-400: #ea580c;
+  --color-primary-500: #f97316;
+  --color-primary-600: #fb923c;
+  --color-primary-700: #fdba74;
+  --color-primary-800: #fed7aa;
+  --color-primary-900: #ffedd5;
+  --color-primary-950: #fff7ed;
+}

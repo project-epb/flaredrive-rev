@@ -66,6 +66,8 @@
     "@types/node": "^25.0.9",
     "@unocss/nuxt": "^66.6.0",
     "@vue/language-plugin-pug": "^3.2.2",
+    "better-sqlite3": "^12.6.0",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "prettier": "^3.8.0",

@@ -12,7 +12,13 @@
 
           .flex.gap-4.justify-center
             UButton(color='primary', size='xl', icon='i-lucide-rocket', @click='handleGetStarted') 开始使用
-            UButton(color='white', variant='outline', size='xl', @click='$router.push("/auth/login")') 登录
+            UButton(
+              color='secondary',
+              variant='outline',
+              size='xl',
+              @click='$router.push("/auth/login")',
+              v-if='!isLoggedIn'
+            ) 登录
 
   .features-section.py-20
     UContainer
@@ -54,23 +60,25 @@ const features = [
   },
 ]
 
+const isLoggedIn = ref(false)
+
 const handleGetStarted = () => {
-  router.push('/auth/register')
+  if (isLoggedIn.value) {
+    router.push('/buckets')
+  } else {
+    router.push('/auth/register')
+  }
 }
 
-// 检查是否已登录，如果已登录则跳转到桶列表
 onMounted(async () => {
   try {
-    const { user, fetchUser } = useUser()
-    const currentUser = await fetchUser()
-
-    if (currentUser?.id) {
-      router.push('/buckets')
+    const { fetchUser } = useUser()
+    const user = await fetchUser()
+    if (user?.id) {
+      isLoggedIn.value = true
+      router.replace('/buckets')
     }
-  } catch (error) {
-    console.info('User not logged in', error)
-    // 未登录，保持在首页
-  }
+  } catch (_) {}
 })
 </script>
 

@@ -1,6 +1,6 @@
 <template lang="pug">
 UForm.space-y-4(@submit.prevent='handleSubmit')
-  UFormField(label='存储桶名称', required, hint='用于显示的别名')
+  UFormField(label='助记标题', required, hint='仅用于显示，可随意命名')
     UInput(v-model='formValue.name', placeholder='例如：我的图片存储', size='lg', icon='i-lucide-tag')
 
   UFormField(label='Bucket Name', required, hint='实际的 S3 桶名称')
@@ -19,7 +19,12 @@ UForm.space-y-4(@submit.prevent='handleSubmit')
 
   .grid.gap-4.grid-cols-1(class='md:grid-cols-2')
     UFormField(label='Access Key ID', :required='!bucket')
-      UInput(v-model='formValue.accessKeyId', :placeholder='bucket ? "若不修改请留空" : "输入 Access Key ID"', size='lg', icon='i-lucide-key')
+      UInput(
+        v-model='formValue.accessKeyId',
+        :placeholder='bucket ? "若不修改请留空" : "输入 Access Key ID"',
+        size='lg',
+        icon='i-lucide-key'
+      )
 
     UFormField(label='Secret Access Key', :required='!bucket')
       UInput(

@@ -6,64 +6,67 @@
         UBreadcrumb(:items='breadcrumbItems')
 
       .actions.flex.items-center.gap-3
+        //- 视图切换
+        UFieldGroup(orientation='horizontal')
+          UButton(
+            :color='viewMode === "list" ? "primary" : "neutral"',
+            :variant='viewMode === "list" ? "solid" : "soft"',
+            icon='i-lucide-list',
+            @click='viewMode = "list"'
+          )
+          UButton(
+            :color='viewMode === "gallery" ? "primary" : "neutral"',
+            :variant='viewMode === "gallery" ? "solid" : "soft"',
+            icon='i-lucide-grid-2x2',
+            @click='viewMode = "gallery"'
+          )
+          UButton(
+            :color='viewMode === "book" ? "primary" : "neutral"',
+            :variant='viewMode === "book" ? "solid" : "soft"',
+            icon='i-lucide-book-open',
+            @click='viewMode = "book"'
+          )
+
+        UDivider.hidden(orientation='vertical', class='md:block')
+
         UButton(color='primary', icon='i-lucide-upload', @click='showUploadModal = true') 上传文件
-        UButton(color='gray', variant='outline', icon='i-lucide-refresh-cw', :loading='loading', @click='refresh') 刷新
+        UButton(color='neutral', variant='outline', icon='i-lucide-refresh-cw', :loading='loading', @click='refresh') 刷新
 
-    .flex.justify-center.py-20(v-if='loading && !objects.length && !prefixes.length')
-      .text-center
-        UIcon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
-        p.text-gray-500(class='dark:text-gray-400') 加载中...
-
-    UAlert(
-      v-else-if='!objects.length && !prefixes.length',
-      icon='i-lucide-folder-open',
-      color='primary',
-      variant='soft',
-      title='目录为空'
+    //- 列表视图
+    BrowserListView(
+      v-if='viewMode === "list"',
+      :objects='objects',
+      :prefixes='prefixes',
+      :current-prefix='currentPrefix',
+      :loading='loading',
+      @navigate='handleNavigate',
+      @download='handleDownload',
+      @delete='handleDelete',
+      @rename='handleRename'
     )
-      template(#description='')
-        | 此目录暂无文件，点击上方"上传文件"按钮开始上传
 
-    .space-y-3(v-else)
-      //- 文件夹列表
-      UCard.cursor-pointer.transition-all(
-        v-for='prefix in prefixes',
-        :key='prefix',
-        class='hover:shadow-md',
-        @click='goTo(prefix)'
-      )
-        .flex.items-center.gap-4
-          .p-3.rounded-lg.bg-amber-100(class='dark:bg-amber-900/20')
-            UIcon.size-6.text-amber-600(name='i-lucide-folder')
-          .flex-1.min-w-0
-            h3.font-medium.text-lg {{ getFolderName(prefix) }}
-            p.text-sm.text-gray-500(class='dark:text-gray-400') 文件夹
-          UIcon.size-5.text-gray-400(name='i-lucide-chevron-right')
+    //- 画廊视图
+    BrowserGalleryView(
+      v-else-if='viewMode === "gallery"',
+      :objects='objects',
+      :prefixes='prefixes',
+      :current-prefix='currentPrefix',
+      :loading='loading',
+      @navigate='handleNavigate',
+      @download='handleDownload',
+      @delete='handleDelete',
+      @rename='handleRename'
+    )
 
-      //- 文件列表
-      UCard.cursor-pointer.transition-all(
-        v-for='obj in objects',
-        :key='obj.key',
-        class='hover:shadow-md',
-        @click='handleFileClick(obj)'
-      )
-        .flex.items-center.gap-4
-          .p-3.rounded-lg.bg-blue-100(class='dark:bg-blue-900/20')
-            UIcon.size-6.text-blue-600(dynamic, :name='getFileIcon(obj.key)')
-          .flex-1.min-w-0
-            h3.font-medium.truncate {{ getFileName(obj.key) }}
-            .flex.gap-4.mt-1.text-xs.text-gray-500(class='dark:text-gray-400')
-              span {{ FileHelper.formatBytes(obj.size) }}
-              span {{ FileHelper.formatDate(obj.lastModified) }}
-          .flex.items-center.gap-2
-            UButton(
-              color='gray',
-              variant='ghost',
-              size='sm',
-              icon='i-lucide-download',
-              @click.stop='handleDownload(obj)'
-            )
-            UButton(color='red', variant='ghost', size='sm', icon='i-lucide-trash', @click.stop='handleDelete(obj)')
+    //- 漫画视图
+    BrowserBookView(
+      v-else-if='viewMode === "book"',
+      :objects='objects',
+      :prefixes='prefixes',
+      :current-prefix='currentPrefix',
+      :loading='loading',
+      @navigate='handleNavigate'
+    )
 
   UModal(v-model:open='showUploadModal', :ui='{ width: "sm:max-w-2xl" }', title='上传文件')
     template(#body)
@@ -79,8 +82,8 @@
         | " 吗？
       template(#footer='')
         .flex.justify-end.gap-3
-          UButton(color='gray', variant='outline', @click='showDeleteModal = false') 取消
-          UButton(color='red', :loading='deleting', @click='confirmDelete') 删除
+          UButton(color='neutral', variant='outline', @click='showDeleteModal = false') 取消
+          UButton(color='error', :loading='deleting', @click='confirmDelete') 删除
 </template>
 
 <script setup lang="ts">
@@ -94,6 +97,22 @@ const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const bucketStore = useBucketStore()
+
+// 视图模式
+const viewMode = ref<'list' | 'gallery' | 'book'>('list')
+
+// 从 localStorage 恢复视图模式
+onMounted(() => {
+  const savedViewMode = localStorage.getItem('browse-view-mode')
+  if (savedViewMode && ['list', 'gallery', 'book'].includes(savedViewMode)) {
+    viewMode.value = savedViewMode as 'list' | 'gallery' | 'book'
+  }
+})
+
+// 保存视图模式到 localStorage
+watch(viewMode, (newMode) => {
+  localStorage.setItem('browse-view-mode', newMode)
+})
 
 const bucketId = computed(() => route.params.id as string)
 const currentPath = computed(() => {
@@ -123,18 +142,22 @@ const pathParts = computed(() => {
 })
 
 const breadcrumbItems = computed(() => {
-  const items = [
+  const items: {
+    label: string
+    icon?: string
+    to: string
+  }[] = [
     {
       label: bucketName.value || 'Bucket',
       icon: 'i-lucide-database',
-      click: () => goTo(''),
+      to: `/buckets/${bucketId.value}/`,
     },
   ]
 
   pathParts.value.forEach((part, index) => {
     items.push({
       label: decodeURIComponent(part),
-      click: () => goTo(pathParts.value.slice(0, index + 1).join('/')),
+      to: `/buckets/${bucketId.value}/${pathParts.value.slice(0, index + 1).join('/')}/`,
     })
   })
 
@@ -201,6 +224,29 @@ const getFileIcon = (filename: string) => {
   return FileHelper.getIcon(filename)
 }
 
+const handleNavigate = (item: S3ObjectInfo | string) => {
+  if (typeof item === 'string') {
+    // 处理特殊导航
+    if (item === '..') {
+      // 返回上级
+      const parts = pathParts.value
+      if (parts.length > 0) {
+        parts.pop()
+        const newPath = parts.join('/')
+        router.push(`/buckets/${bucketId.value}/${newPath ? newPath + '/' : ''}`)
+      } else {
+        router.push(`/buckets/${bucketId.value}/`)
+      }
+    } else {
+      // 普通文件夹导航
+      router.push(`/buckets/${bucketId.value}/${item}`)
+    }
+  } else {
+    // 文件点击
+    handleFileClick(item)
+  }
+}
+
 const handleFileClick = (obj: S3ObjectInfo) => {
   // TODO: 实现文件预览
   console.log('File clicked:', obj)
@@ -250,6 +296,12 @@ const confirmDelete = async () => {
 
 const refresh = () => {
   fetchObjects()
+}
+
+const handleRename = (obj: S3ObjectInfo) => {
+  // TODO: 实现重命名功能
+  console.log('Rename:', obj)
+  toast.add({ title: '重命名功能开发中', color: 'info' })
 }
 
 const handleUploadSuccess = () => {

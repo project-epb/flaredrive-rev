@@ -46,12 +46,12 @@
           UButton(color='info', variant='ghost', size='sm', icon='i-lucide-pencil', @click.stop='handleEdit(bucket)') 编辑
           UButton(color='error', variant='ghost', size='sm', icon='i-lucide-trash', @click.stop='handleDelete(bucket)') 删除
 
-  UModal(v-model:open='showAddModal', :ui='{ width: "sm:max-w-2xl" }')
+  UModal(v-model:open='showAddModal', :ui='{ width: "sm:max-w-2xl" }', :dismissible='false')
     template(#header) 添加存储桶
     template(#body)
       BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
 
-  UModal(v-model:open='showEditModal', :ui='{ width: "sm:max-w-2xl" }')
+  UModal(v-model:open='showEditModal', :ui='{ width: "sm:max-w-2xl" }', :dismissible='false')
     template(#header) 编辑存储桶
     template(#body)
       BucketForm(:bucket='currentBucket', @success='handleFormSuccess', @cancel='showEditModal = false')
@@ -102,7 +102,7 @@ const fetchBuckets = async (force = false) => {
 }
 
 const goToBucket = (bucket: any) => {
-  router.push(`/browse/${bucket.id}`)
+  router.push(`/buckets/${bucket.id}/`)
 }
 
 const handleEdit = (bucket: any) => {

@@ -32,7 +32,7 @@ function getLocalD1Path() {
 
 export default defineConfig({
   out: './drizzle',
-  schema: './db/',
+  schema: './server/db/schema.ts',
   dialect: 'sqlite',
   driver: IS_LOCAL_MODE ? undefined : 'd1-http',
   dbCredentials: IS_LOCAL_MODE
