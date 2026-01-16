@@ -3,6 +3,7 @@ import type { BucketInfo } from '@/models/R2BucketClient'
 export const useNavigationStore = defineStore('navigation', () => {
   const router = useRouter()
   const lastRoute = useLocalStorage('flaredrive:last-route', '/')
+  const didInitialNavigation = ref(false)
 
   /**
    * Save current route as last visited
@@ -55,15 +56,27 @@ export const useNavigationStore = defineStore('navigation', () => {
    * Priority: lastRoute > single bucket redirect > stay on home
    */
   async function handleInitialNavigation(availableBuckets: BucketInfo[]): Promise<void> {
+    if (didInitialNavigation.value) {
+      return
+    }
+
     // Try to restore last route first
     if (tryRestoreLastRoute(availableBuckets)) {
+      didInitialNavigation.value = true
       return
     }
 
     // In production, auto redirect if only one bucket
     if (import.meta.env.PROD && tryRedirectToSingleBucket(availableBuckets)) {
+      didInitialNavigation.value = true
       return
     }
+
+    didInitialNavigation.value = true
+  }
+
+  function markInitialNavigationDone() {
+    didInitialNavigation.value = true
   }
 
   return {
@@ -72,5 +85,6 @@ export const useNavigationStore = defineStore('navigation', () => {
     tryRestoreLastRoute,
     tryRedirectToSingleBucket,
     handleInitialNavigation,
+    markInitialNavigationDone,
   }
 })

@@ -46,22 +46,42 @@ const router = useRouter()
 const breadParts = computed<
   {
     label: string // display name
-    key: string // real path
+    key: string // for template key
+    bucket: string // bucket name (first part)
+    path?: string // path within bucket
   }[]
 >(() => {
   const parts = route.path.split('/').filter(Boolean)
-  return parts.map((part, index) => {
-    return {
-      label: part,
-      key: parts.slice(0, index + 1).join('/'),
-    }
-  })
+  if (parts.length === 0) {
+    return []
+  }
+  const bucket = parts[0]!
+  const pathParts = parts.slice(1)
+
+  const result: { label: string; key: string; bucket: string; path?: string }[] = [
+    { label: bucket, key: bucket, bucket },
+  ]
+
+  if (pathParts.length > 0) {
+    pathParts.forEach((part, index) => {
+      const path = pathParts.slice(0, index + 1).join('/')
+      result.push({
+        label: decodeURI(part),
+        key: `${bucket}/${path}`,
+        bucket,
+        path,
+      })
+    })
+  }
+
+  return result
 })
-const onBreadClick = (item: { label: string; key: string }, index: number) => {
+const onBreadClick = (item: { label: string; key: string; bucket: string; path?: string }, index: number) => {
   if (index + 1 === breadParts.value.length) {
     return // current route
   }
-  router.push({ name: '@browser', params: { path: item.key } })
+  const path = item.path || ''
+  router.push(`/${item.bucket}/${path}${path ? '/' : ''}`)
 }
 
 const scrollRef = useTemplateRef('scrollRef')

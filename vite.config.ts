@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { resolve } from 'node:path'
+import { config } from 'dotenv'
 import { defineConfig } from 'vite'
 import Vue from '@vitejs/plugin-vue'
 import VueJsx from '@vitejs/plugin-vue-jsx'
@@ -12,6 +13,12 @@ import VueRouter from 'unplugin-vue-router/vite'
 import UnoCSS from 'unocss/vite'
 
 const IS_PROD = process.env.NODE_ENV === 'production' && process.env.BUILD_ENV !== 'development'
+
+config({ path: resolve(import.meta.dirname, '.env') })
+config({
+  path: resolve(import.meta.dirname, IS_PROD ? '.env.production' : '.env.development'),
+  override: true,
+})
 
 export default defineConfig({
   plugins: [

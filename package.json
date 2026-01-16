@@ -54,6 +54,7 @@
     "@vitejs/plugin-vue-jsx": "^5.1.3",
     "@vue/language-plugin-pug": "^3.2.2",
     "@vue/tsconfig": "^0.8.1",
+    "dotenv": "^17.2.3",
     "hono": "^4.11.4",
     "prettier": "^3.8.0",
     "pug": "^3.0.3",
