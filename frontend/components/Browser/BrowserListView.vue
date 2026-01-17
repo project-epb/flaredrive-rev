@@ -54,7 +54,7 @@ const columns = computed(() => {
       key: '_preview',
       width: 40,
       render: (row: R2Object) => {
-        const thumbs = bucket.getThumbnailUrls(row, true)
+        const thumbs = bucket.getThumbnailUrls(row)
         if (thumbs) {
           return (
             <NImage

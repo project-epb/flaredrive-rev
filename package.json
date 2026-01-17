@@ -16,7 +16,7 @@
     "drizzle:generate": "drizzle-kit generate",
     "drizzle:migrate": "drizzle-kit migrate",
     "drizzle:push": "wrangler d1 migrations apply D1 --local",
-    "drizzle:push-prod": "wrangler d1 migrations apply D1 --remote",
+    "drizzle:push-prod": "cross-env DRIZZLE_STUDIO_MODE=prod drizzle-kit migrate",
     "drizzle:studio": "cross-env DRIZZLE_STUDIO_MODE=local drizzle-kit studio",
     "drizzle:studio-prod": "cross-env DRIZZLE_STUDIO_MODE=prod drizzle-kit studio"
   },

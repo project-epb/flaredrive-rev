@@ -4,24 +4,19 @@ import { eq, and, gt } from 'drizzle-orm'
 import { users, sessions } from '../../db/schema.js'
 import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
-import { parseBoolean, readEnv } from '../../common/app-env.js'
+import { parseBoolean } from '../../common/app-env.js'
+import { readEnvVars } from '../utils/readCtxEnv.js'
 
 const COOKIE_NAME = 'flaredrive_session'
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30
 
-const readCtxEnv = (ctx: any, key: string) => {
-  const bindings = (ctx?.env || {}) as Record<string, unknown>
-  if (typeof bindings[key] !== 'undefined') return bindings[key]
-  return readEnv(key)
-}
-
 const isRegistrationEnabled = (ctx: any) => {
-  const raw = readCtxEnv(ctx, 'ALLOW_REGISTER')
+  const raw = readEnvVars(ctx, 'ALLOW_REGISTER')
   return parseBoolean(raw, true)
 }
 
 const getAdminCreateToken = (ctx: any) => {
-  const raw = readCtxEnv(ctx, 'ADMIN_CREATE_TOKEN')
+  const raw = readEnvVars(ctx, 'ADMIN_CREATE_TOKEN')
   return typeof raw === 'string' ? raw.trim() : ''
 }
 

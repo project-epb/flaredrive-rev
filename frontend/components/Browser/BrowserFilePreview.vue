@@ -70,9 +70,9 @@
         tr
           th CDN URL
           td: NA(:href='cdnUrl', target='_blank') {{ cdnUrl }}
-        tr(v-if='item?.customMetadata?.thumbnail')
+        tr(v-if='thumbnailUrl')
           th Thumbnail URL
-          td: NA(:href='bucket.getThumbnailUrls(item)?.square', target='_blank') {{ bucket.getThumbnailUrls(item)?.square }}
+          td: NA(:href='thumbnailUrl', target='_blank') {{ thumbnailUrl }}
 
       details
         pre {{ item }}
@@ -116,6 +116,10 @@ const fileNameParts = computed(() => {
 const cdnUrl = computed(() => {
   if (!props.item) return ''
   return bucket.getCDNUrl(props.item)
+})
+const thumbnailUrl = computed(() => {
+  if (!props.item) return ''
+  return bucket.getThumbnailUrls(props.item)?.square || ''
 })
 
 const previewType = computed(() => FileHelper.getPreviewType(props.item))

@@ -24,10 +24,15 @@ import { buckets } from './routes/buckets.js'
 import { objects } from './routes/objects.js'
 
 import type { D1Database } from '@cloudflare/workers-types/2023-07-01'
+import { BlankEnv } from 'hono/types'
 
-export interface HonoEnv {
+export interface HonoEnv extends BlankEnv {
   Bindings: {
     D1: D1Database
+    [key: string]: unknown
+  }
+  Variables: {
+    ADMIN_CREATE_TOKEN?: string
     [key: string]: unknown
   }
 }
