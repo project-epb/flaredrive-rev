@@ -1,22 +1,18 @@
 <template lang="pug">
 .browser-book-view
   .book-container(v-if='!loading && (imageItems.length > 0 || textItems.length > 0)')
-    UCard.mb-6
+    NCard.mb-6
       template(#header='')
         .flex.items-center.justify-between
           .flex.items-center.gap-3
-            UButton(
-              v-if='currentPrefix',
-              icon='i-lucide-arrow-left',
-              color='neutral',
-              variant='ghost',
-              @click='$emit("navigate", "..")'
-            )
+            NButton(v-if='currentPrefix', quaternary, @click='$emit("navigate", "..")')
+              template(#icon)
+                Icon(name='i-lucide-arrow-left')
             .text-xl.font-bold {{ bookTitle }}
           .flex.items-center.gap-2
-            UBadge(color='primary', variant='soft')
+            NTag(type='primary', :bordered='false')
               | {{ imageItems.length }} 张图片
-            UBadge(v-if='textItems.length', color='info', variant='soft')
+            NTag(v-if='textItems.length', type='info', :bordered='false')
               | {{ textItems.length }} 个文档
 
     .book-pages.space-y-8
@@ -36,44 +32,47 @@
 
       //- 文本页面
       .book-page.text-page(v-for='(item, index) in textItems', :key='item.key')
-        UDivider.my-6
+        NDivider.my-6
           .text-lg.font-medium {{ item.displayName }}
 
         .page-content.prose.prose-gray.max-w-none.mx-auto(class='dark:prose-invert')
           .text-center.py-8(v-if='!textContents[item.key]')
-            UIcon.size-8.text-gray-400.animate-spin(name='i-lucide-loader')
+            Icon.size-8.text-gray-400.animate-spin(name='i-lucide-loader')
           .whitespace-pre-wrap(v-else) {{ textContents[item.key] }}
 
         .text-center.mt-6.text-sm.text-gray-400.select-none(class='dark:text-gray-500') --- EOF ---
 
     //- 文件夹导航
     .folder-navigation(v-if='folders.length > 0')
-      UCard.mt-6
+      NCard.mt-6
         template(#header='')
           .text-lg.font-medium 相关文件夹
 
         .grid.grid-cols-2.gap-3(class='md:grid-cols-3 lg:grid-cols-4')
-          UCard.cursor-pointer.transition-all(
+          NCard.cursor-pointer.transition-all(
             v-for='folder in folders',
             :key='folder',
             class='hover:shadow-md',
-            @click='$emit("navigate", folder)'
+            @click='$emit("navigate", folder)',
+            size='small'
           )
             .flex.items-center.gap-3
-              UIcon.text-amber-500(name='i-lucide-folder', size='24')
+              Icon.text-amber-500(name='i-lucide-folder', size='24')
               .flex-1.min-w-0.truncate {{ getFolderName(folder) }}
 
   .flex.justify-center.py-20(v-else-if='loading')
     .text-center
-      UIcon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
+      Icon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
       p.text-gray-500(class='dark:text-gray-400') 加载中...
 
-  UAlert(v-else, icon='i-lucide-book-open', color='neutral', variant='subtle', title='无可显示内容')
-    template(#description='')
+  NAlert(v-else, type='info', title='无可显示内容')
+    template(#default)
       | 漫画视图仅显示图片和文本文件，当前目录暂无此类内容
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
+import { NButton, NCard, NTag, NDivider, NAlert } from 'naive-ui'
 import type { S3ObjectInfo } from '~/composables/bucket'
 
 type BookViewItem = S3ObjectInfo & { displayName: string; cdnUrl: string }
@@ -91,6 +90,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   navigate: [item: S3ObjectInfo | string]
+  preview: [item: S3ObjectInfo]
 }>()
 
 // 书名
@@ -193,65 +193,6 @@ function getFolderName(folder: string): string {
 }
 
 function handleImageClick(item: BookViewItem, index: number) {
-  // TODO: 可以实现图片预览功能
-  console.log('Image clicked:', item, index)
+  emit('preview', item)
 }
 </script>
-
-<style lang="scss" scoped>
-.browser-book-view {
-  .book-pages {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-  }
-
-  .book-page {
-    page-break-after: always;
-    break-after: page;
-
-    .page-image {
-      img {
-        cursor: zoom-in;
-        transition: transform 0.2s;
-
-        &:hover {
-          transform: scale(1.02);
-        }
-      }
-    }
-
-    &.text-page {
-      .page-content {
-        padding: 2rem;
-        background: rgba(0, 0, 0, 0.02);
-        border-radius: 0.5rem;
-        min-height: 200px;
-
-        @media (prefers-color-scheme: dark) {
-          background: rgba(255, 255, 255, 0.05);
-        }
-      }
-    }
-  }
-
-  .folder-navigation {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-  }
-}
-
-// 打印样式
-@media print {
-  .browser-book-view {
-    .book-page {
-      page-break-inside: avoid;
-    }
-
-    .folder-navigation {
-      display: none;
-    }
-  }
-}
-</style>

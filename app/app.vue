@@ -1,5 +1,5 @@
 <template lang="pug">
-UApp
+NaiveuiProvider
   NuxtLayout
     NuxtPage
 </template>

@@ -15,7 +15,7 @@
 - Node.js 版本：24.x LTS
 - 包管理器：bun
 - 前端框架：Nuxt 4.x https://nuxt.com/llms.txt
-- 前端组件库：Nuxt UI https://ui.nuxt.com/llms.txt
+- 前端组件库：Naive UI (via @bg-dev/nuxt-naiveui or nuxtjs-naive-ui)
 - 样式解决方案：tailwind + SCSS
 - 工具库：VueUse, unplugin-auto-import, unplugin-vue-components
 - 状态管理：Pinia

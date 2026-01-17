@@ -1,50 +1,58 @@
 <template lang="pug">
-UForm.space-y-4(@submit.prevent='handleSubmit')
-  UFormField(label='助记标题', required, hint='仅用于显示，可随意命名')
-    UInput(v-model='formValue.name', placeholder='例如：我的图片存储', size='lg', icon='i-lucide-tag')
+form.space-y-4(@submit.prevent='handleSubmit')
+  NFormItem(label='显示名称', required, feedback='仅用于显示，可随意命名')
+    NInput(v-model:value='formValue.name', placeholder='例如：我的图片存储', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-tag')
 
-  UFormField(label='Bucket Name', required, hint='实际的 S3 桶名称')
-    UInput(v-model='formValue.bucketName', placeholder='例如：my-bucket', size='lg', icon='i-lucide-database')
+  NFormItem(label='Bucket Name', required, feedback='实际的 S3 桶名称')
+    NInput(v-model:value='formValue.bucketName', placeholder='例如：my-bucket', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-database')
 
-  UFormField(label='Endpoint URL', required, hint='S3 服务的端点地址')
-    UInput(
-      v-model='formValue.endpointUrl',
-      placeholder='例如：https://s3.amazonaws.com',
-      size='lg',
-      icon='i-lucide-server'
-    )
+  NFormItem(label='Endpoint URL', required, feedback='S3 服务的端点地址')
+    NInput(v-model:value='formValue.endpointUrl', placeholder='例如：https://s3.amazonaws.com', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-server')
 
-  UFormField(label='Region', required)
-    UInput(v-model='formValue.region', placeholder='例如：us-east-1 或 auto', size='lg', icon='i-lucide-map-pin')
+  NFormItem(label='Region', required)
+    NInput(v-model:value='formValue.region', placeholder='例如：us-east-1 或 auto', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-map-pin')
 
   .grid.gap-4.grid-cols-1(class='md:grid-cols-2')
-    UFormField(label='Access Key ID', :required='!bucket')
-      UInput(
-        v-model='formValue.accessKeyId',
+    NFormItem(label='Access Key ID', :required='!bucket')
+      NInput(
+        v-model:value='formValue.accessKeyId',
         :placeholder='bucket ? "若不修改请留空" : "输入 Access Key ID"',
-        size='lg',
-        icon='i-lucide-key'
+        size='large'
       )
+        template(#prefix)
+          Icon(name='i-lucide-key')
 
-    UFormField(label='Secret Access Key', :required='!bucket')
-      UInput(
-        v-model='formValue.secretAccessKey',
+    NFormItem(label='Secret Access Key', :required='!bucket')
+      NInput(
+        v-model:value='formValue.secretAccessKey',
         type='password',
         :placeholder='bucket ? "若不修改请留空" : "输入 Secret Access Key"',
-        size='lg',
-        icon='i-lucide-lock',
-        autocomplete='new-password'
+        size='large',
+        show-password-on='click',
+        :input-props='{ autocomplete: "new-password" }'
       )
+        template(#prefix)
+          Icon(name='i-lucide-lock')
 
-  UFormField(label='CDN Base URL', hint='可选，用于加速访问')
-    UInput(v-model='formValue.cdnBaseUrl', placeholder='例如：https://cdn.example.com', size='lg', icon='i-lucide-globe')
+  NFormItem(label='CDN Base URL', feedback='可选，用于加速访问')
+    NInput(v-model:value='formValue.cdnBaseUrl', placeholder='例如：https://cdn.example.com', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-globe')
 
-  UFormField
-    UCheckbox(v-model='formValue.forcePathStyle', label='强制路径样式')
+  NFormItem
+    NCheckbox(v-model:checked='formValue.forcePathStyle') 强制路径样式
 
   .flex.justify-end.gap-3.pt-4
-    UButton(color='error', variant='ghost', @click='$emit("cancel")') 取消
-    UButton(type='submit', color='primary', size='lg', :loading='loading') {{ bucket ? '保存' : '添加' }}
+    NButton(type='error', quaternary, @click='$emit("cancel")') 取消
+    NButton(attr-type='submit', type='primary', size='large', :loading='loading') {{ bucket ? '保存' : '添加' }}
 </template>
 
 <script setup lang="ts">
@@ -55,7 +63,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['success', 'cancel'])
-const toast = useToast()
+const message = useMessage()
 const loading = ref(false)
 
 const formValue = reactive({
@@ -82,31 +90,31 @@ const isValidUrl = (value: string) => {
 const handleSubmit = async () => {
   try {
     if (!formValue.name) {
-      toast.add({ title: '请输入存储桶名称', color: 'warning' })
+      message.warning('请输入存储桶名称')
       return
     }
     if (!formValue.bucketName) {
-      toast.add({ title: '请输入 Bucket Name', color: 'warning' })
+      message.warning('请输入 Bucket Name')
       return
     }
     if (!formValue.endpointUrl) {
-      toast.add({ title: '请输入 Endpoint URL', color: 'warning' })
+      message.warning('请输入 Endpoint URL')
       return
     }
     if (!isValidUrl(formValue.endpointUrl)) {
-      toast.add({ title: '请输入有效的 URL', color: 'warning' })
+      message.warning('请输入有效的 URL')
       return
     }
     if (!formValue.region) {
-      toast.add({ title: '请输入 Region', color: 'warning' })
+      message.warning('请输入 Region')
       return
     }
     if (!props.bucket && !formValue.accessKeyId) {
-      toast.add({ title: '请输入 Access Key ID', color: 'warning' })
+      message.warning('请输入 Access Key ID')
       return
     }
     if (!props.bucket && !formValue.secretAccessKey) {
-      toast.add({ title: '请输入 Secret Access Key', color: 'warning' })
+      message.warning('请输入 Secret Access Key')
       return
     }
 
@@ -123,20 +131,20 @@ const handleSubmit = async () => {
         method: 'PUT',
         body: payload,
       })
-      toast.add({ title: '更新成功', color: 'success' })
+      message.success('更新成功')
     } else {
       // 添加模式
       await $fetch('/api/buckets', {
         method: 'POST',
         body: payload,
       })
-      toast.add({ title: '添加成功', color: 'success' })
+      message.success('添加成功')
     }
 
     emit('success')
   } catch (error) {
     console.error('Failed to save bucket:', error)
-    toast.add({ title: (error as any).data?.message || '操作失败', color: 'error' })
+    message.error((error as any).data?.message || '操作失败')
   } finally {
     loading.value = false
   }

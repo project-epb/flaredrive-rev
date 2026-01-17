@@ -1,7 +1,7 @@
 <template lang="pug">
 .min-h-screen.flex.flex-col.bg-gray-50(class='dark:bg-gray-950')
   header.sticky.top-0.z-50.border-b.backdrop-blur-lg(class='bg-white/80 dark:bg-gray-900/80')
-    UContainer
+    .container.mx-auto.px-4
       .h-16.flex.items-center.justify-between.gap-4
         .min-w-0.flex.items-center.gap-4
           NuxtLink.flex.items-center.gap-2.font-bold.text-xl.transition-colors(to='/', class='hover:text-primary')
@@ -16,23 +16,27 @@
             ) 全部存储桶
 
         .flex.items-center.gap-3
-          UButton(:icon='currentThemeIcon', color='neutral', variant='ghost', square, @click='toggleTheme')
+          NButton(quaternary, circle, @click='toggleTheme')
+            template(#icon)
+              Icon(:name='currentThemeIcon')
 
-          UDropdownMenu(:items='userMenuItems', :popper='{ placement: "bottom-end" }')
-            UButton(icon='i-lucide-user', color='neutral', variant='ghost', square)
+          NDropdown(:options='userMenuOptions', trigger='click')
+            NButton(quaternary, circle)
+              template(#icon)
+                Icon(name='i-lucide-user')
 
   main.flex-1
-    UContainer.py-8
+    .container.mx-auto.px-4.py-8
       slot
 
   footer.border-t.mt-auto.bg-white(class='dark:bg-gray-900')
-    UContainer
+    .container.mx-auto.px-4
       .py-6.text-center.text-sm.text-gray-600(class='dark:text-gray-400')
         | Copyright © {{ new Date().getFullYear() }} FlareDrive. All rights reserved.
 </template>
 
 <script setup lang="ts">
-import type { DropdownMenuItem } from '#ui/types'
+import { h, resolveComponent } from 'vue'
 
 const router = useRouter()
 // const route = useRoute()  <-- route 也没用了，除非别的用了
@@ -46,27 +50,35 @@ const toggleTheme = () => {
   colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 
-const userMenuItems = computed<DropdownMenuItem[][]>(() => {
-  return [
-    [
-      {
-        label: '设置',
-        icon: 'i-lucide-settings',
-        click: () => {
-          // TODO: 跳转到设置页面
-        },
-      },
-    ],
-    [
-      {
-        label: '退出登录',
-        icon: 'i-lucide-log-out',
-        click: () => {
+const renderIcon = (iconName: string) => {
+  return () => h(resolveComponent('Icon'), { name: iconName })
+}
+
+const userMenuOptions = [
+  {
+    label: '设置',
+    key: 'settings',
+    icon: renderIcon('i-lucide-settings'),
+    props: {
+      onClick: () => {
+        // TODO: 跳转到设置页面
+      }
+    }
+  },
+  {
+     type: 'divider',
+     key: 'd1'
+  },
+  {
+    label: '退出登录',
+    key: 'logout',
+    icon: renderIcon('i-lucide-log-out'),
+    props: {
+        onClick: () => {
           // TODO: 实现登出逻辑
           router.push('/auth/login')
-        },
-      },
-    ],
-  ]
-})
+        }
+    }
+  },
+]
 </script>

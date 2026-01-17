@@ -3,34 +3,48 @@
   .flex.flex-col.gap-6
     .page-header.flex.flex-col.gap-4(class='md:flex-row md:items-center md:justify-between')
       .breadcrumb-wrapper
-        UBreadcrumb(:items='breadcrumbItems')
+        NBreadcrumb
+           NBreadcrumbItem(v-for='item in breadcrumbItems' :key='item.to')
+             router-link(:to="item.to")
+               .flex.items-center.gap-1
+                 Icon(v-if="item.icon" :name="item.icon" size="14")
+                 span {{ item.label }}
 
       .actions.flex.items-center.gap-3
         //- 视图切换
-        UFieldGroup(orientation='horizontal')
-          UButton(
-            :color='viewMode === "list" ? "primary" : "neutral"',
-            :variant='viewMode === "list" ? "solid" : "soft"',
-            icon='i-lucide-list',
+        NButtonGroup
+          NButton(
+            :type='viewMode === "list" ? "primary" : "default"',
+            :secondary='viewMode !== "list"',
             @click='viewMode = "list"'
           )
-          UButton(
-            :color='viewMode === "gallery" ? "primary" : "neutral"',
-            :variant='viewMode === "gallery" ? "solid" : "soft"',
-            icon='i-lucide-grid-2x2',
-            @click='viewMode = "gallery"'
+            template(#icon)
+              Icon(name='i-lucide-list')
+          NButton(
+             :type='viewMode === "gallery" ? "primary" : "default"',
+             :secondary='viewMode !== "gallery"',
+             @click='viewMode = "gallery"'
           )
-          UButton(
-            :color='viewMode === "book" ? "primary" : "neutral"',
-            :variant='viewMode === "book" ? "solid" : "soft"',
-            icon='i-lucide-book-open',
-            @click='viewMode = "book"'
+             template(#icon)
+               Icon(name='i-lucide-grid-2x2')
+          NButton(
+             :type='viewMode === "book" ? "primary" : "default"',
+             :secondary='viewMode !== "book"',
+             @click='viewMode = "book"'
           )
+             template(#icon)
+               Icon(name='i-lucide-book-open')
 
-        UDivider.hidden(orientation='vertical', class='md:block')
+        NDivider(vertical, class='hidden md:block', style="height: 24px")
 
-        UButton(color='primary', icon='i-lucide-upload', @click='showUploadModal = true') 上传文件
-        UButton(color='neutral', variant='outline', icon='i-lucide-refresh-cw', :loading='loading', @click='refresh') 刷新
+        NButton(type='primary', @click='showUploadModal = true')
+           template(#icon)
+             Icon(name='i-lucide-upload')
+           | 上传文件
+        NButton(secondary, :loading='loading', @click='refresh')
+           template(#icon)
+             Icon(name='i-lucide-refresh-cw')
+           | 刷新
 
     //- 列表视图
     BrowserListView(
@@ -42,7 +56,8 @@
       @navigate='handleNavigate',
       @download='handleDownload',
       @delete='handleDelete',
-      @rename='handleRename'
+      @rename='handleRename',
+      @preview='handlePreview'
     )
 
     //- 画廊视图
@@ -55,7 +70,8 @@
       @navigate='handleNavigate',
       @download='handleDownload',
       @delete='handleDelete',
-      @rename='handleRename'
+      @rename='handleRename',
+      @preview='handlePreview'
     )
 
     //- 漫画视图
@@ -65,29 +81,41 @@
       :prefixes='prefixes',
       :current-prefix='currentPrefix',
       :loading='loading',
-      @navigate='handleNavigate'
+      @navigate='handleNavigate',
+      @preview='handlePreview'
     )
 
-  UModal(v-model:open='showUploadModal', :ui='{ content: "sm:max-w-2xl" }', title='上传文件')
-    template(#body)
+  NModal(v-model:show='showUploadModal', preset='card', title='上传文件', style='width: 600px')
       UploadForm(:bucket-id='bucketId', :prefix='currentPrefix', @success='handleUploadSuccess')
 
-  UModal(v-if='showDeleteModal', v-model:open='showDeleteModal')
-    UCard
-      template(#header='')
-        h2.text-xl.font-semibold 确认删除
+  NModal(v-model:show='showDeleteModal', preset='dialog', title='确认删除')
       p.text-gray-600(class='dark:text-gray-400')
         | 确定要删除文件 "
         strong {{ fileToDelete ? getFileName(fileToDelete.key) : '' }}
         | " 吗？
-      template(#footer='')
-        .flex.justify-end.gap-3
-          UButton(color='neutral', variant='outline', @click='showDeleteModal = false') 取消
-          UButton(color='error', :loading='deleting', @click='confirmDelete') 删除
+      template(#action)
+          NButton(@click='showDeleteModal = false') 取消
+          NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
+
+  BrowserPreviewModal(
+    v-model:show='showPreviewModal',
+    :item='previewItem',
+    :bucket-id='bucketId',
+    @download='handleDownload',
+    @delete='handleDelete'
+  )
 </template>
 
 <script setup lang="ts">
 import type { S3ObjectInfo, ObjectListResponse } from '../../../composables/bucket'
+
+const showPreviewModal = ref(false)
+const previewItem = ref<S3ObjectInfo | null>(null)
+
+function handlePreview(item: S3ObjectInfo) {
+  previewItem.value = item
+  showPreviewModal.value = true
+}
 
 definePageMeta({
   middleware: 'auth',
@@ -95,7 +123,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
+const message = useMessage()
 const bucketStore = useBucketStore()
 
 // 视图模式
@@ -192,7 +220,7 @@ const fetchObjects = async () => {
     prefixes.value = response.prefixes || []
   } catch (error) {
     console.error('Failed to fetch objects:', error)
-    toast.add({ title: '获取文件列表失败', color: 'error' })
+    message.error('获取文件列表失败')
   } finally {
     loading.value = false
   }
@@ -266,7 +294,7 @@ const handleDownload = async (obj: S3ObjectInfo) => {
       window.open(response.url, '_blank')
     }
   } catch (error) {
-    toast.add({ title: '获取下载链接失败', color: 'error' })
+    message.error('获取下载链接失败')
   }
 }
 
@@ -283,12 +311,12 @@ const confirmDelete = async () => {
     await $fetch(`/api/objects/${bucketId.value}/${fileToDelete.value.key}` as string, {
       method: 'DELETE',
     })
-    toast.add({ title: '删除成功', color: 'success' })
+    message.success('删除成功')
     showDeleteModal.value = false
     fileToDelete.value = null
     await fetchObjects()
   } catch (error) {
-    toast.add({ title: '删除失败', color: 'error' })
+    message.error('删除失败')
   } finally {
     deleting.value = false
   }
@@ -301,7 +329,7 @@ const refresh = () => {
 const handleRename = (obj: S3ObjectInfo) => {
   // TODO: 实现重命名功能
   console.log('Rename:', obj)
-  toast.add({ title: '重命名功能开发中', color: 'info' })
+  message.info('重命名功能开发中')
 }
 
 const handleUploadSuccess = () => {

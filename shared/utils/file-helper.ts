@@ -87,6 +87,23 @@ export class FileHelper {
     return IconFile
   }
 
+  static getPreviewType(filename: string): 'image' | 'video' | 'audio' | 'markdown' | 'text' | 'pdf' | 'iframe' | 'unknown' {
+    if (this.isImage(filename)) return 'image'
+    if (this.isVideo(filename)) return 'video'
+    if (this.isAudio(filename)) return 'audio'
+    if (this.getFileExtension(filename) === 'md') return 'markdown'
+    if (this.isText(filename) || this.isCode(filename)) return 'text'
+    if (this.getFileExtension(filename) === 'pdf') return 'iframe'
+    return 'unknown'
+  }
+
+  static getSimpleFileInfo(filename: string) {
+    return {
+      name: filename.split('/').pop() || filename,
+      ext: this.getFileExtension(filename)
+    }
+  }
+
   static formatBytes(bytes: number): string {
     if (bytes === 0) return '0 B'
 

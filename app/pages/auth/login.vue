@@ -1,36 +1,39 @@
 <template lang="pug">
 #login
-  UCard
-    template(#header='')
+  NCard
+    template(#header)
       h2.text-2xl.font-bold.text-center 登录
 
-    UForm.space-y-4(@submit.prevent='handleSubmit')
-      UFormField(label='邮箱', required)
-        UInput(
-          v-model='formValue.email',
-          type='email',
+    form.space-y-4(@submit.prevent='handleSubmit')
+      NFormItem(label='邮箱')
+        NInput(
+          v-model:value='formValue.email',
+          type='text',
           placeholder='请输入邮箱',
-          autocomplete='email',
-          size='lg',
-          icon='i-lucide-mail'
+          size='large',
+          :input-props="{ autocomplete: 'email' }"
         )
+           template(#prefix)
+             Icon(name='i-lucide-mail')
 
-      UFormField(label='密码', required)
-        UInput(
-          v-model='formValue.password',
+      NFormItem(label='密码')
+        NInput(
+          v-model:value='formValue.password',
           type='password',
           placeholder='请输入密码',
-          autocomplete='current-password',
-          size='lg',
-          icon='i-lucide-lock'
+          size='large',
+          show-password-on='click',
+          :input-props="{ autocomplete: 'current-password' }"
         )
+           template(#prefix)
+             Icon(name='i-lucide-lock')
 
-      UButton(type='submit', color='primary', block, size='lg', :loading='loading') 登录
+      NButton(type='primary', block, size='large', :loading='loading', attr-type='submit') 登录
 
     template(#footer='')
       .text-center.text-sm
         span.text-gray-600(class='dark:text-gray-400') 还没有账号？
-        UButton(variant='link', color='primary', padded=false, @click='$router.push("/auth/register")') 立即注册
+        NButton(text, type='primary', @click='$router.push("/auth/register")') 立即注册
 </template>
 
 <script setup lang="ts">
@@ -39,7 +42,7 @@ definePageMeta({
 })
 
 const router = useRouter()
-const toast = useToast()
+const message = useMessage()
 const loading = ref(false)
 
 const formValue = reactive({
@@ -55,19 +58,19 @@ const isValidEmail = (email: string) => {
 const handleSubmit = async () => {
   try {
     if (!formValue.email) {
-      toast.add({ title: '请输入邮箱', color: 'warning' })
+      message.warning('请输入邮箱')
       return
     }
     if (!isValidEmail(formValue.email)) {
-      toast.add({ title: '请输入有效的邮箱地址', color: 'warning' })
+      message.warning('请输入有效的邮箱地址')
       return
     }
     if (!formValue.password) {
-      toast.add({ title: '请输入密码', color: 'warning' })
+      message.warning('请输入密码')
       return
     }
     if (formValue.password.length < 8) {
-      toast.add({ title: '密码至少 8 个字符', color: 'warning' })
+      message.warning('密码至少 8 个字符')
       return
     }
 
@@ -82,18 +85,16 @@ const handleSubmit = async () => {
     }) as unknown) as { message?: string }
 
     if (response.message) {
-      toast.add({
-        title: response.message === 'invalid credentials' ? '邮箱或密码错误' : response.message,
-        color: 'error',
-      })
+      const msg = response.message === 'invalid credentials' ? '邮箱或密码错误' : response.message
+      message.error(msg)
       return
     }
 
-    toast.add({ title: '登录成功', color: 'success' })
+    message.success('登录成功')
     router.push('/buckets')
   } catch (error) {
     console.error('Login error:', error)
-    toast.add({ title: (error as any).data?.message || '登录失败，请稍后重试', color: 'error' })
+    message.error((error as any).data?.message || '登录失败，请稍后重试')
   } finally {
     loading.value = false
   }

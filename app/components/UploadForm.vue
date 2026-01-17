@@ -1,33 +1,42 @@
 <template lang="pug">
 .upload-form.space-y-6
-  UCard.cursor-pointer.transition-all(
-    :ui='{ body: "p-0" }',
+  NCard.cursor-pointer.transition-all(
+    content-style='padding: 0',
     :class='{ "ring-2 ring-primary": isDragOver }',
     @dragenter.prevent='onDragEnter',
     @dragover.prevent='onDragOver',
     @dragleave.prevent='onDragLeave',
     @drop.prevent='onDrop',
-    @click='openFilePicker'
+    @click='openFilePicker',
+    hoverable
   )
     input.sr-only(ref='fileInputRef', type='file', multiple, @change='onFileInputChange')
     .flex.flex-col.items-center.gap-4.p-12.text-center
       .p-4.rounded-full.bg-primary-100(class='dark:bg-primary-900/20')
-        UIcon.size-12.text-primary(name='i-lucide-upload')
+        Icon.size-12.text-primary(name='i-lucide-upload')
       div
         .text-lg.font-semibold.mb-2 点击选择文件或拖拽到此区域
         .text-sm.text-gray-500(class='dark:text-gray-400') 支持单个或批量上传
-      UButton(color='primary', size='lg', icon='i-lucide-file-plus') 选择文件
+      NButton(type='primary', size='large')
+        template(#icon)
+          Icon(name='i-lucide-file-plus')
+        | 选择文件
 
-  UFormField(v-if='!prefixReadonly', label='上传路径', hint='可选，指定文件上传的目录')
-    UInput(v-model='uploadPrefix', placeholder='例如：folder/subfolder/', size='lg', icon='i-lucide-folder')
+  NFormItem(v-if='!prefixReadonly', label='上传路径', feedback='可选，指定文件上传的目录')
+    NInput(v-model:value='uploadPrefix', placeholder='例如：folder/subfolder/', size='large')
+      template(#prefix)
+        Icon(name='i-lucide-folder')
 
-  UCard(v-if='files.length')
-    template(#header='')
+  NCard(v-if='files.length', size='small')
+    template(#header)
       .flex.items-center.justify-between
         .flex.items-center.gap-2
-          UIcon.size-5(name='i-lucide-files')
+          Icon.size-5(name='i-lucide-files')
           span.font-semibold 待上传文件 ({{ files.length }})
-        UButton(color='error', variant='ghost', size='sm', icon='i-lucide-x', @click='files = []') 清空
+        NButton(type='error', quaternary, size='small', @click='files = []')
+          template(#icon)
+            Icon(name='i-lucide-x')
+          | 清空
 
     .space-y-2
       .flex.items-center.justify-between.gap-3.p-3.rounded-lg.bg-gray-50(
@@ -36,13 +45,15 @@
         class='dark:bg-gray-800'
       )
         .flex.items-center.gap-3.flex-1.min-w-0
-          UIcon.size-5.text-blue-600(name='i-lucide-file')
+          Icon.size-5.text-blue-600(name='i-lucide-file')
           .min-w-0
             p.font-medium.truncate {{ f.name }}
             p.text-xs.text-gray-500(class='dark:text-gray-400') {{ formatBytes(f.size) }}
 
-    template(#footer='')
-      UButton(color='primary', size='lg', block, :loading='uploading', icon='i-lucide-upload', @click='uploadAll')
+    template(#action)
+      NButton(type='primary', size='large', block, :loading='uploading', @click='uploadAll')
+        template(#icon)
+          Icon(name='i-lucide-upload')
         | 开始上传
 </template>
 
@@ -60,7 +71,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits(['success'])
-const toast = useToast()
+const message = useMessage()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const isDragOver = ref(false)
@@ -152,7 +163,7 @@ const uploadOne = async (file: File) => {
 
 const uploadAll = async () => {
   if (!files.value.length) {
-    toast.add({ title: '请选择要上传的文件', color: 'warning' })
+    message.warning('请选择要上传的文件')
     return
   }
 
@@ -160,14 +171,14 @@ const uploadAll = async () => {
   try {
     for (const file of files.value) {
       await uploadOne(file)
-      toast.add({ title: `${file.name} 上传成功`, color: 'success' })
+      message.success(`${file.name} 上传成功`)
     }
 
     files.value = []
     emit('success')
   } catch (error) {
     console.error('Upload error:', error)
-    toast.add({ title: '上传失败', color: 'error' })
+    message.error('上传失败')
   } finally {
     uploading.value = false
   }

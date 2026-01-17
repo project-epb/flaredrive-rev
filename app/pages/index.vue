@@ -1,8 +1,8 @@
 <template lang="pug">
 .home-page
   .hero-section
-    UContainer
-      .hero-content
+    .container.mx-auto.px-4
+      .hero-content.text-white
         .flex.flex-col.items-center.text-center
           .mb-8
             img.mx-auto(src='/favicon.png', alt='FlareDrive', width='96', height='96')
@@ -11,25 +11,26 @@
           p.text-lg.mb-8.opacity-75 支持 Cloudflare R2、AWS S3、MinIO 等多种存储后端
 
           .flex.gap-4.justify-center
-            UButton(color='primary', size='xl', icon='i-lucide-rocket', @click='handleGetStarted') 开始使用
-            UButton(
-              color='secondary',
-              variant='outline',
-              size='xl',
+            NButton(type='primary', size='large', @click='handleGetStarted')
+              template(#icon)
+                Icon(name='i-lucide-rocket')
+              | 开始使用
+            NButton(
+              size='large',
               @click='$router.push("/auth/login")',
               v-if='!isLoggedIn'
-            ) 登录
+            )
+              | 登录
 
   .features-section.py-20
-    UContainer
+    .container.mx-auto.px-4
       h2.text-4xl.font-bold.text-center.mb-16 核心特性
       .grid.gap-8.grid-cols-1(class='md:grid-cols-2 lg:grid-cols-4')
-        UCard(v-for='feature in features', :key='feature.title')
-          template(#header='')
+        NCard(v-for='feature in features', :key='feature.title', content-style='padding: 0')
+          .p-6.text-center
             .flex.justify-center.mb-4
               .p-4.rounded-full.bg-primary-100(class='dark:bg-primary-900/20')
-                UIcon.size-8.text-primary(dynamic, :name='feature.icon')
-          .text-center
+                Icon.size-8.text-primary(:name='feature.icon')
             h3.text-xl.font-semibold.mb-2 {{ feature.title }}
             p.text-gray-600(class='dark:text-gray-400') {{ feature.description }}
 </template>

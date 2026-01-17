@@ -4,70 +4,72 @@
     div
       h1.text-3xl.font-bold 存储桶管理
       p.text-gray-600.mt-1(class='dark:text-gray-400') 管理您的 S3 兼容存储桶
-    UButton(color='primary', size='lg', icon='i-lucide-plus', @click='showAddModal = true') 添加存储桶
+    NButton(type='primary', size='large', @click='showAddModal = true')
+      template(#icon)
+        Icon(name='i-lucide-plus')
+      | 添加存储桶
 
   .flex.justify-center.py-20(v-if='loading')
     .text-center
-      UIcon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
+      Icon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
       p.text-gray-500(class='dark:text-gray-400') 加载中...
 
-  UAlert(v-else-if='!buckets.length', icon='i-lucide-inbox', color='primary', variant='soft', title='还没有存储桶')
-    template(#description='')
-      | 点击右上角的"添加存储桶"按钮开始添加您的第一个存储桶
+  NAlert(v-else-if='!buckets.length', type='info', title='还没有存储桶')
+    | 点击右上角的"添加存储桶"按钮开始添加您的第一个存储桶
 
   .grid.gap-6.grid-cols-1(v-else, class='sm:grid-cols-2 lg:grid-cols-3')
-    UCard.cursor-pointer.transition-shadow(
+    NCard.cursor-pointer.transition-shadow(
       v-for='bucket in buckets',
       :key='bucket.id',
       class='hover:shadow-lg',
-      @click='goToBucket(bucket)'
+      @click='goToBucket(bucket)',
+      hoverable
     )
-      template(#header='')
+      template(#header)
         .flex.items-center.gap-3
           .p-3.rounded-lg.bg-primary-100(class='dark:bg-primary-900/20')
-            UIcon.size-6.text-primary(name='i-lucide-database')
+             Icon.size-6.text-primary(name='i-lucide-database')
           .flex-1.min-w-0
             h3.font-semibold.text-lg.truncate {{ bucket.name }}
             p.text-sm.text-gray-500.truncate(class='dark:text-gray-400') {{ bucket.bucketName }}
 
-      .space-y-2.text-sm
+      .space-y-2.text-sm.mb-4
         .flex.items-center.gap-2(v-if='bucket.endpointUrl')
-          UIcon.size-4.text-gray-400(name='i-lucide-server')
+          Icon.size-4.text-gray-400(name='i-lucide-server')
           span.text-gray-600.truncate(class='dark:text-gray-400') {{ bucket.endpointUrl }}
         .flex.items-center.gap-2(v-if='bucket.region')
-          UIcon.size-4.text-gray-400(name='i-lucide-map-pin')
+          Icon.size-4.text-gray-400(name='i-lucide-map-pin')
           span.text-gray-600(class='dark:text-gray-400') {{ bucket.region }}
         .flex.items-center.gap-2(v-if='bucket.cdnBaseUrl')
-          UIcon.size-4.text-gray-400(name='i-lucide-globe')
+          Icon.size-4.text-gray-400(name='i-lucide-globe')
           span.text-gray-600.truncate(class='dark:text-gray-400') {{ bucket.cdnBaseUrl }}
 
-      template(#footer='')
+      template(#action)
         .flex.justify-end.gap-2
-          UButton(color='info', variant='ghost', size='sm', icon='i-lucide-pencil', @click.stop='handleEdit(bucket)') 编辑
-          UButton(color='error', variant='ghost', size='sm', icon='i-lucide-trash', @click.stop='handleDelete(bucket)') 删除
+          NButton(type='info', quaternary, size='small', @click.stop='handleEdit(bucket)')
+             template(#icon)
+               Icon(name='i-lucide-pencil')
+             | 编辑
+          NButton(type='error', quaternary, size='small', @click.stop='handleDelete(bucket)')
+             template(#icon)
+               Icon(name='i-lucide-trash')
+             | 删除
 
-  UModal(v-model:open='showAddModal', :ui='{ content: "sm:max-w-2xl" }', :dismissible='false')
-    template(#header) 添加存储桶
-    template(#body)
+  NModal(v-model:show='showAddModal', preset='card', title='添加存储桶', style='width: 600px')
       BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
 
-  UModal(v-model:open='showEditModal', :ui='{ content: "sm:max-w-2xl" }', :dismissible='false')
-    template(#header) 编辑存储桶
-    template(#body)
+  NModal(v-model:show='showEditModal', preset='card', title='编辑存储桶', style='width: 600px')
       BucketForm(:bucket='currentBucket || undefined', @success='handleFormSuccess', @cancel='showEditModal = false')
 
-  UModal(v-model:open='showDeleteModal')
-    template(#header)
-      h2.text-xl.font-semibold 确认删除
-    template(#body)
+  NModal(v-model:show='showDeleteModal', preset='card', title='确认删除', style='width: 400px', :auto-focus='false')
       p.text-gray-600(class='dark:text-gray-400')
         | 确定要删除存储桶 "
         strong {{ bucketToDelete?.name }}
         | " 吗？此操作不可恢复。
-    template(#footer)
-      .flex.justify-end.gap-3
-        UButton(color='neutral', variant='outline', @click='showDeleteModal = false') 取消
-        UButton(color='error', :loading='deleting', @click='confirmDelete') 删除
+      template(#footer)
+        .flex.justify-end.gap-3
+           NButton(@click='showDeleteModal = false') 取消
+           NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
 </template>
 
 <script setup lang="ts">
@@ -78,7 +80,7 @@ definePageMeta({
 })
 
 const router = useRouter()
-const toast = useToast()
+const message = useMessage()
 const bucketStore = useBucketStore()
 
 const loading = ref(false)
@@ -97,7 +99,7 @@ const fetchBuckets = async (force = false) => {
     buckets.value = await bucketStore.fetchBuckets(force)
   } catch (error) {
     console.error('Failed to fetch buckets:', error)
-    toast.add({ title: '获取存储桶列表失败', color: 'error' })
+    message.error('获取存储桶列表失败')
   } finally {
     loading.value = false
   }
@@ -124,12 +126,12 @@ const confirmDelete = async () => {
     await $fetch(`/api/buckets/${bucketToDelete.value.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: '删除成功', color: 'success' })
+    message.success('删除成功')
     showDeleteModal.value = false
     bucketToDelete.value = null
     await fetchBuckets(true)
   } catch (error) {
-    toast.add({ title: '删除失败', color: 'error' })
+    message.error('删除失败')
   } finally {
     deleting.value = false
   }

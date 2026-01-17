@@ -24,7 +24,9 @@
 
     //- 底部操作
     .mt-6.flex.justify-center
-      UButton(:icon='currentThemeIcon', color='white', variant='ghost', size='lg', square, @click='toggleTheme')
+      NButton(quaternary, circle, size='large', @click='toggleTheme', class='text-white')
+        template(#icon)
+          Icon(:name='currentThemeIcon')
 </template>
 
 <script setup lang="ts">

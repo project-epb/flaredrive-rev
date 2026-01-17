@@ -1,37 +1,12 @@
 <template lang="pug">
 .browser-list-view
-  UTable(:data='tableData', :columns='columns')
-    template(#name-cell='{ row }')
-      .flex.items-center.gap-3
-        .preview-cell
-          UAvatar(
-            v-if='row.original.thumbnailUrl',
-            :src='row.original.thumbnailUrl',
-            size='md',
-            :alt='row.original.displayName'
-          )
-          UIcon.text-2xl(v-else, :name='row.original.icon')
-        .min-w-0.flex-1
-          .font-medium.truncate.cursor-pointer(class='hover:underline', @click='handleRowClick(row.original)') {{ row.original.displayName }}
-
-    template(#size-cell='{ row }')
-      span(v-if='!row.original.isFolder') {{ row.original.formattedSize }}
-      span.text-gray-400(v-else) -
-
-    template(#type-cell='{ row }')
-      UBadge(:color='row.original.badgeColor', variant='subtle', size='xs') {{ row.original.typeLabel }}
-
-    template(#lastModified-cell='{ row }')
-      span(v-if='!row.original.isFolder') {{ row.original.formattedDate }}
-      span.text-gray-400(v-else) -
-
-    template(#actions-cell='{ row }')
-      .flex.items-center.justify-end.gap-2(v-if='!row.original.isFolder', @click.stop)
-        UDropdownMenu(:items='getActionItems(row.original)')
-          UButton(color='neutral', variant='ghost', icon='i-lucide-more-horizontal', size='xs')
+  NDataTable(:data='tableData', :columns='columns', :loading='loading')
 </template>
 
 <script setup lang="ts">
+import { h, resolveComponent } from 'vue'
+import { NAvatar, NTag, NDropdown, NButton } from 'naive-ui'
+import type { DataTableColumns } from 'naive-ui'
 import type { S3ObjectInfo, BrowserItem, UIBadgeColor } from '~/composables/bucket'
 
 interface Props {
@@ -47,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   navigate: [item: S3ObjectInfo | string]
+  preview: [item: S3ObjectInfo]
   download: [item: S3ObjectInfo]
   delete: [item: S3ObjectInfo]
   rename: [item: S3ObjectInfo]
@@ -54,25 +30,119 @@ const emit = defineEmits<{
 
 const { formatFileSize } = useFileHelper()
 
-const columns = [
+const colorToType = (color: string): 'default' | 'primary' | 'info' | 'success' | 'warning' | 'error' => {
+  if (color === 'neutral') return 'default'
+  return color as any
+}
+
+const renderIcon = (name: string, props = {}) => {
+  return h(resolveComponent('Icon'), { name, ...props })
+}
+
+const getActionOptions = (row: BrowserItem) => {
+  return [
+    {
+      label: '下载',
+      key: 'download',
+      icon: () => renderIcon('i-lucide-download'),
+      props: {
+        onClick: () => emit('download', row as S3ObjectInfo),
+      },
+    },
+    {
+      label: '预览',
+      key: 'preview',
+      icon: () => renderIcon('i-lucide-eye'),
+      props: {
+        onClick: () => emit('preview', row as S3ObjectInfo),
+      },
+    },
+    {
+      label: '重命名',
+      key: 'rename',
+      icon: () => renderIcon('i-lucide-pencil'),
+      props: {
+        onClick: () => emit('rename', row as S3ObjectInfo),
+      },
+    },
+    {
+      label: '删除',
+      key: 'delete',
+      icon: () => renderIcon('i-lucide-trash'),
+      props: {
+        onClick: () => emit('delete', row as S3ObjectInfo),
+      },
+    },
+  ]
+}
+
+const columns: DataTableColumns<BrowserItem> = [
   {
-    accessorKey: 'name',
-    header: '名称',
+    title: '名称',
+    key: 'name',
+    render(row) {
+      return h('div', { class: 'flex items-center gap-3' }, [
+        h('div', { class: 'preview-cell flex items-center justify-center w-8' }, [
+          row.thumbnailUrl
+            ? h(NAvatar, { src: row.thumbnailUrl, size: 'small' })
+            : renderIcon(row.icon, { class: 'text-2xl' }),
+        ]),
+        h(
+          'div',
+          {
+            class: 'font-medium truncate cursor-pointer hover:underline min-w-0 flex-1',
+            onClick: () => handleRowClick(row),
+          },
+          row.displayName
+        ),
+      ])
+    },
   },
   {
-    accessorKey: 'size',
-    header: '大小',
+    title: '大小',
+    key: 'size',
+    render(row) {
+      return row.isFolder ? '-' : row.formattedSize
+    },
   },
   {
-    accessorKey: 'type',
-    header: '类型',
+    title: '类型',
+    key: 'type',
+    render(row) {
+      const type = colorToType(row.badgeColor)
+      return h(NTag, { type, size: 'small', bordered: false }, { default: () => row.typeLabel })
+    },
   },
   {
-    accessorKey: 'lastModified',
-    header: '修改时间',
+    title: '修改时间',
+    key: 'lastModified',
+    render(row) {
+      return row.isFolder ? '-' : row.formattedDate
+    },
   },
   {
-    id: 'actions',
+    title: '操作',
+    key: 'actions',
+    render(row) {
+      if (row.isFolder) return null
+      return h(
+        NDropdown,
+        {
+          options: getActionOptions(row),
+          trigger: 'click',
+        },
+        {
+          default: () =>
+            h(
+              NButton,
+              { size: 'small', quaternary: true, circle: true },
+              {
+                icon: () => renderIcon('i-lucide-more-horizontal'),
+              }
+            ),
+        }
+      )
+    },
   },
 ]
 
@@ -88,7 +158,7 @@ const tableData = computed(() => {
       icon: 'i-lucide-corner-up-left',
       typeLabel: '上级目录',
       badgeColor: 'neutral',
-    })
+    } as any)
   }
 
   // 文件夹
@@ -101,7 +171,7 @@ const tableData = computed(() => {
       icon: 'i-lucide-folder',
       typeLabel: '文件夹',
       badgeColor: 'warning',
-    })
+    } as any)
   })
 
   // 文件
@@ -121,7 +191,7 @@ const tableData = computed(() => {
       formattedSize: formatFileSize(obj.size),
       formattedDate: new Date(obj.lastModified).toLocaleString('zh-CN'),
       thumbnailUrl: getThumbnailUrl(obj),
-    })
+    } as any)
   })
 
   return items
@@ -189,32 +259,16 @@ function handleRowClick(row: BrowserItem) {
   if (row.isFolder) {
     emit('navigate', row.key === '../' ? '..' : row.key)
   } else {
-    emit('navigate', row as S3ObjectInfo)
+    emit('preview', row as S3ObjectInfo)
   }
 }
-
-function getActionItems(row: BrowserItem) {
-  return [
-    [
-      {
-        label: '下载',
-        icon: 'i-lucide-download',
-        onSelect: () => emit('download', row as S3ObjectInfo),
-      },
-      {
-        label: '重命名',
-        icon: 'i-lucide-pencil',
-        onSelect: () => emit('rename', row as S3ObjectInfo),
-      },
-      {
-        label: '删除',
-        icon: 'i-lucide-trash',
-        onSelect: () => emit('delete', row as S3ObjectInfo),
-      },
-    ],
-  ]
-}
 </script>
+
+<style lang="scss" scoped>
+.browser-list-view {
+  //
+}
+</style>
 
 <style lang="scss" scoped>
 .browser-list-view {
