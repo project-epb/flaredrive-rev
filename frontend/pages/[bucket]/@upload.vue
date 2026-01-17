@@ -16,7 +16,7 @@ const route = useRoute()
 const bucket = useBucketStore()
 
 const currentBucketName = computed(() => {
-  const bucketParam = route.params.bucket
+  const bucketParam = (route.params as any).bucket
   return typeof bucketParam === 'string' ? bucketParam : ''
 })
 

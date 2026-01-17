@@ -4,9 +4,26 @@ import { eq, and, gt } from 'drizzle-orm'
 import { users, sessions } from '../../db/schema.js'
 import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
+import { parseBoolean, readEnv } from '../../common/app-env.js'
 
-const COOKIE_NAME = 'fd_session'
+const COOKIE_NAME = 'flaredrive_session'
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30
+
+const readCtxEnv = (ctx: any, key: string) => {
+  const bindings = (ctx?.env || {}) as Record<string, unknown>
+  if (typeof bindings[key] !== 'undefined') return bindings[key]
+  return readEnv(key)
+}
+
+const isRegistrationEnabled = (ctx: any) => {
+  const raw = readCtxEnv(ctx, 'ALLOW_REGISTER')
+  return parseBoolean(raw, true)
+}
+
+const getAdminCreateToken = (ctx: any) => {
+  const raw = readCtxEnv(ctx, 'ADMIN_CREATE_TOKEN')
+  return typeof raw === 'string' ? raw.trim() : ''
+}
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
@@ -104,6 +121,10 @@ const authorizationLevelForUser = (user: { id: number; authorizationLevel: numbe
 export const auth = new Hono<HonoEnv>()
 
 auth.post('/register', async (ctx) => {
+  if (!isRegistrationEnabled(ctx)) {
+    return ctx.json({ error: 'Registration disabled' }, 403)
+  }
+
   const body = await ctx.req.json().catch(() => null)
   const email = normalizeEmail(body?.email || '')
   const password = body?.password || ''
@@ -143,6 +164,63 @@ auth.post('/register', async (ctx) => {
   }
 
   return ctx.json({ id: created.id, email: created.email }, 201)
+})
+
+auth.post('/admin-create', async (ctx) => {
+  const adminToken = getAdminCreateToken(ctx)
+  if (!adminToken) return ctx.json({ error: 'Admin create disabled' }, 403)
+
+  const headerToken = ctx.req.header('x-admin-token') || ''
+  const bearer = ctx.req.header('authorization') || ''
+  const bearerToken = bearer.replace(/^Bearer\s+/i, '')
+  const providedToken = headerToken || bearerToken
+
+  if (!providedToken || providedToken !== adminToken) {
+    return ctx.json({ error: 'Forbidden' }, 403)
+  }
+
+  const body = await ctx.req.json().catch(() => null)
+  const email = normalizeEmail(body?.email || '')
+  const password = body?.password || ''
+  const authorizationLevel = Number(body?.authorizationLevel ?? 1)
+
+  if (!isValidEmail(email)) return ctx.json({ error: 'Invalid email' }, 400)
+  if (!isValidPassword(password)) return ctx.json({ error: 'Invalid password' }, 400)
+  if (![1, 2, 3].includes(authorizationLevel)) {
+    return ctx.json({ error: 'Invalid authorization level' }, 400)
+  }
+
+  const db = getDb(ctx)
+  const existing = await db.select().from(users).where(eq(users.email, email)).get()
+  if (existing) return ctx.json({ error: 'Email already registered' }, 409)
+
+  const now = Date.now()
+  const { passwordSalt, passwordHash } = await hashPassword(password)
+
+  await db
+    .insert(users)
+    .values({
+      email,
+      passwordSalt,
+      passwordHash,
+      authorizationLevel,
+      createdAt: now,
+    })
+    .run()
+
+  const created = await db
+    .select({ id: users.id, email: users.email, authorizationLevel: users.authorizationLevel })
+    .from(users)
+    .where(eq(users.email, email))
+    .get()
+
+  if (!created) return ctx.json({ error: 'Failed to create user' }, 500)
+
+  if (created.id === 1) {
+    await db.update(users).set({ authorizationLevel: 3 }).where(eq(users.id, 1)).run()
+  }
+
+  return ctx.json({ id: created.id, email: created.email, authorizationLevel: created.authorizationLevel }, 201)
 })
 
 auth.post('/login', async (ctx) => {
@@ -213,7 +291,7 @@ auth.post('/logout', async (ctx) => {
 
 auth.get('/me', async (ctx) => {
   const token = getCookie(ctx, COOKIE_NAME)
-  if (!token) return ctx.json({ error: 'Unauthorized' }, 401)
+  if (!token) return ctx.json({ error: 'Unauthorized', msg: 'Missing token' }, 401)
 
   const db = getDb(ctx)
   const tokenHash = await sha256Base64Url(token)
@@ -231,7 +309,10 @@ auth.get('/me', async (ctx) => {
     .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)))
     .get()
 
-  if (!session) return ctx.json({ error: 'Unauthorized' }, 401)
+  if (!session) {
+    setCookie(ctx, COOKIE_NAME, '', { path: '/' })
+    return ctx.json({ error: 'Unauthorized' }, 401)
+  }
 
   const authLevel = authorizationLevelForUser({ id: session.userId2, authorizationLevel: session.userAuth })
   return ctx.json({ id: session.userId2, email: session.userEmail, authorizationLevel: authLevel })

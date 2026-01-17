@@ -1,6 +1,6 @@
 {
   "name": "flaredrive",
-  "compatibility_date": "2025-05-07",
+  "compatibility_date": "2026-01-14",
   "main": "./backend/index.ts",
   "assets": {
     "not_found_handling": "single-page-application",

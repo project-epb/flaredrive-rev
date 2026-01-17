@@ -26,7 +26,6 @@ buckets.get('/', async (ctx) => {
       cdnBaseUrl: bucketsTable.cdnBaseUrl,
       endpointUrl: bucketsTable.endpointUrl,
       region: bucketsTable.region,
-      accessKeyId: bucketsTable.accessKeyId,
       bucketName: bucketsTable.bucketName,
       forcePathStyle: bucketsTable.forcePathStyle,
       createdAt: bucketsTable.createdAt,

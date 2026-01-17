@@ -16,6 +16,7 @@
 - 包管理器：bun
 - 前端框架：Vue 3 + vue-auto-router
 - 前端组件库：Naive UI
+- 图标库：@tabler/icons-vue
 - 样式解决方案：UnoCSS & SCSS
 - 工具库：@vueuse/core, unplugin-auto-import, unplugin-vue-components
 - 状态管理：Pinia

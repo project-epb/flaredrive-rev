@@ -4,6 +4,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   ListObjectsV2Command,
+  ListObjectsV2Output,
   PutObjectCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
@@ -35,7 +36,7 @@ export class S3Adapter implements StorageAdapter {
   ): Promise<StorageListResult> {
     const limit = Math.min(1000, Math.max(1, opts.limit || 1000))
 
-    const list = await this.s3.send(
+    const list: ListObjectsV2Output = await this.s3.send(
       new ListObjectsV2Command({
         Bucket: this.bucketName,
         Prefix: prefix || undefined,
@@ -48,15 +49,26 @@ export class S3Adapter implements StorageAdapter {
     const objects = (list.Contents || [])
       .filter((o) => o.Key)
       .map((o) => {
+        const etag = o.ETag ? stripQuotes(o.ETag) : ''
         return {
-          key: o.Key as string,
+          key: o.Key || '',
+          version: 'v1',
           size: Number(o.Size || 0),
-          etag: o.ETag ? stripQuotes(o.ETag) : '',
-          uploaded: o.LastModified ? new Date(o.LastModified).getTime() : undefined,
-          httpMetadata: {},
+          etag,
+          httpEtag: etag,
+          checksums: {},
+          uploaded: o.LastModified ? new Date(o.LastModified) : new Date(),
+          httpMetadata: {
+            etag,
+            contentLength: Number(o.Size || 0),
+            lastModified: o.LastModified ? new Date(o.LastModified).toUTCString() : undefined,
+          },
           customMetadata: {},
+          range: undefined,
+          storageClass: o.StorageClass || 'Standard',
         }
       })
+      .filter((o) => o.key !== prefix)
 
     const folders = (list.CommonPrefixes || []).map((p) => p.Prefix || '').filter(Boolean)
     const hasMore = !!list.IsTruncated

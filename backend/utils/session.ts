@@ -3,7 +3,7 @@ import { getCookie } from 'hono/cookie'
 import { sessions, users } from '../../db/schema.js'
 import { getDb } from './db.js'
 
-const COOKIE_NAME = 'fd_session'
+const COOKIE_NAME = 'flaredrive_session'
 
 const base64UrlEncode = (bytes: Uint8Array) => {
   let binary = ''

@@ -1,62 +1,67 @@
 <template lang="pug">
-NForm.space-y-4(@submit.prevent='handleSubmit')
-  NFormItem(label='显示名称', required, feedback='仅用于显示，可随意命名')
-    NInput(v-model:value='formValue.name', placeholder='例如：我的图片存储', size='large')
+NForm.space-y-4(ref='formRef', :model='formValue', :rules='rules', @submit.prevent='handleSubmit')
+  NFormItem(label='Display Name', path='name', feedback='Display name for this bucket')
+    NInput(v-model:value='formValue.name', placeholder='e.g. My Assets', size='large')
       template(#prefix)
-        Icon(name='i-lucide-tag')
+        IconTag
 
-  NFormItem(label='Bucket Name', required, feedback='实际的 S3 桶名称')
-    NInput(v-model:value='formValue.bucketName', placeholder='例如：my-bucket', size='large')
+  NFormItem(label='Bucket Name', path='bucketName', feedback='Actual S3 bucket name')
+    NInput(v-model:value='formValue.bucketName', placeholder='e.g. my-s3-bucket', size='large')
       template(#prefix)
-        Icon(name='i-lucide-database')
+        IconDatabase
 
-  NFormItem(label='Endpoint URL', required, feedback='S3 服务的端点地址')
-    NInput(v-model:value='formValue.endpointUrl', placeholder='例如：https://s3.amazonaws.com', size='large')
+  NFormItem(label='Endpoint URL', path='endpointUrl', feedback='S3 endpoint URL')
+    NInput(v-model:value='formValue.endpointUrl', placeholder='e.g. https://s3.amazonaws.com', size='large')
       template(#prefix)
-        Icon(name='i-lucide-server')
+        IconServer
 
-  NFormItem(label='Region', required)
-    NInput(v-model:value='formValue.region', placeholder='例如：us-east-1 或 auto', size='large')
+  NFormItem(label='Region', path='region')
+    NInput(v-model:value='formValue.region', placeholder='e.g. us-east-1 or auto', size='large')
       template(#prefix)
-        Icon(name='i-lucide-map-pin')
+        IconMapPin
 
   .grid.gap-4.grid-cols-1(class='md:grid-cols-2')
-    NFormItem(label='Access Key ID', :required='!bucket')
+    NFormItem(label='Access Key ID', path='accessKeyId')
       NInput(
         v-model:value='formValue.accessKeyId',
-        :placeholder='bucket ? "若不修改请留空" : "输入 Access Key ID"',
+        :placeholder='bucket ? "Leave empty to keep unchanged" : "Enter Access Key ID"',
         size='large'
       )
         template(#prefix)
-          Icon(name='i-lucide-key')
+          IconKey
 
-    NFormItem(label='Secret Access Key', :required='!bucket')
+    NFormItem(label='Secret Access Key', path='secretAccessKey')
       NInput(
         v-model:value='formValue.secretAccessKey',
         type='password',
-        :placeholder='bucket ? "若不修改请留空" : "输入 Secret Access Key"',
+        :placeholder='bucket ? "Leave empty to keep unchanged" : "Enter Secret Access Key"',
         size='large',
         show-password-on='click',
         :input-props='{ autocomplete: "new-password" }'
       )
         template(#prefix)
-          Icon(name='i-lucide-lock')
+          IconLock
 
-  NFormItem(label='CDN Base URL', feedback='可选，用于加速访问')
-    NInput(v-model:value='formValue.cdnBaseUrl', placeholder='例如：https://cdn.example.com', size='large')
+  NFormItem(label='CDN Base URL', path='cdnBaseUrl', feedback='Optional, public URL prefix for files')
+    NInput(v-model:value='formValue.cdnBaseUrl', placeholder='e.g. https://cdn.example.com', size='large')
       template(#prefix)
-        Icon(name='i-lucide-globe')
+        IconGlobe
 
-  NFormItem(label='强制路径样式')
-    NSwitch(v-model:checked='formValue.forcePathStyle') 强制路径样式
+  NFormItem(label='Force Path Style', path='forcePathStyle')
+    NSwitch(v-model:checked='formValue.forcePathStyle') 
+      template(#checked) Enabled
+      template(#unchecked) Disabled
 
   .flex.justify-end.gap-3.pt-4
-    NButton(type='error', quaternary, @click='$emit("cancel")') 取消
-    NButton(attr-type='submit', type='primary', :loading='loading') {{ bucket ? '保存' : '添加' }}
+    NButton(type='error', quaternary, @click='$emit("cancel")') Cancel
+    NButton(attr-type='submit', type='primary', :loading='loading') {{ bucket ? 'Save Changes' : 'Create Bucket' }}
 </template>
 
 <script setup lang="ts">
-import type { BucketInfo } from '~/composables/bucket'
+import type { BucketInfo } from '@/models/R2BucketClient'
+import { IconTag, IconDatabase, IconServer, IconMapPin, IconKey, IconLock, IconGlobe } from '@tabler/icons-vue'
+import fexios from 'fexios'
+import { useMessage, type FormInst, type FormRules } from 'naive-ui'
 
 const props = defineProps<{
   bucket?: BucketInfo
@@ -65,6 +70,7 @@ const props = defineProps<{
 const emit = defineEmits(['success', 'cancel'])
 const message = useMessage()
 const loading = ref(false)
+const formRef = ref<FormInst | null>(null)
 
 const formValue = reactive({
   name: props.bucket?.name || '',
@@ -74,77 +80,71 @@ const formValue = reactive({
   accessKeyId: '',
   secretAccessKey: '',
   cdnBaseUrl: props.bucket?.cdnBaseUrl || '',
-  forcePathStyle: props.bucket?.forcePathStyle === 1,
+  forcePathStyle: props.bucket?.forcePathStyle === 1 || props.bucket?.forcePathStyle === true,
 })
 
-const isValidUrl = (value: string) => {
-  try {
-    // eslint-disable-next-line no-new
-    new URL(value)
-    return true
-  } catch {
-    return false
+const rules = computed<FormRules>(() => {
+  return {
+    name: { required: true, message: 'Please enter display name', trigger: 'blur' },
+    bucketName: { required: true, message: 'Please enter bucket name', trigger: 'blur' },
+    endpointUrl: [
+      { required: true, message: 'Please enter endpoint URL', trigger: 'blur' },
+      {
+        validator: (rule, value) => {
+          try {
+            new URL(value)
+            return true
+          } catch {
+            return new Error('Please enter a valid URL')
+          }
+        },
+        trigger: 'blur',
+      },
+    ],
+    region: { required: true, message: 'Please enter region', trigger: 'blur' },
+    accessKeyId: {
+      required: !props.bucket,
+      message: 'Please enter Access Key ID',
+      trigger: 'blur',
+    },
+    secretAccessKey: {
+      required: !props.bucket,
+      message: 'Please enter Secret Access Key',
+      trigger: 'blur',
+    },
   }
-}
+})
 
 const handleSubmit = async () => {
   try {
-    if (!formValue.name) {
-      message.warning('请输入存储桶名称')
-      return
-    }
-    if (!formValue.bucketName) {
-      message.warning('请输入 Bucket Name')
-      return
-    }
-    if (!formValue.endpointUrl) {
-      message.warning('请输入 Endpoint URL')
-      return
-    }
-    if (!isValidUrl(formValue.endpointUrl)) {
-      message.warning('请输入有效的 URL')
-      return
-    }
-    if (!formValue.region) {
-      message.warning('请输入 Region')
-      return
-    }
-    if (!props.bucket && !formValue.accessKeyId) {
-      message.warning('请输入 Access Key ID')
-      return
-    }
-    if (!props.bucket && !formValue.secretAccessKey) {
-      message.warning('请输入 Secret Access Key')
-      return
-    }
+    await formRef.value?.validate()
 
     loading.value = true
 
     const payload = {
       ...formValue,
-      forcePathStyle: !!formValue.forcePathStyle,
+      forcePathStyle: formValue.forcePathStyle ? 1 : 0,
     }
 
     if (props.bucket) {
-      // 编辑模式
-      await $fetch(`/api/buckets/${props.bucket.id}`, {
-        method: 'PUT',
-        body: payload,
-      })
-      message.success('更新成功')
+      // Edit Mode
+      await fexios.put(`/api/buckets/${props.bucket.id}`, payload)
+      message.success('Bucket updated successfully')
     } else {
-      // 添加模式
-      await $fetch('/api/buckets', {
-        method: 'POST',
-        body: payload,
-      })
-      message.success('添加成功')
+      // Create Mode
+      await fexios.post('/api/buckets', payload)
+      message.success('Bucket created successfully')
     }
 
     emit('success')
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message?.includes('validation failed')) {
+      // Validation error, do nothing
+      return
+    }
     console.error('Failed to save bucket:', error)
-    message.error((error as any).data?.message || '操作失败')
+    const msg = error.response?.data?.error || error.message || 'Operation failed'
+    message.error(msg)
   } finally {
     loading.value = false
   }

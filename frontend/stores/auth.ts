@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'fexios'
 
 export type AuthUser = {
   id: number
@@ -14,25 +14,31 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const isLoading = ref(false)
   const hasLoaded = ref(false)
+  const pending = ref<Promise<AuthUser | null> | null>(null)
 
-  const isAuthed = computed(() => !!user.value)
+  const isAuthed = computed(() => !!user.value && user.value.id > 0)
 
   const fetchMe = async (force = false) => {
-    if (isLoading.value) return user.value
+    if (pending.value) return pending.value
     if (hasLoaded.value && !force) return user.value
 
     isLoading.value = true
-    try {
-      const { data } = await axios.get<AuthUser>('/api/auth/me')
-      user.value = data
-      return user.value
-    } catch (e) {
-      user.value = null
-      return null
-    } finally {
-      hasLoaded.value = true
-      isLoading.value = false
-    }
+    pending.value = (async () => {
+      try {
+        const { data } = await axios.get<AuthUser>('/api/auth/me')
+        user.value = data
+        return data
+      } catch (e) {
+        user.value = null
+        return null
+      } finally {
+        hasLoaded.value = true
+        isLoading.value = false
+        pending.value = null
+      }
+    })()
+
+    return pending.value
   }
 
   const register = async (payload: { email: string; password: string }) => {

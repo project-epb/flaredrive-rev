@@ -56,6 +56,8 @@ export const useNavigationStore = defineStore('navigation', () => {
    * Priority: lastRoute > single bucket redirect > stay on home
    */
   async function handleInitialNavigation(availableBuckets: BucketInfo[]): Promise<void> {
+    return // temporary disable auto navigation
+
     if (didInitialNavigation.value) {
       return
     }

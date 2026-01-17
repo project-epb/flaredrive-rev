@@ -20,14 +20,17 @@ export const getBucketInfoList = async (ctx: Context) => {
       id: bucketsTable.id,
       name: bucketsTable.name,
       cdnBaseUrl: bucketsTable.cdnBaseUrl,
+      bucketName: bucketsTable.bucketName,
+      endpointUrl: bucketsTable.endpointUrl,
+      region: bucketsTable.region,
+      forcePathStyle: bucketsTable.forcePathStyle,
     })
     .from(bucketsTable)
     .all()
 
   return (rows || [])
     .map((r) => ({
-      id: r.id,
-      name: r.name,
+      ...r,
       cdnBaseUrl: r.cdnBaseUrl ? normalizeBaseUrl(r.cdnBaseUrl) : normalizeBaseUrl(`/api/raw/${r.id}/`),
     }))
     .sort((a, b) => a.name.localeCompare(b.name))

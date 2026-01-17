@@ -7,6 +7,7 @@ export const getBucketConfigById = async (ctx: any, id: string) => {
   const row = await db
     .select({
       id: bucketsTable.id,
+      ownerUserId: bucketsTable.ownerUserId,
       endpointUrl: bucketsTable.endpointUrl,
       region: bucketsTable.region,
       accessKeyId: bucketsTable.accessKeyId,

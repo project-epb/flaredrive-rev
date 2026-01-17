@@ -53,11 +53,12 @@
 - [ ] API：
 	- [x] `POST /api/auth/register`
 	- [x] `POST /api/auth/login`
+	- [x] `POST /api/auth/logout`
 	- [x] `GET /api/auth/me`
 - [ ] 安全：
 	- [ ] 登录限流（IP/账号维度，最简可用内存/短期 KV 可选）
 	- [x] session token 存储为 hash（不落明文 token）
-	- [ ] 记录 `login_xff`、`login_ua` 并做基础校验（可选但建议）
+	- [x] 记录 `login_xff`、`login_ua` 并做基础校验（可选但建议）
 
 验收：未登录访问受保护接口返回 401；注册/登录后可通过 `/api/auth/me` 获取用户信息。
 
@@ -68,7 +69,7 @@
 	- [x] `POST /api/buckets`
 	- [x] `PUT /api/buckets/:id`
 	- [x] `DELETE /api/buckets/:id`
-- [ ] 输入校验：bucket_id 规则、endpoint_url、force_path_style、region 等
+- [x] Input Validation：bucket_id 规则、endpoint_url、force_path_style、region 等
 - [ ] 凭据处理：
 	- [ ] `secret_access_key` 加密存储（至少：Worker 内部加密 + 不在返回体中回显）
 	- [ ] 输出 DTO 脱敏（只回显末尾若干位或直接不回显）
@@ -83,38 +84,41 @@
 	- [x] R2（S3 API 方式，不再依赖 R2 binding）
 	- [x] AWS S3
 	- [x] MinIO（force_path_style 常见）
-- [ ] 兼容差异处理：分页、错误码映射、metadata/header
+- [x] 兼容差异处理：分页、错误码映射、metadata/header
 
 验收：同一套前端/接口可切换不同 provider，仅依赖 buckets 表配置。
 
 ## 7. P5：对象 API 与 Raw 访问
 
-- [ ] 对象操作：
-	- [ ] `GET /api/objects/:bucketId/*`（list/metadata）
-	- [ ] `DELETE /api/objects/:bucketId/*`
+- [x] 对象操作：
+	- [x] `GET /api/bucket/:bucketId/*`（list/metadata，原计划为 /objects）
+	- [x] `DELETE /api/bucket/:bucketId/*`（原计划为 /objects）
+	- [x] `PUT /api/bucket/:bucketId/*`（rename/metadata，含 upload_history 记录）
 	- [x] `POST /api/objects/:bucketId/presign`（上传/下载预签名）
-- [ ] 原始文件访问：
-	- [ ] `GET /api/raw/:bucketId/*` 302 到预签名 URL
+	- [x] `POST /api/objects/:bucketId/record`（上传完成后补录 history）
+	- [x] `PATCH /api/bucket/:bucketId/*`（修改元数据，如 isPublic）
+- [x] 原始文件访问：
+	- [x] `GET /api/raw/:bucketId/*`（代理下载，已增加 Session/Owner/Public 校验）
 	- [ ] 可选：小文件代理（明确 size 限制）
-- [ ] 支持 `cdn_base_url`：前端渲染/下载可直链（public-read 场景）
+- [x] 支持 `cdn_base_url`：前端渲染/下载可直链（public-read 场景，getCDNUrl 已实现）
 
 验收：
 - 预签名上传可成功 PUT；浏览器侧可列目录、预览文本/图片、删除对象。
 
 ## 8. P6：前端改造（UI/路由/接口对接）
 
-- [ ] 新增认证页面：`/@auth/login`、`/@auth/register`
-- [ ] 新增桶管理页面：`/@admin/buckets`
-- [ ] 路由守卫：未登录/无权限重定向到登录页
-- [ ] 上传流程改为“先 presign -> 再直传”，并将 upload_history 写入（后端）
-- [ ] Object Browser 路由：`/:bucketId/:path(.*)*`（并处理 `@` 前缀保留）
+- [x] 新增认证页面：`/@auth/login`、`/@auth/register`
+- [x] 新增桶管理页面：`/@admin/buckets`
+- [x] 路由守卫：未登录/无权限重定向到登录页
+- [x] 上传流程改为“先 presign -> 再直传”，并将 upload_history 写入（后端）
+- [x] Object Browser 路由：`/:bucketId/:path(.*)*`（并处理 `@` 前缀保留）
 
 验收：从 UI 完成“登录 -> 新建桶 -> 浏览/上传/删除 -> 退出登录”的闭环。
 
 ## 9. P7：高级能力（可选/增量）
 
-- [ ] `audit_logs`（或扩展 upload_history）
-- [ ] `path_metadata`：目录公开/标签/目录密码
+- [ ] `audit_logs`（已在 upload_history 覆盖基础上传记录）
+- [x] `path_metadata`：目录公开/标签/目录密码 (isPublic 字段及切换功能已完成)
 - [ ] 分享链接/只读访问（如后续需要）
 - [ ] 管理后台其它站点配置（草案中的 `/@admin/xxx`）
 
@@ -132,3 +136,4 @@
 - 2026-01-17：根据 docs/architecture-draft.md 初始化迁移 TODO 清单，并标记当前仓库已存在的 Drizzle/D1 基础文件。
 - 2026-01-17：后端已移除 R2 binding 语义；新增 buckets CRUD+连接测试、对象 presign；引入 StorageAdapter/S3Adapter 并完成后端路由接线。
 - 2026-01-17：整理 backend 目录结构为 routes/lib/storage，并用根目录 shim 再导出保持旧 import 路径兼容。
+- 2026-01-18：完成前端桶管理 (/admin/buckets)、上传流程重构（Presign+Record）、Raw 访问权限校验、元数据公开性切换 (Toggle Public)。

@@ -230,12 +230,15 @@ export namespace FileHelper {
 
     const contentType = item.httpMetadata?.contentType || 'application/octet-stream'
     const fileName = item.key.split('/').pop() || ''
-    const ext = fileName.toLocaleLowerCase().split('.').pop() || contentType.split('/').pop() || ''
+    const ext = fileName.toLowerCase().split('.').pop() || contentType.split('/').pop() || ''
 
-    if (contentType === 'text/plain') {
+    if (contentType === 'text/plain' || ext === 'txt') {
       return IconFileTypeTxt
     }
-    if (contentType.startsWith('image/')) {
+    if (
+      contentType.startsWith('image/') ||
+      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)
+    ) {
       switch (ext) {
         case 'bmp':
           return IconFileTypeBmp
@@ -251,10 +254,10 @@ export namespace FileHelper {
       }
       return IconPhoto
     }
-    if (contentType.startsWith('video/')) {
+    if (contentType.startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext)) {
       return IconMovie
     }
-    if (contentType.startsWith('audio/')) {
+    if (contentType.startsWith('audio/') || ['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) {
       return IconFileMusic
     }
 
@@ -262,7 +265,7 @@ export namespace FileHelper {
     if (['doc', 'docx'].includes(ext)) {
       return IconFileTypeDocx
     }
-    if (['xls', 'xlsx'].includes(ext)) {
+    if (['xls', 'xlsx', 'csv'].includes(ext)) {
       return IconFileTypeXls
     }
     if (['ppt', 'pptx'].includes(ext)) {
@@ -270,23 +273,24 @@ export namespace FileHelper {
     }
 
     // adobe files
-    if (['pdf'].includes(ext)) {
+    if (['pdf'].includes(ext) || contentType === 'application/pdf') {
       return IconFileTypePdf
     }
 
     // codes
-    if (['js', 'jsx'].includes(ext) && contentType.startsWith('text/')) {
+    if (['js', 'jsx', 'mjs', 'cjs'].includes(ext)) {
       return IconFileTypeJs
     }
-    if (['ts', 'tsx'].includes(ext) && contentType.startsWith('text/')) {
+    if (['ts', 'tsx', 'mts', 'cts'].includes(ext)) {
       return IconFileTypeTs
     }
-    if (['css', 'sass', 'less', 'scss'].includes(ext) && contentType.startsWith('text/')) {
+    if (['css', 'sass', 'less', 'scss'].includes(ext)) {
       return IconFileTypeCss
     }
 
     // archive files zip/rar/7z/tar/...
     if (
+      ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'iso'].includes(ext) ||
       contentType.startsWith('application/zip') ||
       contentType.startsWith('application/x-zip-compressed') ||
       contentType.startsWith('application/x-zip') ||
@@ -392,12 +396,26 @@ export namespace FileHelper {
     if (!item) return 'unknown'
     const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
     if (ext === 'md') return 'markdown'
+    
+    // PDF priority
+    if (['pdf'].includes(ext) || contentType === 'application/pdf') return 'iframe'
+
     if (contentType.startsWith('image/') && !contentType.includes('pdf')) return 'image'
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) return 'image'
+
     if (contentType.startsWith('video/')) return 'video'
+    if (['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext)) return 'video'
+
     if (contentType.startsWith('audio/')) return 'audio'
+    if (['mp3', 'wav', 'aac', 'flac', 'm4a'].includes(ext)) return 'audio'
+
     if (contentType.startsWith('text/html') || ['html', 'htm'].includes(ext)) return 'html'
-    if (contentType.startsWith('text/') || ['json', 'yml', 'yaml', 'toml', 'py'].includes(ext)) return 'text'
-    if (['pdf'].includes(ext)) return 'iframe'
+    if (
+      contentType.startsWith('text/') ||
+      ['txt', 'json', 'yml', 'yaml', 'toml', 'py', 'js', 'ts', 'css', 'scss', 'vue', 'log', 'ini', 'xml', 'sql', 'env'].includes(ext)
+    )
+      return 'text'
+      
     return 'unknown'
   }
 }

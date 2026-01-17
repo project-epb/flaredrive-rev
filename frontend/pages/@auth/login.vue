@@ -8,12 +8,13 @@
         NInput(v-model:value='form.password', type='password', show-password-on='click', placeholder='至少 8 位')
       .flex(gap-3, items-center)
         NButton(type='primary', :loading='submitting', @click='onSubmit') 登录
-        NButton(secondary, @click='goRegister') 去注册
+        NButton(v-if='allowRegister', secondary, @click='goRegister') 去注册
 </template>
 
 <script setup lang="ts">
 import { NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
+import { ALLOW_REGISTER } from '../../../common/app-env'
 
 definePage({
   name: '@auth-login',
@@ -23,6 +24,7 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const allowRegister = ALLOW_REGISTER
 
 const redirectTo = computed(() => {
   const q = route.query.redirect

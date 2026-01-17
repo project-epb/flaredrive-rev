@@ -1,6 +1,11 @@
 <template lang="pug">
 NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
-  BrowserFilePreview(:item, @download='emit("download", $event)', @delete='emit("delete", $event)')
+  BrowserFilePreview(
+    :item, 
+    @download='emit("download", $event)', 
+    @delete='emit("delete", $event)',
+    @toggle-public='emit("togglePublic", $event)'
+  )
 </template>
 
 <script setup lang="ts">
@@ -13,6 +18,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   download: [item: R2Object]
   delete: [item: R2Object]
+  togglePublic: [item: R2Object]
 }>()
 
 const fileName = computed(() => {

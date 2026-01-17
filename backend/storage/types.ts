@@ -1,11 +1,16 @@
 export type StorageListResult = {
   objects: {
     key: string
+    version: string
     size: number
-    etag?: string
-    uploaded?: number
+    etag: string
+    httpEtag: string
+    checksums: any
+    uploaded: Date
     httpMetadata?: Record<string, any>
     customMetadata?: Record<string, any>
+    range?: any
+    storageClass: string
   }[]
   folders: string[]
   hasMore: boolean

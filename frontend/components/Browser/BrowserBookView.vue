@@ -2,13 +2,13 @@
 .browser-book-view
   NSkeleton(v-if='!payload', height='200px')
   .browser-book-view-main(v-else)
-    NCard(:title='bookName', :closable='!!(parentKey && items.length)', @close='$router.push(`/${parentKey}`)')
+    NCard(:title='bookName', :closable='!!(parentKey && items.length)', @close='$router.push(`/${currentBucket}/${parentKey}`)')
       NEmpty(v-if='!items.length')
       .book-pages-container(:data-page-count='items.length')
         .book-page-item(
           v-for='(item, index) in items',
           :key='item.key',
-          :id='"" + item.checksums.md5',
+          :id='"" + item.checksums?.md5',
           :data-page-number='index + 1'
         )
           .book-page-image(v-if='item.previewType === "image"', text-center)
@@ -42,7 +42,7 @@
           :key='item.key',
           :content-style='{ padding: "0.5rem 1rem" }',
           cursor-pointer,
-          @click='() => $router.push(item.key === "../" ? `/${parentKey}` : `/${item.key}`)'
+          @click='() => $router.push(`/${currentBucket}/${item.key === "../" ? parentKey : item.key}`)'
         )
           NIcon(:component='FileHelper.getObjectIcon(item)', size='20', mr-2)
           NText {{ item.key.split('/').filter(Boolean).slice(-1)[0] }}
@@ -68,6 +68,8 @@ const props = withDefaults(
   { payload: null }
 )
 const bucket = useBucketStore()
+const route = useRoute()
+const currentBucket = computed(() => route.params.bucket as string)
 
 const bookName = computed(() => {
   if (!props.payload) return 'Loading...'
@@ -104,12 +106,8 @@ const items = computed<
   if (!props.payload) return [] as any
   return props.payload.objects
     .filter((item) => {
-      const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
-      return (
-        (contentType.startsWith('image/') && !contentType.includes('pdf')) ||
-        contentType.startsWith('text/') ||
-        ['md'].includes(ext)
-      )
+      const type = FileHelper.getPreviewType(item)
+      return type === 'image' || type === 'text' || type === 'markdown'
     })
     .map((item) => {
       return {

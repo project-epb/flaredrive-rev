@@ -14,7 +14,12 @@ export interface R2BucketListResponse {
 export interface BucketInfo {
   id: string
   name: string
-  cdnBaseUrl: string
+  cdnBaseUrl?: string
+  bucketName: string
+  endpointUrl: string
+  region: string
+  accessKeyId?: string // Usually masked or not returned fully if secure
+  forcePathStyle?: number | boolean
 }
 
 export class R2BucketClient {

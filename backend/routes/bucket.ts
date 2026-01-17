@@ -2,6 +2,11 @@ import { Context, Hono } from 'hono'
 import { HonoEnv } from '../index.js'
 import { getBucketConfigById, parseBucketPath } from '../utils/bucket-resolver.js'
 import { createStorageAdapter } from '../storage/factory.js'
+import { getSessionUser } from '../utils/session.js'
+import { getDb } from '../utils/db.js'
+import { uploadHistory } from '../../db/schema.js'
+import { nanoid } from 'nanoid'
+import { getPathMetadata, setPathMetadata } from '../utils/metadata.js'
 
 // @ts-ignore prevent bundler from removing this
 const console: Console = globalThis['con'.concat('sole')]
@@ -27,11 +32,43 @@ const getMetadataFromHeaders = (ctx: Context) => {
   return customMetadata
 }
 
-bucket.get('*', async (ctx) => {
+bucket.patch('*', async (ctx) => {
+  const user = await getSessionUser(ctx)
+  if (!user) return ctx.json({ error: 'Unauthorized' }, 401)
+
   const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
   if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
   const cfg = await getBucketConfigById(ctx, bucketId)
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+  if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
+
+  const path = getFilePath(ctx)
+  if (!path) return ctx.json({ error: 'Invalid path' }, 400)
+
+  const body = await ctx.req.json().catch(() => null)
+  const isPublic = body?.isPublic
+
+  if (typeof isPublic === 'boolean') {
+    await setPathMetadata(ctx, user.id, bucketId, path, { isPublic })
+  }
+
+  const meta = await getPathMetadata(ctx, bucketId, path)
+  return ctx.json({
+    path,
+    isPublic: meta?.isPublic === 1,
+    url: `/api/raw/${bucketId}/${path}`,
+  })
+})
+
+bucket.get('*', async (ctx) => {
+  const user = await getSessionUser(ctx)
+  if (!user) return ctx.json({ error: 'Unauthorized' }, 401)
+
+  const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
+  if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
+  const cfg = await getBucketConfigById(ctx, bucketId)
+  if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+  if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
   const path = getFilePath(ctx)
   const limit = Math.min(1000, ctx.req.query('limit') ? parseInt(ctx.req.query('limit')) : 1000)
@@ -82,10 +119,14 @@ bucket.get('*', async (ctx) => {
 })
 
 bucket.put('*', async (ctx) => {
+  const user = await getSessionUser(ctx)
+  if (!user) return ctx.json({ error: 'Unauthorized' }, 401)
+
   const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
   if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
   const cfg = await getBucketConfigById(ctx, bucketId)
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+  if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
   const adapter = createStorageAdapter({
     endpointUrl: cfg.endpointUrl,
@@ -123,10 +164,17 @@ bucket.put('*', async (ctx) => {
       await adapter.delete(copySource)
       return ctx.json({
         key: path,
+        version: 'v1',
+        size: 0,
         etag: copy.etag || '',
+        httpEtag: copy.etag || '',
+        checksums: {},
+        uploaded: new Date(),
         copySource,
         httpMetadata: { contentType },
         customMetadata,
+        range: undefined,
+        storageClass: 'Standard',
       })
     } catch (e) {
       console.error('Error renaming file', e)
@@ -152,12 +200,33 @@ bucket.put('*', async (ctx) => {
       contentType,
       metadata: customMetadata,
     })
+
+    const db = getDb(ctx)
+    await db
+      .insert(uploadHistory)
+      .values({
+        id: nanoid(),
+        userId: user.id,
+        bucketId,
+        objectKey: path,
+        objectSize: fileBody.byteLength,
+        contentType,
+        createdAt: Date.now(),
+      })
+      .run()
+
     return ctx.json({
       key: path,
+      version: 'v1',
       size: fileBody.byteLength,
       etag: put.etag || '',
+      httpEtag: put.etag || '',
+      checksums: {},
+      uploaded: new Date(),
       httpMetadata: { contentType },
       customMetadata,
+      range: undefined,
+      storageClass: 'Standard',
     })
   } catch (e) {
     console.error('Error uploading file', e)
@@ -176,10 +245,14 @@ bucket.post('*', async (ctx) => {
 })
 
 bucket.delete('*', async (ctx) => {
+  const user = await getSessionUser(ctx)
+  if (!user) return ctx.json({ error: 'Unauthorized' }, 401)
+
   const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
   if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
   const cfg = await getBucketConfigById(ctx, bucketId)
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+  if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
   const adapter = createStorageAdapter({
     endpointUrl: cfg.endpointUrl,

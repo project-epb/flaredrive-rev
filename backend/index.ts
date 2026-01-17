@@ -1,6 +1,23 @@
 import { Hono } from 'hono'
+
+// Polyfill checks for AWS SDK to prevent fs access
+if (typeof process === 'undefined') {
+  ;(globalThis as any).process = { env: {} }
+}
+// Ensure process.env exists
+if (!globalThis.process) {
+  ;(globalThis as any).process = { env: {} }
+}
+if (!globalThis.process.env) {
+  globalThis.process.env = {}
+}
+// Disable config loading from filesystem
+Object.assign(globalThis.process.env, {
+  AWS_SDK_LOAD_CONFIG: '0',
+  AWS_EC2_METADATA_DISABLED: 'true',
+})
+
 import { bucket } from './routes/bucket.js'
-import { getBucketInfoList } from './utils/bucket-utils.js'
 import { raw } from './routes/raw.js'
 import { auth } from './routes/auth.js'
 import { buckets } from './routes/buckets.js'
@@ -21,12 +38,6 @@ app.get('/').all((ctx) => {
   return ctx.json({
     message: 'hello, world',
   })
-})
-
-app.get('/list_buckets', async (ctx) => {
-  // 返回当前已配置的 buckets 列表（来自 D1）。
-  const list = await getBucketInfoList(ctx)
-  return ctx.json(list)
 })
 
 app.route('/auth', auth)

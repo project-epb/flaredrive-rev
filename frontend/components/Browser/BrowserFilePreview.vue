@@ -34,9 +34,17 @@
 
     .preview-actions(mt-4, text-center)
       NButtonGroup
-        NButton(size='small', type='primary', @click='emit("download", item)') Download
-        NButton(size='small', type='info', @click='handleCopyURL') Copy URL
-        NButton(size='small', type='error', @click='emit("delete", item)'): NIcon: IconTrash
+        NButton(size='small', type='primary', @click='emit("download", item)')
+          template(#icon): NIcon: IconDownload
+          | Download
+        NButton(size='small', type='info', secondary, @click='handleCopyURL')
+          template(#icon): NIcon: IconCopy
+          | URL
+        NButton(size='small', @click='emit("toggle-public", item)')
+          template(#icon): NIcon: component(:is='isPublic ? IconWorldOff : IconWorld')
+          | {{ isPublic ? 'Private' : 'Public' }}
+        NButton(size='small', type='error', secondary, @click='emit("delete", item)')
+          template(#icon): NIcon: IconTrash
 
     .preview-details(v-if='item', mt-4, flex, flex-col, gap-4)
       NTable
@@ -73,7 +81,14 @@
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
-import { IconFileUnknown, IconTrash } from '@tabler/icons-vue'
+import { 
+  IconFileUnknown, 
+  IconTrash, 
+  IconDownload, 
+  IconCopy, 
+  IconWorld, 
+  IconWorldOff 
+} from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 
 const Hljs = defineAsyncComponent(() => import('@/components/Hljs.vue'))
@@ -85,9 +100,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   download: [item: R2Object]
   delete: [item: R2Object]
+  'toggle-public': [item: R2Object]
 }>()
 
 const bucket = useBucketStore()
+const message = useMessage()
+
+const isPublic = computed(() => {
+  return !!(props.item?.customMetadata as any)?.isPublic
+})
 
 const fileNameParts = computed(() => {
   return FileHelper.getSimpleFileInfoByObject(props.item)

@@ -1,5 +1,6 @@
 <template lang="pug">
 #browser-view
+  BreadcrumbNav(mb-2)
   .top-sticky-rail(mb-8, z-5, sticky, top='[calc(60px+0.25rem)]')
     NCollapseTransition(:show='isShowTopStickyRail || !!searchInput')
       NCard(size='small')
@@ -141,7 +142,8 @@
     :item='previewItem',
     @delete='onDelete',
     @download='onDownload',
-    @rename='onRename'
+    @rename='onRename',
+    @togglePublic='onTogglePublic'
   )
 
   //- upload history
@@ -232,7 +234,7 @@ const navigation = useNavigationStore()
 
 // Get bucket name from route param
 const currentBucketName = computed(() => {
-  const bucketParam = route.params.bucket
+  const bucketParam = (route.params as any).bucket
   return typeof bucketParam === 'string' ? bucketParam : ''
 })
 
@@ -398,6 +400,32 @@ async function onDelete(item: R2Object) {
         })
     },
   })
+}
+
+async function onTogglePublic(item: R2Object) {
+  if (!item) return
+  const isPublic = !!(item.customMetadata as any)?.isPublic
+  const action = isPublic ? 'Make Private' : 'Make Public'
+
+  // Optimistic update
+  const originalMeta = { ...item.customMetadata }
+  try {
+    const updated = await bucket.togglePublic(item.key, !isPublic)
+    nmessage.success(`${action} success`)
+
+    // Update local state if backend returns it, or manual patch
+    if (updated) {
+      // Ideally we should refetch or patch the item in list.
+      // For now let's just patch the object in place
+      if (!item.customMetadata) item.customMetadata = {} as any
+      ;(item.customMetadata as any).isPublic = updated.isPublic
+    } else {
+      await loadFileList()
+    }
+  } catch (error: any) {
+    nmessage.error(`Failed to ${action}: ${error.message}`)
+    // Rollback handled by not changing if failed, but if optimistic we would rollback here
+  }
 }
 async function onDownload(item: R2Object) {
   const url = bucket.getCDNUrl(item)

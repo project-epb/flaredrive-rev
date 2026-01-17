@@ -6,6 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const ALLOW_REGISTER: typeof import('../common/app-env').ALLOW_REGISTER
   const BATCH_UPLOAD_CONCURRENCY: typeof import('../common/app-env').BATCH_UPLOAD_CONCURRENCY
   const CDN_BASE_URL: typeof import('../common/app-env').CDN_BASE_URL
   const EffectScope: typeof import('vue').EffectScope
@@ -100,6 +101,7 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
+  const parseBoolean: typeof import('../common/app-env').parseBoolean
   const pausableWatch: typeof import('@vueuse/core').pausableWatch
   const provide: typeof import('vue').provide
   const provideLocal: typeof import('@vueuse/core').provideLocal
@@ -109,6 +111,7 @@ declare global {
   const reactiveComputed: typeof import('@vueuse/core').reactiveComputed
   const reactiveOmit: typeof import('@vueuse/core').reactiveOmit
   const reactivePick: typeof import('@vueuse/core').reactivePick
+  const readEnv: typeof import('../common/app-env').readEnv
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const refAutoReset: typeof import('@vueuse/core').refAutoReset
@@ -349,6 +352,7 @@ import { UnwrapRef } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
+    readonly ALLOW_REGISTER: UnwrapRef<typeof import('../common/app-env')['ALLOW_REGISTER']>
     readonly BATCH_UPLOAD_CONCURRENCY: UnwrapRef<typeof import('../common/app-env')['BATCH_UPLOAD_CONCURRENCY']>
     readonly CDN_BASE_URL: UnwrapRef<typeof import('../common/app-env')['CDN_BASE_URL']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
@@ -441,6 +445,7 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
+    readonly parseBoolean: UnwrapRef<typeof import('../common/app-env')['parseBoolean']>
     readonly pausableWatch: UnwrapRef<typeof import('@vueuse/core')['pausableWatch']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly provideLocal: UnwrapRef<typeof import('@vueuse/core')['provideLocal']>
@@ -450,6 +455,7 @@ declare module 'vue' {
     readonly reactiveComputed: UnwrapRef<typeof import('@vueuse/core')['reactiveComputed']>
     readonly reactiveOmit: UnwrapRef<typeof import('@vueuse/core')['reactiveOmit']>
     readonly reactivePick: UnwrapRef<typeof import('@vueuse/core')['reactivePick']>
+    readonly readEnv: UnwrapRef<typeof import('../common/app-env')['readEnv']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly refAutoReset: UnwrapRef<typeof import('@vueuse/core')['refAutoReset']>

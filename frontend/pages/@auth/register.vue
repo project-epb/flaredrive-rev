@@ -1,21 +1,23 @@
 <template lang="pug">
 #auth-register
   NCard(title='注册', size='large')
+    NAlert(v-if='!allowRegister', type='warning', show-icon) 当前未开放注册，请联系管理员或使用命令行创建账号。
     NForm(:model='form', :rules='rules', ref='formRef', label-placement='top')
       NFormItem(label='邮箱', path='email')
-        NInput(v-model:value='form.email', placeholder='you@example.com', autofocus)
+        NInput(v-model:value='form.email', placeholder='you@example.com', autofocus, :disabled='!allowRegister')
       NFormItem(label='密码', path='password')
-        NInput(v-model:value='form.password', type='password', show-password-on='click', placeholder='至少 8 位')
+        NInput(v-model:value='form.password', type='password', show-password-on='click', placeholder='至少 8 位', :disabled='!allowRegister')
       NFormItem(label='确认密码', path='password2')
-        NInput(v-model:value='form.password2', type='password', show-password-on='click')
+        NInput(v-model:value='form.password2', type='password', show-password-on='click', :disabled='!allowRegister')
       .flex(gap-3, items-center)
-        NButton(type='primary', :loading='submitting', @click='onSubmit') 注册并登录
+        NButton(type='primary', :loading='submitting', :disabled='!allowRegister', @click='onSubmit') 注册并登录
         NButton(secondary, @click='goLogin') 去登录
 </template>
 
 <script setup lang="ts">
-import { NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
+import { NAlert, NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
+import { ALLOW_REGISTER } from '../../../common/app-env'
 
 definePage({
   name: '@auth-register',
@@ -25,6 +27,7 @@ const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
+const allowRegister = ALLOW_REGISTER
 
 const redirectTo = computed(() => {
   const q = route.query.redirect
@@ -60,6 +63,10 @@ const submitting = ref(false)
 const formRef = ref<FormInst | null>(null)
 
 const onSubmit = async () => {
+  if (!allowRegister) {
+    message.warning('当前未开放注册')
+    return
+  }
   if (submitting.value) return
   const ok = await formRef.value
     ?.validate()

@@ -10,20 +10,24 @@ app.use(pinia)
 
 app.use(router)
 
-// Auth bootstrap + simple route guard (only affects routes that explicitly set meta.requiresAuth=true)
+// Auth bootstrap + route guard
 const auth = useAuthStore(pinia)
 auth.fetchMe().catch(() => void 0)
 
 router.beforeEach(async (to) => {
-  if ((to.meta as any)?.requiresAuth) {
-    await auth.fetchMe()
-    if (!auth.isAuthed) {
+  const isAuthRoute = to.path.startsWith('/@auth')
+  const requiresAuth = (to.meta as any)?.requiresAuth !== false && !isAuthRoute
+
+  if (requiresAuth) {
+    const data = auth.isAuthed ? auth.user : await auth.fetchMe(true)
+    if (!data) {
       return {
         path: '/@auth/login',
         query: { redirect: to.fullPath },
       }
     }
   }
+
   return true
 })
 

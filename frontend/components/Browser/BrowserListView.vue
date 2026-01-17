@@ -14,9 +14,10 @@
 import type { R2BucketListResponse } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
-import { IconDots } from '@tabler/icons-vue'
+import { IconDots, IconWorld, IconWorldOff } from '@tabler/icons-vue'
 import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
+import { useBucketStore } from '@/stores/bucket'
 
 const props = withDefaults(
   defineProps<{
@@ -42,6 +43,7 @@ const emit = defineEmits<{
   delete: [item: R2Object]
   download: [item: R2Object]
   navigate: [item: R2Object]
+  togglePublic: [item: R2Object]
 }>()
 
 const columns = computed(() => {
@@ -179,6 +181,7 @@ const columns = computed(() => {
       },
       render: (row: R2Object) => {
         if (row.key.endsWith('/')) return ''
+        const isPublic = !!(row.customMetadata as any)?.isPublic
         const onSelect = (key: string) => {
           switch (key) {
             case 'copy_url':
@@ -201,6 +204,9 @@ const columns = computed(() => {
             case 'delete':
               emit('delete', row)
               break
+            case 'toggle_public':
+              emit('togglePublic', row)
+              break
           }
         }
         return (
@@ -209,6 +215,11 @@ const columns = computed(() => {
               options={[
                 { label: 'Copy URL', key: 'copy_url' },
                 { label: 'Download', key: 'download' },
+                { 
+                  label: isPublic ? 'Make Private' : 'Make Public', 
+                  key: 'toggle_public',
+                  icon: isPublic ? () => <IconWorldOff size={16}/> : () => <IconWorld size={16}/>
+                },
                 { label: 'Rename', key: 'rename' },
                 { label: 'Delete', key: 'delete' },
               ]}
