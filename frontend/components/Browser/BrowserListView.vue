@@ -11,9 +11,8 @@
 </template>
 
 <script setup lang="tsx">
-import type { R2BucketListResponse } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import { IconDots, IconWorld, IconWorldOff } from '@tabler/icons-vue'
 import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
@@ -21,7 +20,7 @@ import { useBucketStore } from '@/stores/bucket'
 
 const props = withDefaults(
   defineProps<{
-    payload: R2BucketListResponse
+    payload: StorageListResult
     noActions?: boolean
     noFolder?: boolean
     defaultSortBy?: string
@@ -39,21 +38,21 @@ const bucket = useBucketStore()
 const nmessage = useMessage()
 
 const emit = defineEmits<{
-  rename: [item: R2Object]
-  delete: [item: R2Object]
-  download: [item: R2Object]
-  navigate: [item: R2Object]
-  togglePublic: [item: R2Object]
+  rename: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  download: [item: StorageListObject]
+  navigate: [item: StorageListObject]
+  togglePublic: [item: StorageListObject]
 }>()
 
 const columns = computed(() => {
-  if (!props.payload) return [] as TableColumns<R2Object>
+  if (!props.payload) return [] as TableColumns<StorageListObject>
   const cols = [
     {
       title: '',
       key: '_preview',
       width: 40,
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         const thumbs = bucket.getThumbnailUrls(row)
         if (thumbs) {
           return (
@@ -83,11 +82,11 @@ const columns = computed(() => {
       title: 'Name',
       key: 'key',
       minWidth: 200,
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         if (row.key === '/') return '/'
         return row.key.replace(props.payload!.prefix, '').replace(/\/$/, '')
       },
-      sorter: (a: R2Object, b: R2Object) => {
+      sorter: (a: StorageListObject, b: StorageListObject) => {
         // 文件夹不参与排序
         if (a.key.endsWith('/') || b.key.endsWith('/')) {
           return 0
@@ -100,11 +99,11 @@ const columns = computed(() => {
       key: 'size',
       align: 'center',
       minWidth: 100,
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         if (row.key.endsWith('/')) return '-'
         return FileHelper.formatFileSize(row.size)
       },
-      sorter: (a: R2Object, b: R2Object) => {
+      sorter: (a: StorageListObject, b: StorageListObject) => {
         // 文件夹不参与排序
         if (a.key.endsWith('/') || b.key.endsWith('/')) {
           return 0
@@ -117,7 +116,7 @@ const columns = computed(() => {
       key: 'httpMetadata.contentType',
       align: 'center',
       minWidth: 100,
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         if (row.key === '/') return 'root'
         if (row.key === '../') return 'parent'
         if (row.key.endsWith('/')) return 'folder'
@@ -138,11 +137,11 @@ const columns = computed(() => {
       title: 'Last Modified',
       key: 'uploaded',
       align: 'center',
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         if (row.key.endsWith('/')) return ''
         return new Date(row.uploaded).toLocaleString()
       },
-      sorter: (a: R2Object, b: R2Object) => {
+      sorter: (a: StorageListObject, b: StorageListObject) => {
         // 文件夹不参与排序
         if (a.key.endsWith('/') || b.key.endsWith('/')) {
           return 0
@@ -150,7 +149,7 @@ const columns = computed(() => {
         return new Date(a.uploaded).getTime() - new Date(b.uploaded).getTime()
       },
     },
-  ] as TableColumns<R2Object>
+  ] as TableColumns<StorageListObject>
   if (!props.noActions) {
     // selection
     // cols.unshift({
@@ -179,7 +178,7 @@ const columns = computed(() => {
           },
         }
       },
-      render: (row: R2Object) => {
+      render: (row: StorageListObject) => {
         if (row.key.endsWith('/')) return ''
         const isPublic = !!(row.customMetadata as any)?.isPublic
         const onSelect = (key: string) => {
@@ -259,7 +258,7 @@ const tableData = computed(() => {
   }
   return list
 })
-const handleRowClick = (row: R2Object) => {
+const handleRowClick = (row: StorageListObject) => {
   emit('navigate', row)
 }
 </script>

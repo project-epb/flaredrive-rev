@@ -1,4 +1,4 @@
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 import {
   IconFileMusic,
   IconFileTypeBmp,
@@ -214,10 +214,10 @@ export namespace FileHelper {
       storageClass: '',
       checksums: null as any,
       __is_dir__: !!key?.endsWith('/'),
-    } as unknown as R2Object
+    } as unknown as StorageListObject
   }
 
-  export function getObjectIcon(item: R2Object) {
+  export function getObjectIcon(item: StorageListObject) {
     if (item.key === '/') {
       return IconFolderRoot
     }
@@ -349,7 +349,7 @@ export namespace FileHelper {
       lastModified: null,
     }) as SimpleFileInfo
 
-  export function getSimpleFileInfoByObject(item: R2Object | null | undefined): SimpleFileInfo {
+  export function getSimpleFileInfoByObject(item: StorageListObject | null | undefined): SimpleFileInfo {
     if (!item) {
       return createNullFileInfo()
     }
@@ -392,7 +392,7 @@ export namespace FileHelper {
     } as SimpleFileInfo
   }
 
-  export function getPreviewType(item?: R2Object | null) {
+  export function getPreviewType(item?: StorageListObject | null) {
     if (!item) return 'unknown'
     const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
     if (ext === 'md') return 'markdown'

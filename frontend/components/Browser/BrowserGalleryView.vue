@@ -68,9 +68,8 @@
 </template>
 
 <script setup lang="ts">
-import type { R2BucketListResponse } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import { IconDots, IconSortAscending, IconSortDescending } from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 import type { Component } from 'vue'
@@ -78,14 +77,14 @@ import { Waterfall } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
 
 const props = defineProps<{
-  payload: R2BucketListResponse
+  payload: StorageListResult
 }>()
 
 const emit = defineEmits<{
-  rename: [item: R2Object]
-  delete: [item: R2Object]
-  download: [item: R2Object]
-  navigate: [item: R2Object]
+  rename: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  download: [item: StorageListObject]
+  navigate: [item: StorageListObject]
 }>()
 
 const nmessage = useMessage()
@@ -118,7 +117,7 @@ const sortActions = computed(() => {
 })
 
 const list = computed<
-  (R2Object & {
+  (StorageListObject & {
     thumbUrl?: string
     cdnUrl?: string
     icon?: Component
@@ -141,7 +140,7 @@ const list = computed<
     }),
   ].map(
     (
-      item: R2Object & {
+      item: StorageListObject & {
         cdnUrl?: string
         thumbUrl?: string
         icon?: Component
@@ -172,7 +171,7 @@ watch(
   }
 )
 
-function onClickItem(item: R2Object) {
+function onClickItem(item: StorageListObject) {
   emit('navigate', item)
 }
 const fileActionOptions = ref([
@@ -181,7 +180,7 @@ const fileActionOptions = ref([
   { label: 'Rename', key: 'rename' },
   { label: 'Delete', key: 'delete' },
 ])
-const onSelectAction = (action: string, item: R2Object) => {
+const onSelectAction = (action: string, item: StorageListObject) => {
   switch (action) {
     case 'copy_url':
       navigator.clipboard

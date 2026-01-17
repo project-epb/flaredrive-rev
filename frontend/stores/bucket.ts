@@ -1,6 +1,5 @@
-import { type BucketInfo, R2BucketClient } from '@/models/R2BucketClient'
+import { type BucketInfo, R2BucketClient, type StorageListObject } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import fexios from 'fexios'
 import PQueue from 'p-queue'
 
@@ -52,7 +51,7 @@ export const useBucketStore = defineStore('bucket', () => {
     }
     return thumbKey
   }
-  const isMediaObject = (item: R2Object) => {
+  const isMediaObject = (item: StorageListObject) => {
     const isImage =
       item.httpMetadata?.contentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(item.key)
     const isVideo =
@@ -136,7 +135,7 @@ export const useBucketStore = defineStore('bucket', () => {
     })
     return response
   }
-  const deleteFile = async (item: R2Object) => {
+  const deleteFile = async (item: StorageListObject) => {
     await client.delete(item.key)
     // Remove from upload history
     uploadHistory.value = uploadHistory.value.filter((h) => item.key !== h.key)
@@ -164,7 +163,7 @@ export const useBucketStore = defineStore('bucket', () => {
     })
   }
 
-  const getCDNUrl = (payload: R2Object | string, bucketName = currentBucketName.value) => {
+  const getCDNUrl = (payload: StorageListObject | string, bucketName = currentBucketName.value) => {
     if (!payload) {
       return ''
     }
@@ -178,7 +177,7 @@ export const useBucketStore = defineStore('bucket', () => {
     return url.toString()
   }
   const getThumbnailUrls = (
-    item: R2Object,
+    item: StorageListObject,
     strict = false
   ): { square: string; small: string; medium: string; large: string } | null => {
     if (!item || item.key.endsWith('/')) {
@@ -225,8 +224,8 @@ export const useBucketStore = defineStore('bucket', () => {
   }
 
   const UPLOAD_HISTORY_MAX = 1000
-  const uploadHistory = useLocalStorage<R2Object[]>('flaredrive:upload-history', [])
-  const addToUploadHistory = (item: R2Object) => {
+  const uploadHistory = useLocalStorage<StorageListObject[]>('flaredrive:upload-history', [])
+  const addToUploadHistory = (item: StorageListObject) => {
     console.info('Upload history', item)
     uploadHistory.value = [item, ...uploadHistory.value.filter((i) => i.key !== item.key)]
     if (uploadHistory.value.length > UPLOAD_HISTORY_MAX) {
@@ -328,7 +327,7 @@ export const useBucketStore = defineStore('bucket', () => {
     await recordUpload(targetKey, file.size, contentType)
 
     // 5. Construct Result for frontend
-    const result: R2Object = {
+    const result = {
       key: targetKey,
       size: file.size,
       etag: '', // Cannot get etag easily from PUT response unless exposing ETag header
@@ -337,7 +336,7 @@ export const useBucketStore = defineStore('bucket', () => {
         contentType,
       },
       customMetadata: metadata as any,
-    }
+    } as unknown as StorageListObject
 
     console.info('Upload finish', targetKey, file, result)
     addToUploadHistory(result)

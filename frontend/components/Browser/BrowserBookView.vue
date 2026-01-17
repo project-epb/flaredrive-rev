@@ -57,13 +57,12 @@
 </template>
 
 <script setup lang="ts">
-import type { R2BucketListResponse } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 
 const props = withDefaults(
   defineProps<{
-    payload?: R2BucketListResponse | null
+    payload?: StorageListResult | null
   }>(),
   { payload: null }
 )
@@ -96,8 +95,8 @@ const parentKey = computed(() => {
  * 按 key ascend 排序，过滤出来 image/* text/plain *.md 的对象
  * 这样我们才能把它渲染成类似书本的效果
  */
-const items = computed<
-  (R2Object & {
+const items = computed< 
+  (StorageListObject & {
     previewType: ReturnType<typeof FileHelper.getPreviewType>
     cdnUrl: string
     thumbnailUrl?: string

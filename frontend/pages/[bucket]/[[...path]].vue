@@ -195,9 +195,8 @@
 </template>
 
 <script setup lang="tsx">
-import { type R2BucketListResponse } from '@/models/R2BucketClient'
+import { type StorageListObject, type StorageListResult } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
   IconBook,
   IconChevronCompactDown,
@@ -291,7 +290,7 @@ watch(currentLayout, () => {
 })
 
 const isLoading = ref(false)
-const payload = ref<R2BucketListResponse>()
+const payload = ref<StorageListResult>()
 const curObjectCount = computed(() => {
   if (!payload.value) return { files: 0, folders: 0 }
   return {
@@ -358,8 +357,8 @@ const filteredPayload = computed(() => {
 })
 
 const isShowPreview = ref(false)
-const previewItem = ref<R2Object | undefined>()
-function onNavigate(item: R2Object) {
+const previewItem = ref<StorageListObject | undefined>()
+function onNavigate(item: StorageListObject) {
   const path = item.key || ''
   if (path === '/' || path === '') {
     router.push(`/${currentBucketName.value}/`)
@@ -373,7 +372,7 @@ function onNavigate(item: R2Object) {
     isShowPreview.value = true
   }
 }
-async function onDelete(item: R2Object) {
+async function onDelete(item: StorageListObject) {
   nmodal.create({
     title: 'Delete File',
     type: 'error',
@@ -402,7 +401,7 @@ async function onDelete(item: R2Object) {
   })
 }
 
-async function onTogglePublic(item: R2Object) {
+async function onTogglePublic(item: StorageListObject) {
   if (!item) return
   const isPublic = !!(item.customMetadata as any)?.isPublic
   const action = isPublic ? 'Make Private' : 'Make Public'
@@ -427,7 +426,7 @@ async function onTogglePublic(item: R2Object) {
     // Rollback handled by not changing if failed, but if optimistic we would rollback here
   }
 }
-async function onDownload(item: R2Object) {
+async function onDownload(item: StorageListObject) {
   const url = bucket.getCDNUrl(item)
   const a = document.createElement('a')
   a.href = url
@@ -435,7 +434,7 @@ async function onDownload(item: R2Object) {
   a.click()
   nmessage.success('Download started')
 }
-async function onRename(item: R2Object) {
+async function onRename(item: StorageListObject) {
   const toPathInput = ref(item.key)
   nmodal.create({
     title: 'Rename File',
@@ -693,7 +692,7 @@ watch(
   },
   { immediate: true }
 )
-const fetchPlainText = async (item: R2Object) => {
+const fetchPlainText = async (item: StorageListObject) => {
   if (!item) return ''
   const url = bucket.getCDNUrl(item)
   try {

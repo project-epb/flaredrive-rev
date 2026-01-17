@@ -8,14 +8,14 @@
 </template>
 
 <script setup lang="ts">
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 import { IconInfoCircle } from '@tabler/icons-vue'
 
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 
 const props = withDefaults(
   defineProps<{
-    item?: R2Object | null
+    item?: StorageListObject | null
     autoLoad?: boolean
     content?: string
   }>(),
@@ -23,8 +23,8 @@ const props = withDefaults(
 )
 const emit = defineEmits<{
   'update:content': [content: string]
-  load: [item: R2Object, content: string]
-  navigate: [item: R2Object]
+  load: [item: StorageListObject, content: string]
+  navigate: [item: StorageListObject]
 }>()
 const bucket = useBucketStore()
 

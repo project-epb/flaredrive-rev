@@ -6,13 +6,13 @@
 
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 
 const props = withDefaults(
   defineProps<{
-    item?: R2Object | null
+    item?: StorageListObject | null
     autoLoad?: boolean
   }>(),
   { item: null }
@@ -20,7 +20,7 @@ const props = withDefaults(
 const content = defineModel<string>('content', { default: '' })
 
 const emit = defineEmits<{
-  load: [item: R2Object, content: string]
+  load: [item: StorageListObject, content: string]
 }>()
 
 const bucket = useBucketStore()

@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 import { 
   IconFileUnknown, 
   IconTrash, 
@@ -95,12 +95,12 @@ const Hljs = defineAsyncComponent(() => import('@/components/Hljs.vue'))
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 
 const props = defineProps<{
-  item?: R2Object | null
+  item?: StorageListObject | null
 }>()
 const emit = defineEmits<{
-  download: [item: R2Object]
-  delete: [item: R2Object]
-  'toggle-public': [item: R2Object]
+  download: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  'toggle-public': [item: StorageListObject]
 }>()
 
 const bucket = useBucketStore()

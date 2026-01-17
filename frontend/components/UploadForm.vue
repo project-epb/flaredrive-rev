@@ -13,7 +13,7 @@ NForm
 </template>
 
 <script setup lang="ts">
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 import { IconUpload } from '@tabler/icons-vue'
 import { NFormItem, useMessage, type UploadCustomRequestOptions, type UploadFileInfo } from 'naive-ui'
 
@@ -29,7 +29,7 @@ const props = withDefaults(
   }
 )
 const emit = defineEmits<{
-  uploaded: [item: R2Object]
+  uploaded: [item: StorageListObject]
 }>()
 const formData = reactive({
   prefix: props.defaultPrefix,
