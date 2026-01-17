@@ -15,11 +15,7 @@
               template(#icon)
                 Icon(name='i-lucide-rocket')
               | 开始使用
-            NButton(
-              size='large',
-              @click='$router.push("/auth/login")',
-              v-if='!isLoggedIn'
-            )
+            NButton(size='large', @click='$router.push("/auth/login")', v-if='!isLoggedIn')
               | 登录
 
   .features-section.py-20

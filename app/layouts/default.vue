@@ -38,8 +38,8 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 
+const user = useUser()
 const router = useRouter()
-// const route = useRoute()  <-- route 也没用了，除非别的用了
 
 // 主题管理
 const colorMode = useColorMode()
@@ -62,23 +62,23 @@ const userMenuOptions = [
     props: {
       onClick: () => {
         // TODO: 跳转到设置页面
-      }
-    }
+      },
+    },
   },
   {
-     type: 'divider',
-     key: 'd1'
+    type: 'divider',
+    key: 'd1',
   },
   {
     label: '退出登录',
     key: 'logout',
     icon: renderIcon('i-lucide-log-out'),
     props: {
-        onClick: () => {
-          // TODO: 实现登出逻辑
-          router.push('/auth/login')
-        }
-    }
+      onClick: () => {
+        user.logout()
+        router.push('/')
+      },
+    },
   },
 ]
 </script>

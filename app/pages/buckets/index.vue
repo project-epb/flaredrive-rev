@@ -28,7 +28,7 @@
       template(#header)
         .flex.items-center.gap-3
           .p-3.rounded-lg.bg-primary-100(class='dark:bg-primary-900/20')
-             Icon.size-6.text-primary(name='i-lucide-database')
+            Icon.size-6.text-primary(name='i-lucide-database')
           .flex-1.min-w-0
             h3.font-semibold.text-lg.truncate {{ bucket.name }}
             p.text-sm.text-gray-500.truncate(class='dark:text-gray-400') {{ bucket.bucketName }}
@@ -47,29 +47,29 @@
       template(#action)
         .flex.justify-end.gap-2
           NButton(type='info', quaternary, size='small', @click.stop='handleEdit(bucket)')
-             template(#icon)
-               Icon(name='i-lucide-pencil')
-             | 编辑
+            template(#icon)
+              Icon(name='i-lucide-pencil')
+            | 编辑
           NButton(type='error', quaternary, size='small', @click.stop='handleDelete(bucket)')
-             template(#icon)
-               Icon(name='i-lucide-trash')
-             | 删除
+            template(#icon)
+              Icon(name='i-lucide-trash')
+            | 删除
 
   NModal(v-model:show='showAddModal', preset='card', title='添加存储桶', style='width: 600px')
-      BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
+    BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
 
   NModal(v-model:show='showEditModal', preset='card', title='编辑存储桶', style='width: 600px')
-      BucketForm(:bucket='currentBucket || undefined', @success='handleFormSuccess', @cancel='showEditModal = false')
+    BucketForm(:bucket='currentBucket || undefined', @success='handleFormSuccess', @cancel='showEditModal = false')
 
   NModal(v-model:show='showDeleteModal', preset='card', title='确认删除', style='width: 400px', :auto-focus='false')
-      p.text-gray-600(class='dark:text-gray-400')
-        | 确定要删除存储桶 "
-        strong {{ bucketToDelete?.name }}
-        | " 吗？此操作不可恢复。
-      template(#footer)
-        .flex.justify-end.gap-3
-           NButton(@click='showDeleteModal = false') 取消
-           NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
+    p.text-gray-600(class='dark:text-gray-400')
+      | 确定要删除存储桶 "
+      strong {{ bucketToDelete?.name }}
+      | " 吗？此操作不可恢复。
+    template(#footer)
+      .flex.justify-end.gap-3
+        NButton(@click='showDeleteModal = false') 取消
+        NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
 </template>
 
 <script setup lang="ts">

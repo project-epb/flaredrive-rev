@@ -24,7 +24,7 @@
 
     //- 底部操作
     .mt-6.flex.justify-center
-      NButton(quaternary, circle, size='large', @click='toggleTheme', class='text-white')
+      NButton.text-white(quaternary, circle, size='large', @click='toggleTheme')
         template(#icon)
           Icon(:name='currentThemeIcon')
 </template>

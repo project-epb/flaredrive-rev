@@ -4,17 +4,17 @@
     template(#header)
       h2.text-2xl.font-bold.text-center 登录
 
-    form.space-y-4(@submit.prevent='handleSubmit')
+    NForm.space-y-4(@submit.prevent='handleSubmit')
       NFormItem(label='邮箱')
         NInput(
           v-model:value='formValue.email',
           type='text',
           placeholder='请输入邮箱',
           size='large',
-          :input-props="{ autocomplete: 'email' }"
+          :input-props='{ autocomplete: "email" }'
         )
-           template(#prefix)
-             Icon(name='i-lucide-mail')
+          template(#prefix)
+            Icon(name='i-lucide-mail')
 
       NFormItem(label='密码')
         NInput(
@@ -23,10 +23,10 @@
           placeholder='请输入密码',
           size='large',
           show-password-on='click',
-          :input-props="{ autocomplete: 'current-password' }"
+          :input-props='{ autocomplete: "current-password" }'
         )
-           template(#prefix)
-             Icon(name='i-lucide-lock')
+          template(#prefix)
+            Icon(name='i-lucide-lock')
 
       NButton(type='primary', block, size='large', :loading='loading', attr-type='submit') 登录
 
@@ -82,7 +82,7 @@ const handleSubmit = async () => {
         email: formValue.email,
         password: formValue.password,
       },
-    }) as unknown) as { message?: string }
+    })) as unknown as { message?: string }
 
     if (response.message) {
       const msg = response.message === 'invalid credentials' ? '邮箱或密码错误' : response.message

@@ -86,5 +86,8 @@
     "unplugin-auto-import": "^21.0.0",
     "unplugin-vue-components": "^31.0.0",
     "wrangler": "^4.59.2"
-  }
+  },
+  "workspaces": [
+    "."
+  ]
 }

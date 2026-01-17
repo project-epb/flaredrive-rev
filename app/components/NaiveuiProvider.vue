@@ -14,10 +14,10 @@ NConfigProvider(
 </template>
 
 <script setup lang="ts">
-import { type GlobalThemeOverrides, darkTheme, dateZhCN, zhCN } from 'naive-ui'
+import { type GlobalThemeOverrides, darkTheme, lightTheme, dateZhCN, zhCN } from 'naive-ui'
 
 const colorMode = useColorMode()
-const naiveTheme = computed(() => (colorMode.value === 'dark' ? darkTheme : null))
+const naiveTheme = computed(() => (colorMode.value === 'dark' ? darkTheme : lightTheme))
 
 // Cloudflare Orange Theme
 const themeOverrides: GlobalThemeOverrides = {

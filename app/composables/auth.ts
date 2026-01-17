@@ -18,9 +18,7 @@ export const useUser = () => {
 
   const logout = async () => {
     user.value = null
-    // Here implies we might want to call a logout API endpoint if it existed,
-    // but the original code didn't seem to have one in context usage yet, or just clearing state.
-    // Usually there is /api/auth/logout. But for now just clearing state.
+    await $fetch('/api/auth/logout', { method: 'POST' })
   }
 
   return {

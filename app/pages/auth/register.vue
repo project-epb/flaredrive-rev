@@ -1,20 +1,20 @@
 <template lang="pug">
-NuxtLayout(name='auth')
+#register
   NCard
     template(#header='')
       h2.text-2xl.font-bold.text-center 注册
 
-    form.space-y-4(@submit.prevent='handleSubmit')
+    NForm.space-y-4(@submit.prevent='handleSubmit')
       NFormItem(label='邮箱')
         NInput(
           v-model:value='formValue.email',
           type='text',
           placeholder='请输入邮箱',
           size='large',
-          :input-props="{ autocomplete: 'email' }"
+          :input-props='{ autocomplete: "email" }'
         )
-           template(#prefix)
-             Icon(name='i-lucide-mail')
+          template(#prefix)
+            Icon(name='i-lucide-mail')
 
       NFormItem(label='密码', feedback='至少 8 个字符')
         NInput(
@@ -23,10 +23,10 @@ NuxtLayout(name='auth')
           placeholder='请输入密码',
           size='large',
           show-password-on='click',
-          :input-props="{ autocomplete: 'new-password' }"
+          :input-props='{ autocomplete: "new-password" }'
         )
-           template(#prefix)
-             Icon(name='i-lucide-lock')
+          template(#prefix)
+            Icon(name='i-lucide-lock')
 
       NFormItem(label='确认密码')
         NInput(
@@ -35,10 +35,10 @@ NuxtLayout(name='auth')
           placeholder='请再次输入密码',
           size='large',
           show-password-on='click',
-          :input-props="{ autocomplete: 'new-password' }"
+          :input-props='{ autocomplete: "new-password" }'
         )
-           template(#prefix)
-             Icon(name='i-lucide-lock')
+          template(#prefix)
+            Icon(name='i-lucide-lock')
 
       NButton(type='primary', block, size='large', :loading='loading', attr-type='submit') 注册
 
@@ -102,7 +102,7 @@ const handleSubmit = async () => {
         email: formValue.email,
         password: formValue.password,
       },
-    }) as unknown) as { message?: string }
+    })) as unknown as { message?: string }
 
     if (response.message) {
       const msg = response.message === 'email already registered' ? '邮箱已被注册' : response.message

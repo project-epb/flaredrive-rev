@@ -4,11 +4,11 @@
     .page-header.flex.flex-col.gap-4(class='md:flex-row md:items-center md:justify-between')
       .breadcrumb-wrapper
         NBreadcrumb
-           NBreadcrumbItem(v-for='item in breadcrumbItems' :key='item.to')
-             router-link(:to="item.to")
-               .flex.items-center.gap-1
-                 Icon(v-if="item.icon" :name="item.icon" size="14")
-                 span {{ item.label }}
+          NBreadcrumbItem(v-for='item in breadcrumbItems', :key='item.to')
+            router-link(:to='item.to')
+              .flex.items-center.gap-1
+                Icon(v-if='item.icon', :name='item.icon', size='14')
+                span {{ item.label }}
 
       .actions.flex.items-center.gap-3
         //- 视图切换
@@ -21,30 +21,30 @@
             template(#icon)
               Icon(name='i-lucide-list')
           NButton(
-             :type='viewMode === "gallery" ? "primary" : "default"',
-             :secondary='viewMode !== "gallery"',
-             @click='viewMode = "gallery"'
+            :type='viewMode === "gallery" ? "primary" : "default"',
+            :secondary='viewMode !== "gallery"',
+            @click='viewMode = "gallery"'
           )
-             template(#icon)
-               Icon(name='i-lucide-grid-2x2')
+            template(#icon)
+              Icon(name='i-lucide-grid-2x2')
           NButton(
-             :type='viewMode === "book" ? "primary" : "default"',
-             :secondary='viewMode !== "book"',
-             @click='viewMode = "book"'
+            :type='viewMode === "book" ? "primary" : "default"',
+            :secondary='viewMode !== "book"',
+            @click='viewMode = "book"'
           )
-             template(#icon)
-               Icon(name='i-lucide-book-open')
+            template(#icon)
+              Icon(name='i-lucide-book-open')
 
-        NDivider(vertical, class='hidden md:block', style="height: 24px")
+        NDivider.hidden(vertical, class='md:block', style='height: 24px')
 
         NButton(type='primary', @click='showUploadModal = true')
-           template(#icon)
-             Icon(name='i-lucide-upload')
-           | 上传文件
+          template(#icon)
+            Icon(name='i-lucide-upload')
+          | 上传文件
         NButton(secondary, :loading='loading', @click='refresh')
-           template(#icon)
-             Icon(name='i-lucide-refresh-cw')
-           | 刷新
+          template(#icon)
+            Icon(name='i-lucide-refresh-cw')
+          | 刷新
 
     //- 列表视图
     BrowserListView(
@@ -86,16 +86,16 @@
     )
 
   NModal(v-model:show='showUploadModal', preset='card', title='上传文件', style='width: 600px')
-      UploadForm(:bucket-id='bucketId', :prefix='currentPrefix', @success='handleUploadSuccess')
+    UploadForm(:bucket-id='bucketId', :prefix='currentPrefix', @success='handleUploadSuccess')
 
   NModal(v-model:show='showDeleteModal', preset='dialog', title='确认删除')
-      p.text-gray-600(class='dark:text-gray-400')
-        | 确定要删除文件 "
-        strong {{ fileToDelete ? getFileName(fileToDelete.key) : '' }}
-        | " 吗？
-      template(#action)
-          NButton(@click='showDeleteModal = false') 取消
-          NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
+    p.text-gray-600(class='dark:text-gray-400')
+      | 确定要删除文件 "
+      strong {{ fileToDelete ? getFileName(fileToDelete.key) : '' }}
+      | " 吗？
+    template(#action)
+      NButton(@click='showDeleteModal = false') 取消
+      NButton(type='error', :loading='deleting', @click='confirmDelete') 删除
 
   BrowserPreviewModal(
     v-model:show='showPreviewModal',
