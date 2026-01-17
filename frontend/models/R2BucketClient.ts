@@ -37,7 +37,7 @@ export interface BucketInfo {
 
 export class R2BucketClient {
   readonly request: Fexios
-  constructor(private baseURL: string = '/api/bucket') {
+  constructor(private baseURL: string = '/api/bucket/') {
     this.request = Fexios.create({
       baseURL,
     })

@@ -75,7 +75,7 @@ export const useBucketStore = defineStore('bucket', () => {
 
   const setCurrentBucket = (bucketId: string) => {
     currentBucketName.value = bucketId || ''
-    const baseUrl = bucketId ? `/api/bucket/${bucketId}` : '/api/bucket'
+    const baseUrl = bucketId ? `/api/bucket/${bucketId}/` : '/api/bucket/'
     client.setBaseURL(baseUrl)
   }
 
@@ -183,43 +183,22 @@ export const useBucketStore = defineStore('bucket', () => {
     if (!item || item.key.endsWith('/')) {
       return null
     }
-    const { isImage, isVideo, isMedia } = isMediaObject(item)
+    const { isMedia } = isMediaObject(item)
 
     if (!isMedia) {
       return null
     }
-    const makeCgiUrl = (size: number) => {
-      const url = new URL(getCDNUrl(item.key))
-      if (import.meta.env.DEV) {
-        url.search = `thumbsize=${size}`
-        return url.href
-      }
-      url.pathname = `/cdn-cgi/image/format=auto,fit=contain,width=${size},height=${size},onerror=redirect${url.pathname}`
-      return url.href
+    const cached = thumbnailKeyCache.value[item.key]
+    if (!cached) {
+      getThumbnailKey(item.key).catch((e) => console.error('Error hashing thumbnail key', item, e))
+      return null
     }
-    if (isVideo) {
-      const cached = thumbnailKeyCache.value[item.key]
-      if (!cached) {
-        getThumbnailKey(item.key).catch((e) => console.error('Error hashing thumbnail key', item, e))
-        return null
-      }
-      const square = getCDNUrl(cached)
-      return {
-        square,
-        small: square,
-        medium: square,
-        large: square,
-      }
-    }
-    const square = makeCgiUrl(256)
-    const small = makeCgiUrl(256)
-    const medium = makeCgiUrl(400)
-    const large = makeCgiUrl(800)
+    const square = getCDNUrl(cached)
     return {
       square,
-      small,
-      medium,
-      large,
+      small: square,
+      medium: square,
+      large: square,
     }
   }
 
