@@ -12,6 +12,7 @@ export interface R2BucketListResponse {
 }
 
 export interface BucketInfo {
+  id: string
   name: string
   cdnBaseUrl: string
 }

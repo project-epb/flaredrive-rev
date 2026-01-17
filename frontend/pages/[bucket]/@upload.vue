@@ -7,6 +7,9 @@
 <script setup lang="ts">
 definePage({
   name: '@upload-standalone',
+  meta: {
+    requiresAuth: true,
+  },
 })
 
 const route = useRoute()

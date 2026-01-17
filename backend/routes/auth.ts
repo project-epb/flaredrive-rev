@@ -1,0 +1,238 @@
+import { Hono } from 'hono'
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { eq, and, gt } from 'drizzle-orm'
+import { users, sessions } from '../../db/schema.js'
+import type { HonoEnv } from '../index.js'
+import { getDb } from '../utils/db.js'
+
+const COOKIE_NAME = 'fd_session'
+const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase()
+
+const isValidEmail = (email: string) => {
+  if (!email || email.length > 254) return false
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+const isValidPassword = (password: string) => {
+  return typeof password === 'string' && password.length >= 8 && password.length <= 128
+}
+
+const base64UrlEncode = (bytes: Uint8Array) => {
+  let binary = ''
+  for (const b of bytes) binary += String.fromCharCode(b)
+  const b64 = btoa(binary)
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
+const base64UrlDecode = (value: string) => {
+  const padded = value
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(Math.ceil(value.length / 4) * 4, '=')
+  const binary = atob(padded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
+const sha256Base64Url = async (input: string) => {
+  const data = new TextEncoder().encode(input)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return base64UrlEncode(new Uint8Array(digest))
+}
+
+const timingSafeEqual = (a: Uint8Array, b: Uint8Array) => {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+  return diff === 0
+}
+
+const hashPassword = async (password: string, saltB64Url?: string) => {
+  const iterations = 100_000
+  const salt = saltB64Url ? base64UrlDecode(saltB64Url) : crypto.getRandomValues(new Uint8Array(16))
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), { name: 'PBKDF2' }, false, [
+    'deriveBits',
+  ])
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256)
+  const hash = new Uint8Array(bits)
+  return {
+    passwordSalt: base64UrlEncode(salt),
+    passwordHash: `pbkdf2:sha256:${iterations}:${base64UrlEncode(hash)}`,
+  }
+}
+
+const verifyPassword = async (password: string, passwordSalt: string, storedPasswordHash: string) => {
+  const [algo, hashName, iterationsStr, hashB64Url] = storedPasswordHash.split(':')
+  if (algo !== 'pbkdf2' || hashName !== 'sha256') return false
+  const iterations = Number(iterationsStr)
+  if (!Number.isFinite(iterations) || iterations <= 0) return false
+
+  const salt = base64UrlDecode(passwordSalt)
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), { name: 'PBKDF2' }, false, [
+    'deriveBits',
+  ])
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256)
+  const computed = new Uint8Array(bits)
+  const stored = base64UrlDecode(hashB64Url)
+  return timingSafeEqual(computed, stored)
+}
+
+const getRequestIp = (ctx: any) => {
+  return ctx.req.header('x-forwarded-for') || ctx.req.header('cf-connecting-ip') || null
+}
+
+const getUserAgent = (ctx: any) => {
+  return ctx.req.header('user-agent') || null
+}
+
+const isSecureRequest = (ctx: any) => {
+  try {
+    return new URL(ctx.req.url).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+const authorizationLevelForUser = (user: { id: number; authorizationLevel: number }) => {
+  // “首个用户为管理员（ID=1）”规则：即使数据库字段不是 3，也视为管理员
+  return user.id === 1 ? 3 : user.authorizationLevel
+}
+
+export const auth = new Hono<HonoEnv>()
+
+auth.post('/register', async (ctx) => {
+  const body = await ctx.req.json().catch(() => null)
+  const email = normalizeEmail(body?.email || '')
+  const password = body?.password || ''
+
+  if (!isValidEmail(email)) return ctx.json({ error: 'Invalid email' }, 400)
+  if (!isValidPassword(password)) return ctx.json({ error: 'Invalid password' }, 400)
+
+  const db = getDb(ctx)
+  const existing = await db.select().from(users).where(eq(users.email, email)).get()
+  if (existing) return ctx.json({ error: 'Email already registered' }, 409)
+
+  const now = Date.now()
+  const { passwordSalt, passwordHash } = await hashPassword(password)
+
+  // 先插入用户（authorizationLevel 默认 1）
+  await db
+    .insert(users)
+    .values({
+      email,
+      passwordSalt,
+      passwordHash,
+      createdAt: now,
+    })
+    .run()
+
+  const created = await db
+    .select({ id: users.id, email: users.email, authorizationLevel: users.authorizationLevel })
+    .from(users)
+    .where(eq(users.email, email))
+    .get()
+
+  if (!created) return ctx.json({ error: 'Failed to create user' }, 500)
+
+  // 如果是首个用户，则固化为 admin（同时 auth 判定也会强制 id=1 为 admin）
+  if (created.id === 1) {
+    await db.update(users).set({ authorizationLevel: 3 }).where(eq(users.id, 1)).run()
+  }
+
+  return ctx.json({ id: created.id, email: created.email }, 201)
+})
+
+auth.post('/login', async (ctx) => {
+  const body = await ctx.req.json().catch(() => null)
+  const email = normalizeEmail(body?.email || '')
+  const password = body?.password || ''
+
+  if (!isValidEmail(email)) return ctx.json({ error: 'Invalid email' }, 400)
+  if (!isValidPassword(password)) return ctx.json({ error: 'Invalid password' }, 400)
+
+  const db = getDb(ctx)
+  const user = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      passwordSalt: users.passwordSalt,
+      passwordHash: users.passwordHash,
+      authorizationLevel: users.authorizationLevel,
+    })
+    .from(users)
+    .where(eq(users.email, email))
+    .get()
+
+  if (!user) return ctx.json({ error: 'Invalid email or password' }, 401)
+
+  const ok = await verifyPassword(password, user.passwordSalt, user.passwordHash)
+  if (!ok) return ctx.json({ error: 'Invalid email or password' }, 401)
+
+  const token = base64UrlEncode(crypto.getRandomValues(new Uint8Array(32)))
+  const tokenHash = await sha256Base64Url(token)
+  const now = Date.now()
+  const expiresAt = now + SESSION_MAX_AGE_SEC * 1000
+
+  await db
+    .insert(sessions)
+    .values({
+      userId: user.id,
+      tokenHash,
+      loginXff: getRequestIp(ctx),
+      loginUa: getUserAgent(ctx),
+      createdAt: now,
+      expiresAt,
+    })
+    .run()
+
+  setCookie(ctx, COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: isSecureRequest(ctx),
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: SESSION_MAX_AGE_SEC,
+  })
+
+  return ctx.json({ ok: true })
+})
+
+auth.post('/logout', async (ctx) => {
+  const token = getCookie(ctx, COOKIE_NAME)
+  if (token) {
+    const db = getDb(ctx)
+    const tokenHash = await sha256Base64Url(token)
+    await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash)).run()
+  }
+
+  deleteCookie(ctx, COOKIE_NAME, { path: '/' })
+  return ctx.json({ ok: true })
+})
+
+auth.get('/me', async (ctx) => {
+  const token = getCookie(ctx, COOKIE_NAME)
+  if (!token) return ctx.json({ error: 'Unauthorized' }, 401)
+
+  const db = getDb(ctx)
+  const tokenHash = await sha256Base64Url(token)
+  const now = Date.now()
+
+  const session = await db
+    .select({
+      userId: sessions.userId,
+      userEmail: users.email,
+      userAuth: users.authorizationLevel,
+      userId2: users.id,
+    })
+    .from(sessions)
+    .innerJoin(users, eq(users.id, sessions.userId))
+    .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)))
+    .get()
+
+  if (!session) return ctx.json({ error: 'Unauthorized' }, 401)
+
+  const authLevel = authorizationLevelForUser({ id: session.userId2, authorizationLevel: session.userAuth })
+  return ctx.json({ id: session.userId2, email: session.userEmail, authorizationLevel: authLevel })
+})

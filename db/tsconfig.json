@@ -6,10 +6,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "types": ["node", "@cloudflare/workers-types/2023-07-01"],
-    "paths": {
-      "@/*": ["./*"]
-    }
-  }
+    "resolveJsonModule": true
+  },
+  "include": ["./**/*.ts"]
 }

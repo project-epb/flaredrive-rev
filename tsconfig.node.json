@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "rootDir": "./",
+    "baseUrl": "./",
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "./.tsbuild/node",
+    "tsBuildInfoFile": "./.tsbuild/node.tsbuildinfo",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "types": ["node", "@cloudflare/workers-types/2023-07-01"]
+  },
+  "include": [
+    "backend/**/*.ts",
+    "db/**/*.ts",
+    "common/**/*.ts",
+    "drizzle.config.ts",
+    "vite.config.ts",
+    "unocss.config.ts"
+  ],
+  "exclude": ["node_modules", "dist", "frontend", "drizzle/**/*.sql"]
+}

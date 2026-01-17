@@ -5,11 +5,13 @@
   "assets": {
     "not_found_handling": "single-page-application",
   },
-  "r2_buckets": [
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
     {
-      "binding": "BUCKET",
-      "bucket_name": "cloud-epb",
-      "preview_bucket_name": "cloud-epb-preview",
+      "binding": "D1",
+      "database_name": "flaredrive",
+      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "migrations_dir": "drizzle",
     },
   ],
   "observability": {

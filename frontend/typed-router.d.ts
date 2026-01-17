@@ -44,6 +44,20 @@ declare module 'vue-router/auto-routes' {
       { bucket: ParamValue<false> },
       | never
     >,
+    '@auth-login': RouteRecordInfo<
+      '@auth-login',
+      '/@auth/login',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '@auth-register': RouteRecordInfo<
+      '@auth-register',
+      '/@auth/register',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -72,6 +86,18 @@ declare module 'vue-router/auto-routes' {
     'frontend/pages/[bucket]/@upload.vue': {
       routes:
         | '@upload-standalone'
+      views:
+        | never
+    }
+    'frontend/pages/@auth/login.vue': {
+      routes:
+        | '@auth-login'
+      views:
+        | never
+    }
+    'frontend/pages/@auth/register.vue': {
+      routes:
+        | '@auth-register'
       views:
         | never
     }

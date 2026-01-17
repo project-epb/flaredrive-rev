@@ -43,9 +43,9 @@ export const useBucketStore = defineStore('bucket', () => {
     return normalized.endsWith('/') ? normalized : `${normalized}/`
   }
 
-  const setCurrentBucket = (bucketName: string) => {
-    currentBucketName.value = bucketName || ''
-    const baseUrl = bucketName ? `/api/bucket/${bucketName}` : '/api/bucket'
+  const setCurrentBucket = (bucketId: string) => {
+    currentBucketName.value = bucketId || ''
+    const baseUrl = bucketId ? `/api/bucket/${bucketId}` : '/api/bucket'
     client.setBaseURL(baseUrl)
   }
 
@@ -59,8 +59,8 @@ export const useBucketStore = defineStore('bucket', () => {
       availableBuckets.value = data || []
       bucketCdnMap.value = (data || []).reduce(
         (acc, item) => {
-          if (item?.name) {
-            acc[item.name] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
+          if (item?.id) {
+            acc[item.id] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
           }
           return acc
         },

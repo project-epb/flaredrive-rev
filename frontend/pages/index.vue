@@ -12,8 +12,8 @@
     .bucket-grid(v-else)
       .bucket-card(
         v-for='(item, index) in bucket.availableBuckets',
-        :key='item.name',
-        @click='goToBucket(item.name)',
+        :key='item.id',
+        @click='goToBucket(item.id)',
         :style='{ animationDelay: `${index * 50}ms` }'
       )
         .bucket-card-icon

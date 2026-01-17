@@ -1,0 +1,21 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "baseUrl": "./frontend",
+    "composite": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": false,
+    "outDir": "./.tsbuild/web",
+    "tsBuildInfoFile": "./.tsbuild/web.tsbuildinfo",
+    "types": ["vite/client", "unplugin-vue-router/client"],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["frontend/**/*.ts", "frontend/**/*.tsx", "frontend/**/*.vue", "common/**/*.ts", "common/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "backend", "db", "drizzle", "**/*.test.*", "**/*.spec.*"],
+  "vueCompilerOptions": {
+    "plugins": ["@vue/language-plugin-pug"]
+  }
+}

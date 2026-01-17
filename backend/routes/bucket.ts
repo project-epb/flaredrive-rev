@@ -1,6 +1,7 @@
 import { Context, Hono } from 'hono'
-import { HonoEnv } from '.'
-import { resolveBucketRequest } from './bucket-utils.js'
+import { HonoEnv } from '../index.js'
+import { getBucketConfigById, parseBucketPath } from '../utils/bucket-resolver.js'
+import { createStorageAdapter } from '../storage/factory.js'
 
 // @ts-ignore prevent bundler from removing this
 const console: Console = globalThis['con'.concat('sole')]
@@ -8,8 +9,7 @@ const console: Console = globalThis['con'.concat('sole')]
 export const bucket = new Hono<HonoEnv>()
 
 const getFilePath = (ctx: Context) => {
-  const { path } = resolveBucketRequest(ctx, 'bucket')
-  return path
+  return parseBucketPath(ctx.req.path, 'bucket').path
 }
 const getFileName = (ctx: Context) => {
   const path = getFilePath(ctx)
@@ -28,21 +28,29 @@ const getMetadataFromHeaders = (ctx: Context) => {
 }
 
 bucket.get('*', async (ctx) => {
-  const { bucket } = resolveBucketRequest(ctx, 'bucket')
-  if (!bucket) {
-    return ctx.json({ error: 'Bucket not found' }, 404)
-  }
+  const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
+  if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
+  const cfg = await getBucketConfigById(ctx, bucketId)
+  if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+
   const path = getFilePath(ctx)
   const limit = Math.min(1000, ctx.req.query('limit') ? parseInt(ctx.req.query('limit')) : 1000)
   const startAfter = ctx.req.query('startAfter') || ''
 
+  const adapter = createStorageAdapter({
+    endpointUrl: cfg.endpointUrl,
+    region: cfg.region,
+    accessKeyId: cfg.accessKeyId,
+    secretAccessKey: cfg.secretAccessKey,
+    bucketName: cfg.bucketName,
+    forcePathStyle: cfg.forcePathStyle,
+  })
+
   try {
-    const list = await bucket.list({
-      prefix: path,
+    const list = await adapter.list(path || '', {
       delimiter: '/',
       limit,
-      startAfter,
-      include: ['httpMetadata', 'customMetadata'],
+      startAfter: startAfter || undefined,
     })
     console.info(
       'Listing files',
@@ -53,11 +61,14 @@ bucket.get('*', async (ctx) => {
       },
       list
     )
-    const hasMore = list.truncated
-    const moreAfter = hasMore ? list.objects.at(-1)?.key || null : null
+
+    const objects = list.objects
+    const folders = list.folders
+    const hasMore = list.hasMore
+    const moreAfter = list.moreAfter
     return ctx.json({
-      objects: list.objects,
-      folders: list.delimitedPrefixes,
+      objects,
+      folders,
       prefix: path,
       limit,
       startAfter,
@@ -71,10 +82,19 @@ bucket.get('*', async (ctx) => {
 })
 
 bucket.put('*', async (ctx) => {
-  const { bucket } = resolveBucketRequest(ctx, 'bucket')
-  if (!bucket) {
-    return ctx.json({ error: 'Bucket not found' }, 404)
-  }
+  const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
+  if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
+  const cfg = await getBucketConfigById(ctx, bucketId)
+  if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+
+  const adapter = createStorageAdapter({
+    endpointUrl: cfg.endpointUrl,
+    region: cfg.region,
+    accessKeyId: cfg.accessKeyId,
+    secretAccessKey: cfg.secretAccessKey,
+    bucketName: cfg.bucketName,
+    forcePathStyle: cfg.forcePathStyle,
+  })
   const path = getFilePath(ctx)
   const fileName = getFileName(ctx)
   if (!fileName) {
@@ -95,8 +115,19 @@ bucket.put('*', async (ctx) => {
         contentType,
         customMetadata,
       })
-      const item = await handleRenameFile(bucket, copySource, path, customMetadata)
-      return ctx.json(item)
+
+      const copy = await adapter.copy(copySource, path, {
+        contentType,
+        metadata: customMetadata,
+      })
+      await adapter.delete(copySource)
+      return ctx.json({
+        key: path,
+        etag: copy.etag || '',
+        copySource,
+        httpMetadata: { contentType },
+        customMetadata,
+      })
     } catch (e) {
       console.error('Error renaming file', e)
       return ctx.json({ error: e.message || e.toString(), stack: e.stack, fromPath: copySource, toPath: path }, 500)
@@ -116,8 +147,18 @@ bucket.put('*', async (ctx) => {
       contentType,
       customMetadata,
     })
-    const item = await handleUploadFile(bucket, fileBody, path, fileName, contentType, customMetadata)
-    return ctx.json(item)
+
+    const put = await adapter.put(path, fileBody, {
+      contentType,
+      metadata: customMetadata,
+    })
+    return ctx.json({
+      key: path,
+      size: fileBody.byteLength,
+      etag: put.etag || '',
+      httpMetadata: { contentType },
+      customMetadata,
+    })
   } catch (e) {
     console.error('Error uploading file', e)
     return ctx.json({ error: e.message || e.toString(), stack: e.stack }, 500)
@@ -135,10 +176,19 @@ bucket.post('*', async (ctx) => {
 })
 
 bucket.delete('*', async (ctx) => {
-  const { bucket } = resolveBucketRequest(ctx, 'bucket')
-  if (!bucket) {
-    return ctx.json({ error: 'Bucket not found' }, 404)
-  }
+  const { bucketId } = parseBucketPath(ctx.req.path, 'bucket')
+  if (!bucketId) return ctx.json({ error: 'Bucket not found' }, 404)
+  const cfg = await getBucketConfigById(ctx, bucketId)
+  if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
+
+  const adapter = createStorageAdapter({
+    endpointUrl: cfg.endpointUrl,
+    region: cfg.region,
+    accessKeyId: cfg.accessKeyId,
+    secretAccessKey: cfg.secretAccessKey,
+    bucketName: cfg.bucketName,
+    forcePathStyle: cfg.forcePathStyle,
+  })
   const path = getFilePath(ctx)
   if (!path) {
     return ctx.json({ error: 'No file path provided' }, 400)
@@ -148,7 +198,7 @@ bucket.delete('*', async (ctx) => {
   }
   try {
     console.info('Deleting file', path)
-    await bucket.delete(path)
+    await adapter.delete(path)
     return ctx.json({
       message: 'Deletion successful',
       path,
@@ -158,69 +208,3 @@ bucket.delete('*', async (ctx) => {
     return ctx.json({ error: e.message || e.toString(), stack: e.stack }, 500)
   }
 })
-
-async function handleUploadFile(
-  BUCKET: R2Bucket,
-  file: ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob,
-  path: string,
-  fileName: string,
-  contentType: string,
-  customMetadata: Record<string, string>
-): Promise<R2Object> {
-  if (!fileName) {
-    throw new Error('No fileName provided')
-  }
-  if (!file) {
-    throw new Error('No file provided')
-  }
-
-  const item = await BUCKET.put(path, file, {
-    httpMetadata: {
-      contentType,
-    },
-    customMetadata,
-  })
-  return item
-}
-
-async function handleRenameFile(
-  BUCKET: R2Bucket,
-  fromPath: string,
-  toPath: string,
-  customMetadata: Record<string, string>
-) {
-  if (!fromPath || !toPath) {
-    throw new Error('Invalid file paths')
-  }
-  if (fromPath.endsWith('/') || toPath.endsWith('/')) {
-    throw new Error('Rename folders is not supported yet')
-  }
-
-  const file = await BUCKET.get(fromPath).catch((e) => {
-    console.error('Error getting file', e)
-    throw new Error(`Failed to get file ${fromPath}`, { cause: e })
-  })
-  if (!file) {
-    throw new Error(`File ${fromPath} not found`)
-  }
-  const item = await BUCKET.put(toPath, file.body, {
-    httpMetadata: {
-      contentType: file.httpMetadata.contentType,
-    },
-    customMetadata: {
-      ...file.customMetadata,
-      ...customMetadata,
-    },
-  })
-  // @ts-ignore
-  item.copySource = fromPath
-
-  await BUCKET.delete(fromPath).catch((e) => {
-    console.error('Error deleting file', e)
-    // no need to throw error here
-    // @ts-ignore
-    item.warnings = [{ message: 'Failed to delete old file', error: e.message || e.toString(), stack: e.stack }]
-  })
-
-  return item
-}
