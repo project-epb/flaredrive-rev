@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const bucketId = getRouterParam(event, 'bucketId')
   const pathSegments = getRouterParam(event, 'path')
   const query = getQuery(event)
-  
+
   if (!bucketId) {
     throw createError({ statusCode: 400, statusMessage: 'Missing bucket id' })
   }
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
   })
 
   let prefix = pathSegments ? pathSegments : ''
-  
+
   // Ensure prefix is properly decoded
   try {
     prefix = decodeURIComponent(prefix)
@@ -57,12 +57,14 @@ export default defineEventHandler(async (event) => {
   const result = await s3.listObjects(prefix, delimiter, maxKeys)
 
   return {
-    objects: result.objects.map((obj) => ({
-      key: obj.Key,
-      size: obj.Size,
-      lastModified: obj.LastModified?.toISOString(),
-      etag: obj.ETag,
-    })),
+    objects: result.objects
+      .map((obj) => ({
+        key: obj.Key,
+        size: obj.Size,
+        lastModified: obj.LastModified?.toISOString(),
+        etag: obj.ETag,
+      }))
+      .filter((obj) => obj.key !== prefix), // Exclude the folder object itself
     prefixes: result.commonPrefixes.map((p) => p.Prefix),
     isTruncated: result.isTruncated,
     nextToken: result.nextContinuationToken,

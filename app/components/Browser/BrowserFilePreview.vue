@@ -18,7 +18,7 @@
         .flex.justify-center.py-8(v-else)
           NSpin(show, size='small')
       .preview-file-text(v-else-if='previewType === "text"')
-        .overflow-auto.border.p-4.rounded.bg-gray-50(
+        .overflow-auto.p-4.rounded.bg-gray-50(
           v-if='rawTextContent !== null',
           class='min-h-[200px] max-h-[60vh] dark:bg-gray-900'
         )

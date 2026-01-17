@@ -2,8 +2,8 @@
 .buckets-page
   .flex.items-center.justify-between.gap-4.mb-8
     div
-      h1.text-3xl.font-bold 存储桶管理
-      p.text-gray-600.mt-1(class='dark:text-gray-400') 管理您的 S3 兼容存储桶
+      NH1.text-3xl.font-bold 存储桶管理
+      NP.text-gray-600.mt-1(class='dark:text-gray-400') 管理您的 S3 兼容存储桶
     NButton(type='primary', size='large', @click='showAddModal = true')
       template(#icon)
         Icon(name='i-lucide-plus')
@@ -12,7 +12,7 @@
   .flex.justify-center.py-20(v-if='loading')
     .text-center
       Icon.size-12.text-gray-400.mb-4.animate-spin(name='i-lucide-loader')
-      p.text-gray-500(class='dark:text-gray-400') 加载中...
+      NP.text-gray-500(class='dark:text-gray-400') 加载中...
 
   NAlert(v-else-if='!buckets.length', type='info', title='还没有存储桶')
     | 点击右上角的"添加存储桶"按钮开始添加您的第一个存储桶
@@ -27,11 +27,11 @@
     )
       template(#header)
         .flex.items-center.gap-3
-          .p-3.rounded-lg.bg-primary-100(class='dark:bg-primary-900/20')
-            Icon.size-6.text-primary(name='i-lucide-database')
+          .rounded-lg.bg-primary-100(class='dark:bg-primary-900/20')
+            Icon.text-primary(name='i-lucide-database', size='32')
           .flex-1.min-w-0
-            h3.font-semibold.text-lg.truncate {{ bucket.name }}
-            p.text-sm.text-gray-500.truncate(class='dark:text-gray-400') {{ bucket.bucketName }}
+            h3.font-semibold.text-lg.mb-0.truncate {{ bucket.name }}
+            .text-sm.text-gray-500.truncate(class='dark:text-gray-400') {{ bucket.bucketName }}
 
       .space-y-2.text-sm.mb-4
         .flex.items-center.gap-2(v-if='bucket.endpointUrl')
@@ -46,19 +46,19 @@
 
       template(#action)
         .flex.justify-end.gap-2
-          NButton(type='info', quaternary, size='small', @click.stop='handleEdit(bucket)')
+          NButton(type='info', quaternary, @click.stop='handleEdit(bucket)')
             template(#icon)
               Icon(name='i-lucide-pencil')
             | 编辑
-          NButton(type='error', quaternary, size='small', @click.stop='handleDelete(bucket)')
+          NButton(type='error', quaternary, @click.stop='handleDelete(bucket)')
             template(#icon)
               Icon(name='i-lucide-trash')
             | 删除
 
-  NModal(v-model:show='showAddModal', preset='card', title='添加存储桶', style='width: 600px')
+  NModal(v-model:show='showAddModal', preset='card', title='添加存储桶', style='width: 600px', :mask-closable='false')
     BucketForm(@success='handleFormSuccess', @cancel='showAddModal = false')
 
-  NModal(v-model:show='showEditModal', preset='card', title='编辑存储桶', style='width: 600px')
+  NModal(v-model:show='showEditModal', preset='card', title='编辑存储桶', style='width: 600px', :mask-closable='false')
     BucketForm(:bucket='currentBucket || undefined', @success='handleFormSuccess', @cancel='showEditModal = false')
 
   NModal(v-model:show='showDeleteModal', preset='card', title='确认删除', style='width: 400px', :auto-focus='false')

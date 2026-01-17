@@ -47,12 +47,12 @@ form.space-y-4(@submit.prevent='handleSubmit')
       template(#prefix)
         Icon(name='i-lucide-globe')
 
-  NFormItem
-    NCheckbox(v-model:checked='formValue.forcePathStyle') 强制路径样式
+  NFormItem(label='强制路径样式')
+    NSwitch(v-model:checked='formValue.forcePathStyle') 强制路径样式
 
   .flex.justify-end.gap-3.pt-4
     NButton(type='error', quaternary, @click='$emit("cancel")') 取消
-    NButton(attr-type='submit', type='primary', size='large', :loading='loading') {{ bucket ? '保存' : '添加' }}
+    NButton(attr-type='submit', type='primary', :loading='loading') {{ bucket ? '保存' : '添加' }}
 </template>
 
 <script setup lang="ts">

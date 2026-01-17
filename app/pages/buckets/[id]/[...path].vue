@@ -4,11 +4,11 @@
     .page-header.flex.flex-col.gap-4(class='md:flex-row md:items-center md:justify-between')
       .breadcrumb-wrapper
         NBreadcrumb
-          NBreadcrumbItem(v-for='item in breadcrumbItems', :key='item.to')
-            router-link(:to='item.to')
-              .flex.items-center.gap-1
-                Icon(v-if='item.icon', :name='item.icon', size='14')
-                span {{ item.label }}
+          NBreadcrumbItem(v-for='(item, index) in breadcrumbItems', :key='item.to', @click='$router.push(item.to)')
+            NText(quaternary, text, v-if='index === 0')
+              Icon.inline.w-4.h-4.mr-2(name='i-lucide-database')
+              | {{ bucketName || 'Bucket' }}
+            NText(quaternary, text, v-else) {{ item.label }}
 
       .actions.flex.items-center.gap-3
         //- 视图切换

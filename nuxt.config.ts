@@ -8,6 +8,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-01-17',
   devtools: { enabled: true },
   ssr: false,
+  // Tailwind darkMode is configured as 'class' (expects `.dark`)
+  // @nuxtjs/color-mode defaults may generate `dark-mode`, so align it.
+  colorMode: {
+    classSuffix: '',
+  },
   app: {
     head: {
       title: 'FlareDrive',

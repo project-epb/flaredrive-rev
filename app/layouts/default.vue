@@ -47,7 +47,8 @@ const colorMode = useColorMode()
 const currentThemeIcon = computed(() => (colorMode.value === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'))
 
 const toggleTheme = () => {
-  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
+  // @nuxtjs/color-mode: set user preference so module updates <html> class
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 }
 
 const renderIcon = (iconName: string) => {
