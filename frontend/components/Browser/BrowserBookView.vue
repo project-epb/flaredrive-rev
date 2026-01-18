@@ -13,7 +13,7 @@
         )
           .book-page-image(v-if='item.previewType === "image"', text-center)
             NImage(
-              :src='item.thumbnailUrl || item.cdnUrl',
+              :src='item.cdnUrl',
               :preview-src='item.cdnUrl',
               :alt='item.key',
               object-fit='contain',
@@ -99,7 +99,6 @@ const items = computed<
   (StorageListObject & {
     previewType: ReturnType<typeof FileHelper.getPreviewType>
     cdnUrl: string
-    thumbnailUrl?: string
   })[]
 >(() => {
   if (!props.payload) return [] as any
@@ -113,7 +112,6 @@ const items = computed<
         ...item,
         previewType: FileHelper.getPreviewType(item),
         cdnUrl: bucket.getCDNUrl(item),
-        thumbnailUrl: bucket.getThumbnailUrls(item)?.large,
       }
     })
     .sort((a, b) => {

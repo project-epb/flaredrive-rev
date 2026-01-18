@@ -232,7 +232,7 @@ const bucket = useBucketStore()
 const navigation = useNavigationStore()
 
 // Get bucket name from route param
-const currentBucketName = computed(() => {
+const bucketId = computed(() => {
   const bucketParam = (route.params as any).bucket
   return typeof bucketParam === 'string' ? bucketParam : ''
 })
@@ -249,7 +249,7 @@ const currentPath = computed(() => {
 
 const displayPath = computed(() => {
   const suffix = currentPath.value ? `${currentPath.value}` : ''
-  const full = `/${currentBucketName.value}/${suffix}`
+  const full = `/${suffix}`
   return full.endsWith('/') ? full : `${full}/`
 })
 
@@ -300,7 +300,7 @@ const curObjectCount = computed(() => {
 })
 
 watch(
-  [currentBucketName, currentPath],
+  [bucketId, currentPath],
   ([bucketName, bucketPath]) => {
     bucket.setCurrentBucket(bucketName)
     if (!bucketName) {
@@ -323,7 +323,7 @@ watch(
 )
 
 async function loadFileList() {
-  if (!currentBucketName.value) {
+  if (!bucketId.value) {
     payload.value = undefined
     return
   }
@@ -361,12 +361,12 @@ const previewItem = ref<StorageListObject | undefined>()
 function onNavigate(item: StorageListObject) {
   const path = item.key || ''
   if (path === '/' || path === '') {
-    router.push(`/${currentBucketName.value}/`)
+    router.push(`/${bucketId.value}/`)
   } else if (path === '../') {
     const parentPath = currentPath.value.split('/').slice(0, -2).join('/')
-    router.push(parentPath ? `/${currentBucketName.value}/${parentPath}/` : `/${currentBucketName.value}/`)
+    router.push(parentPath ? `/${bucketId.value}/${parentPath}/` : `/${bucketId.value}/`)
   } else if (path.endsWith('/')) {
-    router.push(`/${currentBucketName.value}/${path}`)
+    router.push(`/${bucketId.value}/${path}`)
   } else {
     previewItem.value = item
     isShowPreview.value = true
@@ -505,7 +505,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      router.push(`/${currentBucketName.value}/${currentPath.value}${folderName}/`)
+      router.push(`/${bucketId.value}/${currentPath.value}${folderName}/`)
     },
   })
 }
@@ -515,7 +515,7 @@ function handleUploadInput(
   prefix = currentPath.value,
   options?: { isDirectory?: boolean }
 ) {
-  if (!currentBucketName.value) {
+  if (!bucketId.value) {
     return
   }
   if (!files || !files.length) {

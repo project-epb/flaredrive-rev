@@ -53,15 +53,15 @@ const columns = computed(() => {
       key: '_preview',
       width: 40,
       render: (row: StorageListObject) => {
-        const thumbs = bucket.getThumbnailUrls(row)
-        if (thumbs) {
+        const previewType = FileHelper.getPreviewType(row)
+        if (previewType === 'image') {
           return (
             <NImage
               width={40}
               height={40}
               objectFit="cover"
               lazy
-              src={thumbs.square}
+              src={bucket.getCDNUrl(row)}
               previewSrc={bucket.getCDNUrl(row)}
               /** @ts-ignore */
               onClick={(e) => {

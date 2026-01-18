@@ -34,10 +34,10 @@
       )
         template(#cover)
           NImage(
-            v-if='item.thumbUrl',
+            v-if='item.previewType === "image"',
             @click.stop,
             @load='resizeWaterfall',
-            :src='item.thumbUrl',
+            :src='item.cdnUrl',
             :preview-src='item.cdnUrl',
             :alt='item.key',
             w-full,
@@ -118,9 +118,9 @@ const sortActions = computed(() => {
 
 const list = computed<
   (StorageListObject & {
-    thumbUrl?: string
     cdnUrl?: string
     icon?: Component
+    previewType?: ReturnType<typeof FileHelper.getPreviewType>
   })[]
 >(() => {
   return [
@@ -142,15 +142,12 @@ const list = computed<
     (
       item: StorageListObject & {
         cdnUrl?: string
-        thumbUrl?: string
         icon?: Component
+        previewType?: ReturnType<typeof FileHelper.getPreviewType>
       }
     ) => {
       item.cdnUrl = bucket.getCDNUrl(item)
-      const thumb = bucket.getThumbnailUrls(item)
-      if (thumb) {
-        item.thumbUrl = thumb.medium
-      }
+      item.previewType = FileHelper.getPreviewType(item)
       item.icon = FileHelper.getObjectIcon(item)
       return item
     }

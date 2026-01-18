@@ -28,37 +28,6 @@ export const useBucketStore = defineStore('bucket', () => {
     return FLARE_DRIVE_HIDDEN_KEY && FLARE_DRIVE_HIDDEN_KEY !== '/' && key.endsWith(FLARE_DRIVE_HIDDEN_KEY)
   }
 
-  const THUMBNAIL_PREFIX = `${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/by-key/`
-  const thumbnailKeyCache = shallowRef<Record<string, string>>({})
-  const sha1Hex = async (value: string) => {
-    if (!globalThis.crypto?.subtle) {
-      return FileHelper.blobToSha1(new Blob([value]))
-    }
-    const data = new TextEncoder().encode(value)
-    const digest = await globalThis.crypto.subtle.digest('SHA-1', data)
-    return Array.from(new Uint8Array(digest))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-  }
-  const getThumbnailKey = async (key: string) => {
-    const cached = thumbnailKeyCache.value[key]
-    if (cached) return cached
-    const hashed = await sha1Hex(key)
-    const thumbKey = `${THUMBNAIL_PREFIX}${hashed}.png`
-    thumbnailKeyCache.value = {
-      ...thumbnailKeyCache.value,
-      [key]: thumbKey,
-    }
-    return thumbKey
-  }
-  const isMediaObject = (item: StorageListObject) => {
-    const isImage =
-      item.httpMetadata?.contentType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(item.key)
-    const isVideo =
-      item.httpMetadata?.contentType?.startsWith('video/') || /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(item.key)
-    return { isImage, isVideo, isMedia: isImage || isVideo }
-  }
-
   const currentBucketName = ref('')
   const availableBuckets = ref<BucketInfo[]>([])
   const isBucketListLoading = ref(false)
@@ -139,15 +108,6 @@ export const useBucketStore = defineStore('bucket', () => {
     await client.delete(item.key)
     // Remove from upload history
     uploadHistory.value = uploadHistory.value.filter((h) => item.key !== h.key)
-    // delete thumbnail if needed
-    const mediaInfo = isMediaObject(item)
-    if (mediaInfo.isMedia) {
-      const thumbKey = await getThumbnailKey(item.key)
-      client.delete(thumbKey).catch((e) => {
-        // ignore error, this is not critical
-        console.error('Error deleting thumbnail', item, e)
-      })
-    }
   }
   const rename = client.rename.bind(client)
 
@@ -175,31 +135,6 @@ export const useBucketStore = defineStore('bucket', () => {
       bucketCdnMap.value[bucketName] || (bucketName ? normalizeCdnBaseUrl(`/api/raw/${bucketName}/`) : CDN_BASE_URL)
     const url = new URL(filePath, cdnBaseUrl)
     return url.toString()
-  }
-  const getThumbnailUrls = (
-    item: StorageListObject,
-    strict = false
-  ): { square: string; small: string; medium: string; large: string } | null => {
-    if (!item || item.key.endsWith('/')) {
-      return null
-    }
-    const { isMedia } = isMediaObject(item)
-
-    if (!isMedia) {
-      return null
-    }
-    const cached = thumbnailKeyCache.value[item.key]
-    if (!cached) {
-      getThumbnailKey(item.key).catch((e) => console.error('Error hashing thumbnail key', item, e))
-      return null
-    }
-    const square = getCDNUrl(cached)
-    return {
-      square,
-      small: square,
-      medium: square,
-      large: square,
-    }
   }
 
   const UPLOAD_HISTORY_MAX = 1000
@@ -252,7 +187,7 @@ export const useBucketStore = defineStore('bucket', () => {
 
     let targetKey = key
 
-    // 1. Handle thumbnails (optional/parallel)
+    // 1. Handle media metadata (width/height only)
     if (isMediaFile) {
       try {
         const size = await FileHelper.getMediaFileNaturalSize(file)
@@ -268,22 +203,6 @@ export const useBucketStore = defineStore('bucket', () => {
       const hashSecond = fileHash.slice(0, 2)
       targetKey = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
       metadata['original_name'] = file.name
-    }
-
-    // 1.5 Upload thumbnail (deterministic key, no metadata dependency)
-    if (isMediaFile) {
-      try {
-        const { blob } = await FileHelper.generateMediaFileThumbnail(file)
-        const thumbnailKey = await getThumbnailKey(targetKey)
-        await client.upload(thumbnailKey, blob, {
-          contentType: 'image/png',
-          metadata: {
-            __flare_drive_internal__: '1',
-          },
-        })
-      } catch (e) {
-        console.error('Error generating thumbnail', file, e)
-      }
     }
 
     console.info('Upload start', targetKey, file, { metadata })
@@ -435,7 +354,6 @@ export const useBucketStore = defineStore('bucket', () => {
     deleteFile,
     rename,
     getCDNUrl,
-    getThumbnailUrls,
     uploadHistory,
     // uploadQueue: uploadQueue as PQueue, // 类型问题！！
     addToUploadQueue,
