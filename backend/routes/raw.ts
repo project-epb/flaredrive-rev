@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { getMimeType } from 'hono/utils/mime'
 import { HonoEnv } from '../index.js'
 import { getBucketConfigById, parseBucketPath } from '../utils/bucket-resolver.js'
+import { normalizeBaseUrl } from '../utils/bucket-config.js'
 import { createStorageAdapter } from '../storage/factory.js'
 import { getSessionUser } from '../utils/session.js'
 import { getPathMetadata } from '../utils/metadata.js'
@@ -38,52 +38,39 @@ app.get('*', async (ctx) => {
     }
   }
 
-  let obj: any
-  try {
-    const adapter = createStorageAdapter({
-      endpointUrl: cfg.endpointUrl,
-      region: cfg.region,
-      accessKeyId: cfg.accessKeyId,
-      secretAccessKey: cfg.secretAccessKey,
-      bucketName: cfg.bucketName,
-      forcePathStyle: cfg.forcePathStyle,
-    })
-    obj = await adapter.get(filePath)
-  } catch (e: any) {
-    if (e?.$metadata?.httpStatusCode === 404) {
-      return ctx.json({ error: 'File not found' }, 404)
-    }
-    return ctx.json({ error: e?.message || e?.toString?.() || 'GetObject failed' }, 500)
-  }
-
-  if (!obj?.body) {
-    return ctx.json({ error: 'File not found' }, 404)
-  }
-
-  const body = obj.body
-  let contentType = obj.contentType || 'application/octet-stream'
-
-  // If no content type or generic binary, try to guess from file extension
-  if (contentType === 'application/octet-stream') {
-    contentType = getMimeType(filePath) || contentType
-  }
-
-  const etag = (obj.etag || '').replace(/^\"|\"$/g, '')
-
   const isDownload = typeof ctx.req.query('download') !== 'undefined'
   const fileName = filePath.split('/').pop() || ''
-  const headers: Record<string, string> = {
-    'Content-Type': contentType,
-    'Content-Disposition': `inline; filename="${encodeURIComponent(fileName)}"`,
-    'Cache-Control': 'max-age=31536000',
-    Etag: etag,
-  }
-  if (isDownload) {
-    headers['Content-Disposition'] = `attachment; filename="${encodeURIComponent(fileName)}"`
+  const cdnBaseUrl = (cfg.cdnBaseUrl || '').toString().trim()
+  const normalizedCdnBaseUrl = cdnBaseUrl ? normalizeBaseUrl(cdnBaseUrl) : ''
+
+  if (normalizedCdnBaseUrl) {
+    const cdnUrl = new URL(filePath, normalizedCdnBaseUrl)
+    const reqUrl = new URL(ctx.req.url)
+    reqUrl.searchParams.forEach((value, key) => {
+      cdnUrl.searchParams.append(key, value)
+    })
+    if (isDownload) {
+      cdnUrl.searchParams.append('t', Date.now().toString())
+    }
+    return ctx.redirect(cdnUrl.toString(), 302)
   }
 
-  return ctx.body(body, {
-    status: 200,
-    headers,
+  const adapter = createStorageAdapter({
+    endpointUrl: cfg.endpointUrl,
+    region: cfg.region,
+    accessKeyId: cfg.accessKeyId,
+    secretAccessKey: cfg.secretAccessKey,
+    bucketName: cfg.bucketName,
+    forcePathStyle: cfg.forcePathStyle,
   })
+
+  try {
+    const presigned = await adapter.presignGet(filePath, {
+      expiresIn: 900,
+      ...(isDownload ? { download: true, fileName } : {}),
+    })
+    return ctx.redirect(presigned.url, 302)
+  } catch (e: any) {
+    return ctx.json({ error: e?.message || e?.toString?.() || 'Presign failed' }, 500)
+  }
 })
