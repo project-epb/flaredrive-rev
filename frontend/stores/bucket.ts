@@ -1,7 +1,6 @@
-import { type BucketInfo, R2BucketClient } from '@/models/R2BucketClient'
+import { type BucketInfo, R2BucketClient, type StorageListObject } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
-import axios from 'axios'
+import fexios from 'fexios'
 import PQueue from 'p-queue'
 
 export const useBucketStore = defineStore('bucket', () => {
@@ -43,9 +42,9 @@ export const useBucketStore = defineStore('bucket', () => {
     return normalized.endsWith('/') ? normalized : `${normalized}/`
   }
 
-  const setCurrentBucket = (bucketName: string) => {
-    currentBucketName.value = bucketName || ''
-    const baseUrl = bucketName ? `/api/bucket/${bucketName}` : '/api/bucket'
+  const setCurrentBucket = (bucketId: string) => {
+    currentBucketName.value = bucketId || ''
+    const baseUrl = bucketId ? `/api/bucket/${bucketId}/` : '/api/bucket/'
     client.setBaseURL(baseUrl)
   }
 
@@ -55,12 +54,12 @@ export const useBucketStore = defineStore('bucket', () => {
     }
     isBucketListLoading.value = true
     try {
-      const { data } = await axios.get<BucketInfo[]>('/api/list_buckets')
+      const { data } = await fexios.get<BucketInfo[]>('/api/buckets')
       availableBuckets.value = data || []
       bucketCdnMap.value = (data || []).reduce(
         (acc, item) => {
-          if (item?.name) {
-            acc[item.name] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
+          if (item?.id) {
+            acc[item.id] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
           }
           return acc
         },
@@ -105,17 +104,10 @@ export const useBucketStore = defineStore('bucket', () => {
     })
     return response
   }
-  const deleteFile = async (item: R2Object) => {
+  const deleteFile = async (item: StorageListObject) => {
     await client.delete(item.key)
     // Remove from upload history
     uploadHistory.value = uploadHistory.value.filter((h) => item.key !== h.key)
-    // delete thumbnail if needed
-    if (item.customMetadata?.thumbnail) {
-      client.delete(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${item.customMetadata.thumbnail}.png`).catch((e) => {
-        // ignore error, this is not critical
-        console.error('Error deleting thumbnail', item, e)
-      })
-    }
   }
   const rename = client.rename.bind(client)
 
@@ -131,7 +123,7 @@ export const useBucketStore = defineStore('bucket', () => {
     })
   }
 
-  const getCDNUrl = (payload: R2Object | string, bucketName = currentBucketName.value) => {
+  const getCDNUrl = (payload: StorageListObject | string, bucketName = currentBucketName.value) => {
     if (!payload) {
       return ''
     }
@@ -144,62 +136,40 @@ export const useBucketStore = defineStore('bucket', () => {
     const url = new URL(filePath, cdnBaseUrl)
     return url.toString()
   }
-  const getThumbnailUrls = (
-    item: R2Object,
-    strict = false
-  ): { square: string; small: string; medium: string; large: string } | null => {
-    if (!item || item.key.endsWith('/')) {
-      return null
-    }
-    if (
-      !item.httpMetadata?.contentType?.startsWith('image/') &&
-      !item.httpMetadata?.contentType?.startsWith('video/')
-    ) {
-      return null
-    }
-    if (strict && !item.customMetadata?.thumbnail) {
-      return null
-    }
-    const makeCgiUrl = (size: number) => {
-      const url = new URL(getCDNUrl(item.key))
-      if (import.meta.env.DEV) {
-        url.search = `thumbsize=${size}`
-        return url.href
-      }
-      url.pathname = `/cdn-cgi/image/format=auto,fit=contain,width=${size},height=${size},onerror=redirect${url.pathname}`
-      return url.href
-    }
-    const square = item.customMetadata?.thumbnail
-      ? getCDNUrl(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${item.customMetadata.thumbnail}.png`)
-      : ''
-    if (item.httpMetadata?.contentType?.startsWith('video/')) {
-      return square
-        ? {
-            square,
-            small: square,
-            medium: square,
-            large: square,
-          }
-        : null
-    }
-    const small = makeCgiUrl(256)
-    const medium = makeCgiUrl(400)
-    const large = makeCgiUrl(800)
-    return {
-      square,
-      small,
-      medium,
-      large,
-    }
-  }
 
   const UPLOAD_HISTORY_MAX = 1000
-  const uploadHistory = useLocalStorage<R2Object[]>('flaredrive:upload-history', [])
-  const addToUploadHistory = (item: R2Object) => {
+  const uploadHistory = useLocalStorage<StorageListObject[]>('flaredrive:upload-history', [])
+  const addToUploadHistory = (item: StorageListObject) => {
     console.info('Upload history', item)
     uploadHistory.value = [item, ...uploadHistory.value.filter((i) => i.key !== item.key)]
     if (uploadHistory.value.length > UPLOAD_HISTORY_MAX) {
       uploadHistory.value = uploadHistory.value.slice(0, UPLOAD_HISTORY_MAX)
+    }
+  }
+
+  const togglePublic = async (path: string, isPublic: boolean) => {
+    try {
+      const { data } = await fexios.patch(`/api/bucket/${currentBucketName.value}/${path}`, {
+        isPublic,
+      })
+      // Should probably update the list item state locally too if we had it in store
+      return data
+    } catch (e) {
+      console.error('Failed to toggle public', e)
+      throw e
+    }
+  }
+
+  const recordUpload = async (key: string, size: number, contentType: string) => {
+    try {
+      if (!currentBucketName.value) return
+      await fexios.post(`/api/objects/${currentBucketName.value}/record`, {
+        key,
+        size,
+        contentType,
+      })
+    } catch (e) {
+      console.warn('Failed to record upload history', e)
     }
   }
 
@@ -209,10 +179,15 @@ export const useBucketStore = defineStore('bucket', () => {
     metadata: Record<string, string> = {},
     options?: { ignoreRandom?: boolean }
   ) => {
+    // 0. Prepare
     const fileHash = await FileHelper.blobToSha1(file)
     const { ext } = FileHelper.getSimpleFileInfoByFile(file)
     const isMediaFile = FileHelper.checkIsMediaFile(file)
+    const contentType = file.type || 'application/octet-stream'
 
+    let targetKey = key
+
+    // 1. Handle media metadata (width/height only)
     if (isMediaFile) {
       try {
         const size = await FileHelper.getMediaFileNaturalSize(file)
@@ -221,37 +196,49 @@ export const useBucketStore = defineStore('bucket', () => {
       } catch (e) {
         console.warn('Error getting media file size', file, e)
       }
-      try {
-        const mediaMeta = await FileHelper.getMediaFileMetadata(file)
-        await client.upload(`${FLARE_DRIVE_HIDDEN_KEY}/thumbnails/${fileHash}.png`, mediaMeta.thumbnail.blob, {
-          metadata: {
-            width: mediaMeta.thumbnail.width.toString(),
-            height: mediaMeta.thumbnail.height.toString(),
-          },
-        })
-        metadata['thumbnail'] = mediaMeta.sha1
-        metadata['thumbnail_width'] = mediaMeta.thumbnail.width.toString()
-        metadata['thumbnail_height'] = mediaMeta.thumbnail.height.toString()
-      } catch (e) {
-        console.error('Error generating thumbnail', file, e)
-      }
     }
+
     if (checkIsRandomUploadDir(key) && !options?.ignoreRandom) {
       const hashFirst = fileHash.slice(0, 1)
       const hashSecond = fileHash.slice(0, 2)
-      key = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
+      targetKey = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
       metadata['original_name'] = file.name
     }
 
-    console.info('Upload start', key, file, { metadata })
-    const res = await client.upload(key, file, {
-      metadata,
+    console.info('Upload start', targetKey, file, { metadata })
+
+    // 2. Presign Flow: Get URL
+    const { data: presignInfo } = await fexios.post(`/api/objects/${currentBucketName.value}/presign`, {
+      action: 'put',
+      key: targetKey,
+      contentType,
     })
-    console.info('Upload finish', key, file, res)
-    if (res.data) {
-      addToUploadHistory(res.data)
-    }
-    return res
+
+    // 3. Direct PUT to S3
+    await fexios.put(presignInfo.url, file, {
+      headers: {
+        'Content-Type': contentType,
+      },
+    })
+
+    // 4. Record History
+    await recordUpload(targetKey, file.size, contentType)
+
+    // 5. Construct Result for frontend
+    const result = {
+      key: targetKey,
+      size: file.size,
+      etag: '', // Cannot get etag easily from PUT response unless exposing ETag header
+      uploaded: new Date().toISOString() as any, // Approximation
+      httpMetadata: {
+        contentType,
+      },
+      customMetadata: metadata as any,
+    } as unknown as StorageListObject
+
+    console.info('Upload finish', targetKey, file, result)
+    addToUploadHistory(result)
+    return { data: result }
   }
 
   // ---- Upload Queue ----
@@ -367,7 +354,6 @@ export const useBucketStore = defineStore('bucket', () => {
     deleteFile,
     rename,
     getCDNUrl,
-    getThumbnailUrls,
     uploadHistory,
     // uploadQueue: uploadQueue as PQueue, // 类型问题！！
     addToUploadQueue,
@@ -377,5 +363,6 @@ export const useBucketStore = defineStore('bucket', () => {
     currentBatchFinished,
     currentBatchPercentage,
     uploadFailedList,
+    togglePublic,
   }
 })

@@ -1,5 +1,6 @@
 <template lang="pug">
 #browser-view
+  BreadcrumbNav(mb-2)
   .top-sticky-rail(mb-8, z-5, sticky, top='[calc(60px+0.25rem)]')
     NCollapseTransition(:show='isShowTopStickyRail || !!searchInput')
       NCard(size='small')
@@ -141,7 +142,8 @@
     :item='previewItem',
     @delete='onDelete',
     @download='onDownload',
-    @rename='onRename'
+    @rename='onRename',
+    @togglePublic='onTogglePublic'
   )
 
   //- upload history
@@ -193,9 +195,8 @@
 </template>
 
 <script setup lang="tsx">
-import { type R2BucketListResponse } from '@/models/R2BucketClient'
+import { type StorageListObject, type StorageListResult } from '@/models/R2BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
 import {
   IconBook,
   IconChevronCompactDown,
@@ -231,8 +232,8 @@ const bucket = useBucketStore()
 const navigation = useNavigationStore()
 
 // Get bucket name from route param
-const currentBucketName = computed(() => {
-  const bucketParam = route.params.bucket
+const bucketId = computed(() => {
+  const bucketParam = (route.params as any).bucket
   return typeof bucketParam === 'string' ? bucketParam : ''
 })
 
@@ -248,7 +249,7 @@ const currentPath = computed(() => {
 
 const displayPath = computed(() => {
   const suffix = currentPath.value ? `${currentPath.value}` : ''
-  const full = `/${currentBucketName.value}/${suffix}`
+  const full = `/${suffix}`
   return full.endsWith('/') ? full : `${full}/`
 })
 
@@ -289,7 +290,7 @@ watch(currentLayout, () => {
 })
 
 const isLoading = ref(false)
-const payload = ref<R2BucketListResponse>()
+const payload = ref<StorageListResult>()
 const curObjectCount = computed(() => {
   if (!payload.value) return { files: 0, folders: 0 }
   return {
@@ -299,7 +300,7 @@ const curObjectCount = computed(() => {
 })
 
 watch(
-  [currentBucketName, currentPath],
+  [bucketId, currentPath],
   ([bucketName, bucketPath]) => {
     bucket.setCurrentBucket(bucketName)
     if (!bucketName) {
@@ -322,7 +323,7 @@ watch(
 )
 
 async function loadFileList() {
-  if (!currentBucketName.value) {
+  if (!bucketId.value) {
     payload.value = undefined
     return
   }
@@ -356,22 +357,22 @@ const filteredPayload = computed(() => {
 })
 
 const isShowPreview = ref(false)
-const previewItem = ref<R2Object | undefined>()
-function onNavigate(item: R2Object) {
+const previewItem = ref<StorageListObject | undefined>()
+function onNavigate(item: StorageListObject) {
   const path = item.key || ''
   if (path === '/' || path === '') {
-    router.push(`/${currentBucketName.value}/`)
+    router.push(`/${bucketId.value}/`)
   } else if (path === '../') {
     const parentPath = currentPath.value.split('/').slice(0, -2).join('/')
-    router.push(parentPath ? `/${currentBucketName.value}/${parentPath}/` : `/${currentBucketName.value}/`)
+    router.push(parentPath ? `/${bucketId.value}/${parentPath}/` : `/${bucketId.value}/`)
   } else if (path.endsWith('/')) {
-    router.push(`/${currentBucketName.value}/${path}`)
+    router.push(`/${bucketId.value}/${path}`)
   } else {
     previewItem.value = item
     isShowPreview.value = true
   }
 }
-async function onDelete(item: R2Object) {
+async function onDelete(item: StorageListObject) {
   nmodal.create({
     title: 'Delete File',
     type: 'error',
@@ -399,7 +400,33 @@ async function onDelete(item: R2Object) {
     },
   })
 }
-async function onDownload(item: R2Object) {
+
+async function onTogglePublic(item: StorageListObject) {
+  if (!item) return
+  const isPublic = !!(item.customMetadata as any)?.isPublic
+  const action = isPublic ? 'Make Private' : 'Make Public'
+
+  // Optimistic update
+  const originalMeta = { ...item.customMetadata }
+  try {
+    const updated = await bucket.togglePublic(item.key, !isPublic)
+    nmessage.success(`${action} success`)
+
+    // Update local state if backend returns it, or manual patch
+    if (updated) {
+      // Ideally we should refetch or patch the item in list.
+      // For now let's just patch the object in place
+      if (!item.customMetadata) item.customMetadata = {} as any
+      ;(item.customMetadata as any).isPublic = updated.isPublic
+    } else {
+      await loadFileList()
+    }
+  } catch (error: any) {
+    nmessage.error(`Failed to ${action}: ${error.message}`)
+    // Rollback handled by not changing if failed, but if optimistic we would rollback here
+  }
+}
+async function onDownload(item: StorageListObject) {
   const url = bucket.getCDNUrl(item)
   const a = document.createElement('a')
   a.href = url
@@ -407,7 +434,7 @@ async function onDownload(item: R2Object) {
   a.click()
   nmessage.success('Download started')
 }
-async function onRename(item: R2Object) {
+async function onRename(item: StorageListObject) {
   const toPathInput = ref(item.key)
   nmodal.create({
     title: 'Rename File',
@@ -478,7 +505,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      router.push(`/${currentBucketName.value}/${currentPath.value}${folderName}/`)
+      router.push(`/${bucketId.value}/${currentPath.value}${folderName}/`)
     },
   })
 }
@@ -488,7 +515,7 @@ function handleUploadInput(
   prefix = currentPath.value,
   options?: { isDirectory?: boolean }
 ) {
-  if (!currentBucketName.value) {
+  if (!bucketId.value) {
     return
   }
   if (!files || !files.length) {
@@ -665,7 +692,7 @@ watch(
   },
   { immediate: true }
 )
-const fetchPlainText = async (item: R2Object) => {
+const fetchPlainText = async (item: StorageListObject) => {
   if (!item) return ''
   const url = bucket.getCDNUrl(item)
   try {

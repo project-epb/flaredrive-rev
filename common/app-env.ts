@@ -1,5 +1,9 @@
-const readEnv = <T = string>(key: string, defaultValue?: T, transform?: (value: string) => T) => {
-  let rawValue = import.meta.env[key] || import.meta.env[`VITE_${key}`]
+export const readEnv = <T = string>(key: string, defaultValue?: T, transform?: (value: any) => T) => {
+  let rawValue =
+    import.meta.env[key] ||
+    import.meta.env[`VITE_${key}`] ||
+    (globalThis as any)?.process?.env?.[key] ||
+    (globalThis as any)?.process?.env?.[`VITE_${key}`]
   if (typeof rawValue === 'undefined') {
     if (typeof defaultValue === 'undefined') {
       return void 0 as T
@@ -7,6 +11,16 @@ const readEnv = <T = string>(key: string, defaultValue?: T, transform?: (value: 
     rawValue = defaultValue
   }
   return transform ? transform(rawValue) : rawValue
+}
+
+export const parseBoolean = (value: unknown, defaultValue: boolean) => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value !== 0
+  const normalized = String(value).trim().toLowerCase()
+  if (!normalized) return defaultValue
+  if (['1', 'true', 'yes', 'y', 'on', 'enable', 'enabled'].includes(normalized)) return true
+  if (['0', 'false', 'no', 'n', 'off', 'disable', 'disabled'].includes(normalized)) return false
+  return defaultValue
 }
 
 /**
@@ -28,6 +42,14 @@ export const FLARE_DRIVE_HIDDEN_KEY: string = '_$flaredrive$'
  * @example /-/yyyy/MM/dd/random-name.png
  */
 export const RANDOM_UPLOAD_DIR = readEnv<string>('VITE_RANDOM_UPLOAD_DIR', '')
+
+/**
+ * Toggle whether public registration is enabled
+ * default: true
+ */
+export const ALLOW_REGISTER = readEnv<boolean>('VITE_ALLOW_REGISTER', true, (value) => {
+  return parseBoolean(value, true)
+})
 /**
  * To control the batch upload concurrency
  */

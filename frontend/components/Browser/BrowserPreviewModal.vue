@@ -1,18 +1,24 @@
 <template lang="pug">
 NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
-  BrowserFilePreview(:item, @download='emit("download", $event)', @delete='emit("delete", $event)')
+  BrowserFilePreview(
+    :item, 
+    @download='emit("download", $event)', 
+    @delete='emit("delete", $event)',
+    @toggle-public='emit("togglePublic", $event)'
+  )
 </template>
 
 <script setup lang="ts">
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject } from '@/models/R2BucketClient'
 
 const show = defineModel('show', { type: Boolean, default: false })
 const props = defineProps<{
-  item?: R2Object | null
+  item?: StorageListObject | null
 }>()
 const emit = defineEmits<{
-  download: [item: R2Object]
-  delete: [item: R2Object]
+  download: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  togglePublic: [item: StorageListObject]
 }>()
 
 const fileName = computed(() => {

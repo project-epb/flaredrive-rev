@@ -34,9 +34,17 @@
 
     .preview-actions(mt-4, text-center)
       NButtonGroup
-        NButton(size='small', type='primary', @click='emit("download", item)') Download
-        NButton(size='small', type='info', @click='handleCopyURL') Copy URL
-        NButton(size='small', type='error', @click='emit("delete", item)'): NIcon: IconTrash
+        NButton(size='small', type='primary', @click='emit("download", item)')
+          template(#icon): NIcon: IconDownload
+          | Download
+        NButton(size='small', type='info', secondary, @click='handleCopyURL')
+          template(#icon): NIcon: IconCopy
+          | URL
+        NButton(size='small', @click='emit("toggle-public", item)')
+          template(#icon): NIcon: component(:is='isPublic ? IconWorldOff : IconWorld')
+          | {{ isPublic ? 'Private' : 'Public' }}
+        NButton(size='small', type='error', secondary, @click='emit("delete", item)')
+          template(#icon): NIcon: IconTrash
 
     .preview-details(v-if='item', mt-4, flex, flex-col, gap-4)
       NTable
@@ -62,9 +70,6 @@
         tr
           th CDN URL
           td: NA(:href='cdnUrl', target='_blank') {{ cdnUrl }}
-        tr(v-if='item?.customMetadata?.thumbnail')
-          th Thumbnail URL
-          td: NA(:href='bucket.getThumbnailUrls(item)?.square', target='_blank') {{ bucket.getThumbnailUrls(item)?.square }}
 
       details
         pre {{ item }}
@@ -72,22 +77,35 @@
 
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
-import { IconFileUnknown, IconTrash } from '@tabler/icons-vue'
+import type { StorageListObject } from '@/models/R2BucketClient'
+import { 
+  IconFileUnknown, 
+  IconTrash, 
+  IconDownload, 
+  IconCopy, 
+  IconWorld, 
+  IconWorldOff 
+} from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 
 const Hljs = defineAsyncComponent(() => import('@/components/Hljs.vue'))
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 
 const props = defineProps<{
-  item?: R2Object | null
+  item?: StorageListObject | null
 }>()
 const emit = defineEmits<{
-  download: [item: R2Object]
-  delete: [item: R2Object]
+  download: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  'toggle-public': [item: StorageListObject]
 }>()
 
 const bucket = useBucketStore()
+const message = useMessage()
+
+const isPublic = computed(() => {
+  return !!(props.item?.customMetadata as any)?.isPublic
+})
 
 const fileNameParts = computed(() => {
   return FileHelper.getSimpleFileInfoByObject(props.item)
@@ -96,7 +114,6 @@ const cdnUrl = computed(() => {
   if (!props.item) return ''
   return bucket.getCDNUrl(props.item)
 })
-
 const previewType = computed(() => FileHelper.getPreviewType(props.item))
 
 const rawTextContent = ref<string | null>(null)

@@ -1,22 +1,4 @@
 {
-  "compilerOptions": {
-    "rootDir": "./",
-    "baseUrl": "./",
-    "noEmit": true,
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true
-  },
-  "references": [
-    {
-      "path": "./frontend/tsconfig.json"
-    },
-    {
-      "path": "./backend/tsconfig.json"
-    }
-  ],
-  "vueCompilerOptions": {
-    "plugins": ["@vue/language-plugin-pug"]
-  }
+  "files": [],
+  "references": [{ "path": "./tsconfig.web.json" }, { "path": "./tsconfig.node.json" }]
 }

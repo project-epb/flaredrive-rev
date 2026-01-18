@@ -30,7 +30,7 @@ export const useNavigationStore = defineStore('navigation', () => {
     }
 
     // Check if bucket exists
-    const bucketExists = availableBuckets.some((b) => b.name === bucketName)
+    const bucketExists = availableBuckets.some((b) => b.id === bucketName)
     if (!bucketExists) {
       return false
     }
@@ -44,8 +44,8 @@ export const useNavigationStore = defineStore('navigation', () => {
    * @returns true if redirected, false otherwise
    */
   function tryRedirectToSingleBucket(availableBuckets: BucketInfo[]): boolean {
-    if (availableBuckets.length === 1 && availableBuckets[0]?.name) {
-      router.replace(`/${availableBuckets[0].name}/`)
+    if (availableBuckets.length === 1 && availableBuckets[0]?.id) {
+      router.replace(`/${availableBuckets[0].id}/`)
       return true
     }
     return false
@@ -56,6 +56,8 @@ export const useNavigationStore = defineStore('navigation', () => {
    * Priority: lastRoute > single bucket redirect > stay on home
    */
   async function handleInitialNavigation(availableBuckets: BucketInfo[]): Promise<void> {
+    return // temporary disable auto navigation
+
     if (didInitialNavigation.value) {
       return
     }

@@ -1,17 +1,22 @@
 {
   "name": "flaredrive",
-  "compatibility_date": "2025-05-07",
+  "compatibility_date": "2026-01-14",
   "main": "./backend/index.ts",
   "assets": {
     "not_found_handling": "single-page-application",
   },
-  "r2_buckets": [
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
     {
-      "binding": "BUCKET",
-      "bucket_name": "cloud-epb",
-      "preview_bucket_name": "cloud-epb-preview",
+      "binding": "D1",
+      "database_name": "flaredrive",
+      "database_id": "f3d07a76-273f-4075-906b-c6292ee4cfb9",
+      "migrations_dir": "drizzle",
     },
   ],
+  "vars": {
+    "ALLOW_REGISTER": "false",
+  },
   "observability": {
     "logs": {
       "enabled": true,

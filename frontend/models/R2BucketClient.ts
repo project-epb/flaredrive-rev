@@ -1,8 +1,21 @@
-import axios, { type Axios } from 'axios'
-import { type R2Object } from '@cloudflare/workers-types/2023-07-01'
+import { Fexios, type FexiosFinalContext } from 'fexios'
 
-export interface R2BucketListResponse {
-  objects: R2Object[]
+export type StorageListObject = {
+  key: string
+  version: string
+  size: number
+  etag: string
+  httpEtag: string
+  checksums: any
+  uploaded: Date
+  httpMetadata?: Record<string, any>
+  customMetadata?: Record<string, any>
+  range?: any
+  storageClass: string
+}
+
+export type StorageListResult = {
+  objects: StorageListObject[]
   folders: string[]
   prefix: string
   limit: number
@@ -12,14 +25,20 @@ export interface R2BucketListResponse {
 }
 
 export interface BucketInfo {
+  id: string
   name: string
-  cdnBaseUrl: string
+  cdnBaseUrl?: string
+  bucketName: string
+  endpointUrl: string
+  region: string
+  accessKeyId?: string // Usually masked or not returned fully if secure
+  forcePathStyle?: number | boolean
 }
 
 export class R2BucketClient {
-  readonly request: Axios
-  constructor(private baseURL: string = '/api/bucket') {
-    this.request = axios.create({
+  readonly request: Fexios
+  constructor(private baseURL: string = '/api/bucket/') {
+    this.request = Fexios.create({
       baseURL,
     })
   }
@@ -32,8 +51,8 @@ export class R2BucketClient {
 
   list(prefix: string, options?: { delimiter?: string; limit?: number; startAfter?: string }) {
     const { delimiter, limit, startAfter } = options || {}
-    return this.request.get<R2BucketListResponse>(prefix, {
-      params: {
+    return this.request.get<StorageListResult>(prefix, {
+      query: {
         delimiter,
         limit,
         startAfter,
@@ -63,7 +82,7 @@ export class R2BucketClient {
       },
       {} as Record<string, string>
     )
-    return this.request.put<R2Object>(key, file, {
+    return this.request.put<StorageListObject>(key, file, {
       headers: {
         ...metaHeaders,
         'Content-Type': contentType || 'application/octet-stream',
@@ -71,13 +90,13 @@ export class R2BucketClient {
     })
   }
 
-  delete(key: string): Promise<void> {
+  delete(key: string): Promise<FexiosFinalContext<any>> {
     return this.request.delete(key)
   }
 
-  rename(oldKey: string, newKey: string): Promise<void> {
+  rename(oldKey: string, newKey: string): Promise<FexiosFinalContext<any>> {
     return this.request.put(newKey, null, {
-      params: {
+      query: {
         copySource: oldKey,
       },
     })

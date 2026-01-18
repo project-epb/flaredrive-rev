@@ -1,10 +1,38 @@
 import { Hono } from 'hono'
-import { bucket } from './bucket.js'
-import { getBucketInfoList } from './bucket-utils.js'
-import { raw } from './raw.js'
 
-export interface HonoEnv {
+// Polyfill checks for AWS SDK to prevent fs access
+if (typeof process === 'undefined') {
+  ;(globalThis as any).process = { env: {} }
+}
+// Ensure process.env exists
+if (!globalThis.process) {
+  ;(globalThis as any).process = { env: {} }
+}
+if (!globalThis.process.env) {
+  globalThis.process.env = {}
+}
+// Disable config loading from filesystem
+Object.assign(globalThis.process.env, {
+  AWS_SDK_LOAD_CONFIG: '0',
+  AWS_EC2_METADATA_DISABLED: 'true',
+})
+
+import { bucket } from './routes/bucket.js'
+import { raw } from './routes/raw.js'
+import { auth } from './routes/auth.js'
+import { buckets } from './routes/buckets.js'
+import { objects } from './routes/objects.js'
+
+import type { D1Database } from '@cloudflare/workers-types/2023-07-01'
+import { BlankEnv } from 'hono/types'
+
+export interface HonoEnv extends BlankEnv {
   Bindings: {
+    D1: D1Database
+    [key: string]: unknown
+  }
+  Variables: {
+    ADMIN_CREATE_TOKEN?: string
     [key: string]: unknown
   }
 }
@@ -17,11 +45,9 @@ app.get('/').all((ctx) => {
   })
 })
 
-app.get('/list_buckets', (ctx) => {
-  const buckets = getBucketInfoList(ctx.env)
-  return ctx.json(buckets)
-})
-
+app.route('/auth', auth)
+app.route('/buckets', buckets)
+app.route('/objects', objects)
 app.route('/bucket', bucket)
 app.route('/raw', raw)
 

@@ -15,19 +15,18 @@ NDrawer(v-model:show='show', placement='bottom', default-height='75vh', resizabl
 </template>
 
 <script setup lang="ts">
-import type { R2BucketListResponse } from '@/models/R2BucketClient'
 import BrowserListView from './BrowserListView.vue'
-import type { R2Object } from '@cloudflare/workers-types/2023-07-01'
+import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
 
 const show = defineModel('show', { type: Boolean, default: false })
 const props = defineProps<{
-  list: R2Object[]
+  list: StorageListObject[]
 }>()
 const emit = defineEmits<{
-  rename: [item: R2Object]
-  delete: [item: R2Object]
-  download: [item: R2Object]
-  navigate: [item: R2Object]
+  rename: [item: StorageListObject]
+  delete: [item: StorageListObject]
+  download: [item: StorageListObject]
+  navigate: [item: StorageListObject]
 }>()
 
 const payload = computed(() => {
@@ -39,7 +38,7 @@ const payload = computed(() => {
     startAfter: '',
     hasMore: false,
     moreAfter: null,
-  } as R2BucketListResponse
+  } as StorageListResult
 })
 </script>
 
