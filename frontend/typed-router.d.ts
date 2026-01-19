@@ -30,6 +30,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/[...fallback]': RouteRecordInfo<
+      '/[...fallback]',
+      '/:fallback(.*)',
+      { fallback: ParamValue<true> },
+      { fallback: ParamValue<false> },
+      | never
+    >,
     '/admin': RouteRecordInfo<
       '/admin',
       '/admin',
@@ -111,6 +118,12 @@ declare module 'vue-router/auto-routes' {
     'frontend/pages/index.vue': {
       routes:
         | '/'
+      views:
+        | never
+    }
+    'frontend/pages/[...fallback].vue': {
+      routes:
+        | '/[...fallback]'
       views:
         | never
     }

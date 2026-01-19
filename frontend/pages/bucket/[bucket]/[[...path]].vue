@@ -255,6 +255,11 @@ const displayPath = computed(() => {
 
 onMounted(async () => {
   await bucket.fetchBucketList()
+  // 如果存储桶不存在，跳转回首页
+  if (bucketId.value && !bucket.availableBuckets.some((b) => b.id === bucketId.value)) {
+    router.replace('/')
+    return
+  }
 })
 
 onBeforeRouteUpdate((to) => {
