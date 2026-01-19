@@ -14,6 +14,7 @@ export const getBucketConfigById = async (ctx: any, id: string) => {
       secretAccessKey: bucketsTable.secretAccessKey,
       bucketName: bucketsTable.bucketName,
       forcePathStyle: bucketsTable.forcePathStyle,
+      uploadMethod: bucketsTable.uploadMethod,
       cdnBaseUrl: bucketsTable.cdnBaseUrl,
     })
     .from(bucketsTable)

@@ -33,6 +33,7 @@ export interface BucketInfo {
   region: string
   accessKeyId?: string // Usually masked or not returned fully if secure
   forcePathStyle?: number | boolean
+  uploadMethod?: 'presigned' | 'proxy'
 }
 
 export class R2BucketClient {

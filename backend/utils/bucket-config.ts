@@ -11,6 +11,7 @@ export type BucketConfigRow = {
   secretAccessKey: string
   bucketName: string
   forcePathStyle: number
+  uploadMethod: 'presigned' | 'proxy'
   createdAt: number
 }
 
@@ -35,6 +36,8 @@ export const validateBucketConfigInput = (input: any) => {
   const cdnBaseUrlRaw = (input?.cdnBaseUrl || '').toString().trim()
   const cdnBaseUrl = cdnBaseUrlRaw ? normalizeBaseUrl(cdnBaseUrlRaw) : ''
   const forcePathStyle = !!input?.forcePathStyle
+  const uploadMethodRaw = (input?.uploadMethod || '').toString().trim()
+  const uploadMethod = uploadMethodRaw ? uploadMethodRaw : 'presigned'
 
   if (!name) return { ok: false as const, error: 'Invalid name' }
   if (!bucketName) return { ok: false as const, error: 'Invalid bucketName' }
@@ -48,6 +51,9 @@ export const validateBucketConfigInput = (input: any) => {
   }
 
   if (!region) return { ok: false as const, error: 'Invalid region' }
+  if (uploadMethod !== 'presigned' && uploadMethod !== 'proxy') {
+    return { ok: false as const, error: 'Invalid uploadMethod' }
+  }
 
   return {
     ok: true as const,
@@ -60,6 +66,7 @@ export const validateBucketConfigInput = (input: any) => {
       secretAccessKey,
       cdnBaseUrl: cdnBaseUrl || null,
       forcePathStyle: forcePathStyle ? 1 : 0,
+      uploadMethod,
     },
   }
 }

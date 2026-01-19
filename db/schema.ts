@@ -28,6 +28,7 @@ export const buckets = sqliteTable(
     secretAccessKey: text('secret_access_key').notNull(),
     bucketName: text('bucket_name').notNull(),
     forcePathStyle: integer('force_path_style').notNull().default(0),
+    uploadMethod: text('upload_method').notNull().default('presigned'),
     createdAt: integer('created_at').notNull(),
   },
   (t) => [

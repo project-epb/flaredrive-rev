@@ -1,0 +1,1 @@
+ALTER TABLE `buckets` ADD `upload_method` text DEFAULT 'presigned' NOT NULL;

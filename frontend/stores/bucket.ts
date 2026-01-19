@@ -32,6 +32,7 @@ export const useBucketStore = defineStore('bucket', () => {
   const availableBuckets = ref<BucketInfo[]>([])
   const isBucketListLoading = ref(false)
   const bucketCdnMap = ref<Record<string, string>>({})
+  const bucketUploadMethodMap = ref<Record<string, 'presigned' | 'proxy'>>({})
 
   const normalizeCdnBaseUrl = (value: string) => {
     if (!value) return ''
@@ -65,11 +66,21 @@ export const useBucketStore = defineStore('bucket', () => {
         },
         {} as Record<string, string>
       )
+      bucketUploadMethodMap.value = (data || []).reduce(
+        (acc, item) => {
+          if (item?.id) {
+            acc[item.id] = item.uploadMethod === 'proxy' ? 'proxy' : 'presigned'
+          }
+          return acc
+        },
+        {} as Record<string, 'presigned' | 'proxy'>
+      )
       return availableBuckets.value
     } catch (error) {
       console.error('Failed to fetch bucket list', error)
       availableBuckets.value = []
       bucketCdnMap.value = {}
+      bucketUploadMethodMap.value = {}
       return availableBuckets.value
     } finally {
       isBucketListLoading.value = false
@@ -179,13 +190,15 @@ export const useBucketStore = defineStore('bucket', () => {
     metadata: Record<string, string> = {},
     options?: { ignoreRandom?: boolean }
   ) => {
+    const normalizedKey = key.replace(/^\/+/, '')
     // 0. Prepare
     const fileHash = await FileHelper.blobToSha1(file)
     const { ext } = FileHelper.getSimpleFileInfoByFile(file)
     const isMediaFile = FileHelper.checkIsMediaFile(file)
     const contentType = file.type || 'application/octet-stream'
+    const uploadMethod = bucketUploadMethodMap.value[currentBucketName.value] || 'presigned'
 
-    let targetKey = key
+    let targetKey = normalizedKey
 
     // 1. Handle media metadata (width/height only)
     if (isMediaFile) {
@@ -198,7 +211,7 @@ export const useBucketStore = defineStore('bucket', () => {
       }
     }
 
-    if (checkIsRandomUploadDir(key) && !options?.ignoreRandom) {
+    if (checkIsRandomUploadDir(normalizedKey) && !options?.ignoreRandom) {
       const hashFirst = fileHash.slice(0, 1)
       const hashSecond = fileHash.slice(0, 2)
       targetKey = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
@@ -207,34 +220,51 @@ export const useBucketStore = defineStore('bucket', () => {
 
     console.info('Upload start', targetKey, file, { metadata })
 
-    // 2. Presign Flow: Get URL
-    const { data: presignInfo } = await fexios.post(`/api/objects/${currentBucketName.value}/presign`, {
-      action: 'put',
-      key: targetKey,
-      contentType,
-    })
+    let result: StorageListObject
 
-    // 3. Direct PUT to S3
-    await fexios.put(presignInfo.url, file, {
-      headers: {
-        'Content-Type': contentType,
-      },
-    })
-
-    // 4. Record History
-    await recordUpload(targetKey, file.size, contentType)
-
-    // 5. Construct Result for frontend
-    const result = {
-      key: targetKey,
-      size: file.size,
-      etag: '', // Cannot get etag easily from PUT response unless exposing ETag header
-      uploaded: new Date().toISOString() as any, // Approximation
-      httpMetadata: {
+    if (uploadMethod === 'proxy') {
+      const { data } = await client.upload(targetKey, file, {
         contentType,
-      },
-      customMetadata: metadata as any,
-    } as unknown as StorageListObject
+        metadata,
+      })
+      result = (data || {
+        key: targetKey,
+        size: file.size,
+        etag: '',
+        uploaded: new Date().toISOString() as any,
+        httpMetadata: { contentType },
+        customMetadata: metadata as any,
+      }) as StorageListObject
+    } else {
+      // 2. Presign Flow: Get URL
+      const { data: presignInfo } = await fexios.post(`/api/objects/${currentBucketName.value}/presign`, {
+        action: 'put',
+        key: targetKey,
+        contentType,
+      })
+
+      // 3. Direct PUT to S3
+      await fexios.put(presignInfo.url, file, {
+        headers: {
+          'Content-Type': contentType,
+        },
+      })
+
+      // 4. Record History
+      await recordUpload(targetKey, file.size, contentType)
+
+      // 5. Construct Result for frontend
+      result = {
+        key: targetKey,
+        size: file.size,
+        etag: '', // Cannot get etag easily from PUT response unless exposing ETag header
+        uploaded: new Date().toISOString() as any, // Approximation
+        httpMetadata: {
+          contentType,
+        },
+        customMetadata: metadata as any,
+      } as unknown as StorageListObject
+    }
 
     console.info('Upload finish', targetKey, file, result)
     addToUploadHistory(result)
@@ -301,29 +331,30 @@ export const useBucketStore = defineStore('bucket', () => {
   >([])
 
   const addToUploadQueue = (key: string, file: File, options?: { ignoreRandom?: boolean }) => {
-    const existing = pendinUploadList.value.find((item) => item.key === key)
+    const normalizedKey = key.replace(/^\/+/, '')
+    const existing = pendinUploadList.value.find((item) => item.key === normalizedKey)
     if (existing) {
-      console.info('Upload already in queue', key, file)
+      console.info('Upload already in queue', normalizedKey, file)
       existing.abort?.()
     }
     const abortController = new AbortController()
     const abort = () => {
-      console.info('Upload aborted', key, file)
+      console.info('Upload aborted', normalizedKey, file)
       abortController.abort()
-      pendinUploadList.value = pendinUploadList.value.filter((item) => item.key !== key)
+      pendinUploadList.value = pendinUploadList.value.filter((item) => item.key !== normalizedKey)
     }
     pendinUploadList.value.push({
-      key,
+      key: normalizedKey,
       abort,
     })
     const handler = async () => {
       if (abortController.signal.aborted) {
         throw new Error('Upload aborted')
       }
-      const { data } = await uploadOne(key, file, {}, options).catch((error) => {
-        console.error('Upload failed', key, file, error)
+      const { data } = await uploadOne(normalizedKey, file, {}, options).catch((error) => {
+        console.error('Upload failed', normalizedKey, file, error)
         uploadFailedList.value.push({
-          key: key,
+          key: normalizedKey,
           file: file,
           error,
         })

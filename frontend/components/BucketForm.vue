@@ -47,6 +47,14 @@ NForm.space-y-4(ref='formRef', :model='formValue', :rules='rules', @submit.preve
       template(#prefix)
         IconGlobe
 
+  NFormItem(label='Upload Method', path='uploadMethod')
+    NSelect(
+      v-model:value='formValue.uploadMethod',
+      size='large',
+      :options='uploadMethodOptions',
+      placeholder='Select upload method'
+    )
+
   NFormItem(label='Force Path Style', path='forcePathStyle')
     NSwitch(v-model:checked='formValue.forcePathStyle') 
       template(#checked) Enabled
@@ -81,7 +89,13 @@ const formValue = reactive({
   secretAccessKey: '',
   cdnBaseUrl: props.bucket?.cdnBaseUrl || '',
   forcePathStyle: props.bucket?.forcePathStyle === 1 || props.bucket?.forcePathStyle === true,
+  uploadMethod: props.bucket?.uploadMethod || 'presigned',
 })
+
+const uploadMethodOptions = [
+  { label: 'Presigned direct upload', value: 'presigned' },
+  { label: 'FlareDrive proxy upload', value: 'proxy' },
+]
 
 const rules = computed<FormRules>(() => {
   return {
@@ -112,6 +126,7 @@ const rules = computed<FormRules>(() => {
       message: 'Please enter Secret Access Key',
       trigger: 'blur',
     },
+    uploadMethod: { required: true, message: 'Please select upload method', trigger: 'blur' },
   }
 })
 

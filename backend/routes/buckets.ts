@@ -28,6 +28,7 @@ buckets.get('/', async (ctx) => {
       region: bucketsTable.region,
       bucketName: bucketsTable.bucketName,
       forcePathStyle: bucketsTable.forcePathStyle,
+      uploadMethod: bucketsTable.uploadMethod,
       createdAt: bucketsTable.createdAt,
     })
     .from(bucketsTable)
@@ -65,6 +66,7 @@ buckets.post('/', async (ctx) => {
       secretAccessKey: parsed.value.secretAccessKey,
       bucketName: parsed.value.bucketName,
       forcePathStyle: parsed.value.forcePathStyle,
+      uploadMethod: parsed.value.uploadMethod,
       createdAt: now,
     })
     .run()
@@ -101,6 +103,7 @@ buckets.put('/:id', async (ctx) => {
     region: parsed.value.region,
     bucketName: parsed.value.bucketName,
     forcePathStyle: parsed.value.forcePathStyle,
+    uploadMethod: parsed.value.uploadMethod,
   }
 
   // 编辑时允许留空表示不修改 AK/SK

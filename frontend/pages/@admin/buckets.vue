@@ -102,6 +102,16 @@ const columns = [
   { title: 'Region', key: 'region', width: 100 },
   { title: 'Endpoint', key: 'endpointUrl', width: 250, ellipsis: true },
   {
+    title: 'Upload',
+    key: 'uploadMethod',
+    width: 140,
+    render: (row: BucketInfo) => {
+      const method = row.uploadMethod === 'proxy' ? 'Proxy' : 'Presigned'
+      const type = row.uploadMethod === 'proxy' ? 'warning' : 'info'
+      return h(NTag, { type, size: 'small' }, () => method)
+    },
+  },
+  {
     title: 'Path Style',
     key: 'forcePathStyle',
     width: 100,
