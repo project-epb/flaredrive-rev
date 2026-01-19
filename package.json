@@ -66,6 +66,7 @@
     "@vue/language-plugin-pug": "^3.2.2",
     "@vue/tsconfig": "^0.8.1",
     "better-sqlite3": "^12.6.2",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "hono": "^4.11.4",

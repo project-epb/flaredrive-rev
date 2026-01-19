@@ -1,5 +1,5 @@
 <template lang="pug">
-NLayoutHeader.global-header(bordered, fixed, top-0, left-0, right-0, z-10)
+NLayoutHeader.global-header(bordered)
   .flex(h-60px, px-4, py-2, gap-4, items-center, justify-between, h-full)
     //- Left Side
     .flex(items-center, gap-6)
@@ -12,10 +12,13 @@ NLayoutHeader.global-header(bordered, fixed, top-0, left-0, right-0, z-10)
       NButton(quaternary, @click='$router.push("/")')
         template(#icon)
           NIcon(:component='IconBucket')
-        | All Buckets
+        | My Buckets
 
     //- Right Side
     .flex(items-center, gap-3)
+      NButton(quaternary, size='small', v-if='showDashboard', @click='$router.push("/admin")')
+        template(#icon): IconDashboard
+        | Dashboard
       NDropdown(:options='themeOptions', @select='theme.setTheme', :value='theme.rawTheme')
         NButton(quaternary, circle, @click='switchThemes'): component(:is='currentThemeOption.icon')
 
@@ -24,9 +27,11 @@ NLayoutHeader.global-header(bordered, fixed, top-0, left-0, right-0, z-10)
 
 <script setup lang="ts">
 import type { DropdownOption } from 'naive-ui/es/dropdown/src/interface'
-import { IconBucket } from '@tabler/icons-vue'
+import { IconBucket, IconDashboard } from '@tabler/icons-vue'
 
 const theme = useThemeStore()
+const auth = useAuthStore()
+const router = useRouter()
 const themeOptions = shallowRef<DropdownOption[]>([
   {
     type: '',
@@ -48,6 +53,7 @@ const themeOptions = shallowRef<DropdownOption[]>([
 const currentThemeOption = computed(() => {
   return themeOptions.value.find((option) => option.key === theme.rawTheme)!
 })
+const showDashboard = computed(() => (auth.user?.authorizationLevel || 0) >= 3)
 const switchThemes = () => {
   const currentIndex = themeOptions.value.findIndex((option) => option.key === theme.rawTheme)
   const nextIndex = (currentIndex + 1) % themeOptions.value.length

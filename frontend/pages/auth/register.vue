@@ -6,7 +6,13 @@
       NFormItem(label='邮箱', path='email')
         NInput(v-model:value='form.email', placeholder='you@example.com', autofocus, :disabled='!allowRegister')
       NFormItem(label='密码', path='password')
-        NInput(v-model:value='form.password', type='password', show-password-on='click', placeholder='至少 8 位', :disabled='!allowRegister')
+        NInput(
+          v-model:value='form.password',
+          type='password',
+          show-password-on='click',
+          placeholder='至少 8 位',
+          :disabled='!allowRegister'
+        )
       NFormItem(label='确认密码', path='password2')
         NInput(v-model:value='form.password2', type='password', show-password-on='click', :disabled='!allowRegister')
       .flex(gap-3, items-center)
@@ -88,7 +94,7 @@ const onSubmit = async () => {
 }
 
 const goLogin = () => {
-  router.push({ path: '/@auth/login', query: { redirect: redirectTo.value } })
+  router.push({ name: '@auth-login', query: { redirect: redirectTo.value } })
 }
 </script>
 

@@ -29,7 +29,6 @@ declare global {
   const controlledRef: typeof import('@vueuse/core').controlledRef
   const createApp: typeof import('vue').createApp
   const createEventHook: typeof import('@vueuse/core').createEventHook
-  const createFolderObject: (typeof import('./utils/FileHelper'))['createFolderObject']
   const createGlobalState: typeof import('@vueuse/core').createGlobalState
   const createInjectionState: typeof import('@vueuse/core').createInjectionState
   const createNullObject: typeof import('./utils/FileHelper').createNullObject
@@ -51,7 +50,6 @@ declare global {
   const extendRef: typeof import('@vueuse/core').extendRef
   const formatFileSize: typeof import('./utils/FileHelper').formatFileSize
   const generateMediaFileThumbnail: typeof import('./utils/FileHelper').generateMediaFileThumbnail
-  const generateThumbnail: (typeof import('./utils/FileHelper'))['generateThumbnail']
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
@@ -122,7 +120,6 @@ declare global {
   const refWithControl: typeof import('@vueuse/core').refWithControl
   const resolveComponent: typeof import('vue').resolveComponent
   const resolveRef: typeof import('@vueuse/core').resolveRef
-  const resolveUnref: (typeof import('@vueuse/core'))['resolveUnref']
   const setActivePinia: typeof import('pinia').setActivePinia
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
   const shallowReactive: typeof import('vue').shallowReactive

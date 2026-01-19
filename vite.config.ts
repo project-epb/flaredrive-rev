@@ -30,6 +30,7 @@ export default defineConfig({
     VueJsx(),
     AutoImport({
       dts: 'frontend/auto-imports.d.ts',
+      dtsMode: 'overwrite',
       imports: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
       vueTemplate: true,
       vueDirectives: true,

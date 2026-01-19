@@ -13,7 +13,6 @@
     .actions.flex.items-center.gap-3
       NButton(secondary, @click='refreshList', :loading='bucketStore.isBucketListLoading')
         template(#icon): NIcon: IconRefresh
-        | Refresh
 
       NButton(type='primary', @click='openCreateModal')
         template(#icon)
@@ -143,7 +142,7 @@ onMounted(async () => {
 
 const goToBucket = (bucketId: string) => {
   if (!bucketId) return
-  router.push(`/${bucketId}/`)
+  router.push(`/bucket/${bucketId}/`)
 }
 
 // Actions

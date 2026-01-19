@@ -22,6 +22,7 @@ import { raw } from './routes/raw.js'
 import { auth } from './routes/auth.js'
 import { buckets } from './routes/buckets.js'
 import { objects } from './routes/objects.js'
+import { admin } from './routes/admin.js'
 
 import type { D1Database } from '@cloudflare/workers-types/2023-07-01'
 import { BlankEnv } from 'hono/types'
@@ -50,5 +51,6 @@ app.route('/buckets', buckets)
 app.route('/objects', objects)
 app.route('/bucket', bucket)
 app.route('/raw', raw)
+app.route('/admin', admin)
 
 export default app

@@ -30,39 +30,69 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '@browser': RouteRecordInfo<
-      '@browser',
-      '/:bucket/:path(.*)?',
-      { bucket: ParamValue<true>, path?: ParamValueZeroOrOne<true> },
-      { bucket: ParamValue<false>, path?: ParamValueZeroOrOne<false> },
+    '/admin': RouteRecordInfo<
+      '/admin',
+      '/admin',
+      Record<never, never>,
+      Record<never, never>,
+      | '/admin/'
+      | '/admin/buckets'
+      | '/admin/users'
+    >,
+    '/admin/': RouteRecordInfo<
+      '/admin/',
+      '/admin',
+      Record<never, never>,
+      Record<never, never>,
       | never
     >,
-    '@upload-standalone': RouteRecordInfo<
-      '@upload-standalone',
-      '/:bucket/@upload',
-      { bucket: ParamValue<true> },
-      { bucket: ParamValue<false> },
+    '/admin/buckets': RouteRecordInfo<
+      '/admin/buckets',
+      '/admin/buckets',
+      Record<never, never>,
+      Record<never, never>,
       | never
     >,
-    '/@admin/buckets': RouteRecordInfo<
-      '/@admin/buckets',
-      '/@admin/buckets',
+    '/admin/users': RouteRecordInfo<
+      '/admin/users',
+      '/admin/users',
       Record<never, never>,
       Record<never, never>,
       | never
     >,
     '@auth-login': RouteRecordInfo<
       '@auth-login',
-      '/@auth/login',
+      '/auth/login',
       Record<never, never>,
       Record<never, never>,
       | never
     >,
     '@auth-register': RouteRecordInfo<
       '@auth-register',
-      '/@auth/register',
+      '/auth/register',
       Record<never, never>,
       Record<never, never>,
+      | never
+    >,
+    '/bucket/': RouteRecordInfo<
+      '/bucket/',
+      '/bucket',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '@browser': RouteRecordInfo<
+      '@browser',
+      '/bucket/:bucket/:path(.*)?',
+      { bucket: ParamValue<true>, path?: ParamValueZeroOrOne<true> },
+      { bucket: ParamValue<false>, path?: ParamValueZeroOrOne<false> },
+      | never
+    >,
+    '@upload-standalone': RouteRecordInfo<
+      '@upload-standalone',
+      '/bucket/:bucket/@upload',
+      { bucket: ParamValue<true> },
+      { bucket: ParamValue<false> },
       | never
     >,
   }
@@ -84,33 +114,60 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'frontend/pages/[bucket]/[[...path]].vue': {
+    'frontend/pages/admin.vue': {
       routes:
-        | '@browser'
+        | '/admin'
+        | '/admin/'
+        | '/admin/buckets'
+        | '/admin/users'
+      views:
+        | 'default'
+    }
+    'frontend/pages/admin/index.vue': {
+      routes:
+        | '/admin/'
       views:
         | never
     }
-    'frontend/pages/[bucket]/@upload.vue': {
+    'frontend/pages/admin/buckets.vue': {
       routes:
-        | '@upload-standalone'
+        | '/admin/buckets'
       views:
         | never
     }
-    'frontend/pages/@admin/buckets.vue': {
+    'frontend/pages/admin/users.vue': {
       routes:
-        | '/@admin/buckets'
+        | '/admin/users'
       views:
         | never
     }
-    'frontend/pages/@auth/login.vue': {
+    'frontend/pages/auth/login.vue': {
       routes:
         | '@auth-login'
       views:
         | never
     }
-    'frontend/pages/@auth/register.vue': {
+    'frontend/pages/auth/register.vue': {
       routes:
         | '@auth-register'
+      views:
+        | never
+    }
+    'frontend/pages/bucket/index.vue': {
+      routes:
+        | '/bucket/'
+      views:
+        | never
+    }
+    'frontend/pages/bucket/[bucket]/[[...path]].vue': {
+      routes:
+        | '@browser'
+      views:
+        | never
+    }
+    'frontend/pages/bucket/[bucket]/@upload.vue': {
+      routes:
+        | '@upload-standalone'
       views:
         | never
     }

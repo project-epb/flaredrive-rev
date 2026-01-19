@@ -3,7 +3,7 @@ NBreadcrumb.breadcrumb-nav
   NBreadcrumbItem(key='__ROOT__', @click='$router.push("/")')
     NText(quaternary, text)
       //- IconHome
-      NIcon(mr-1, :component="IconHome")
+      NIcon(mr-1, :component='IconHome')
       | Home
   NBreadcrumbItem(v-for='(item, index) in breadParts', :key='item.key', @click='onBreadClick(item, index)') {{ item.label }}
 </template>
@@ -23,7 +23,7 @@ const breadParts = computed<
     path?: string // path within bucket
   }[]
 >(() => {
-  const parts = route.path.split('/').filter(Boolean)
+  const parts = route.path.split('/').filter(Boolean).slice(1) // Remove leading "bucket" part
   if (parts.length === 0) {
     return []
   }
@@ -43,7 +43,7 @@ const breadParts = computed<
       const path = pathParts.slice(0, index + 1).join('/')
       result.push({
         label: decodeURI(part),
-        key: `${bucketId}/${path}`,
+        key: `/bucket/${bucketId}/${path}`,
         bucket: bucketId,
         path,
       })
@@ -53,13 +53,12 @@ const breadParts = computed<
   return result
 })
 
-
 const onBreadClick = (item: { label: string; key: string; bucket: string; path?: string }, index: number) => {
   if (index + 1 === breadParts.value.length) {
     return // current route
   }
   const path = item.path || ''
-  router.push(`/${item.bucket}/${path}${path ? '/' : ''}`)
+  router.push(`/bucket/${item.bucket}/${path}${path ? '/' : ''}`)
 }
 </script>
 

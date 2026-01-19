@@ -12,6 +12,8 @@
 
 ## 基本环境与相关文档
 
+前后端分离设计，但通过 @cloudflare/vite 插件实现统一开发、构建、部署。
+
 - Node.js 版本：24.x LTS
 - 包管理器：bun
 - 前端框架：Vue 3 + vue-auto-router
@@ -25,7 +27,8 @@
 - 数据库：D1（SQLite 兼容）
 - ORM：Drizzle
 - 存储后端：S3-compatible（Cloudflare R2、AWS S3、MinIO 等）
-- Vue SFC 风格示例：
+
+### Vue SFC 风格示例
 
 ```vue
 <template lang="pug">
@@ -45,7 +48,13 @@ const data = ref('Hello, FlareDrive Rev!')
 </style>
 ```
 
-前后端分离设计，但通过 @cloudflare/vite 插件实现统一开发、构建、部署。
+### 关于自动导入
+
+- 前端文件夹下的 `utils/`, `stores/` 目录中导出的所有函数和常量会被自动导入到前端的各个模块中，无需手动导入。
+- `components/` 目录下的 Vue 组件会被自动注册为全局组件，无需手动导入和注册。
+  - 组件名：将根据文件名自动生成，遵循 PascalCase 命名规范。例如，`MyButton.vue` 会被注册为 `<MyButton />` 组件。
+  - 文件夹：如果组件文件位于子文件夹中，组件名会包含文件夹名称。例如，`components/Foo/BarBaz.vue` 会被注册为 `<FooBarBaz />` 组件。
+  - 名字空间：如果组件位于文件夹，但文件名开头与文件夹名相同，则会省略文件夹名称作为前缀。例如，`components/Foo/FooButton.vue` 会被注册为 `<FooButton />` 组件，而不是 `<FooFooButton />`。
 
 ## 目录结构
 

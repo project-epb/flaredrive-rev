@@ -309,10 +309,10 @@ watch(
       return
     }
     if (bucketPath && !bucketPath.endsWith('/')) {
-      router.replace(`/${bucketName}/${bucketPath}/`)
+      router.replace(`/bucket/${bucketName}/${bucketPath}/`)
       return
     }
-    const rootPath = `/${bucketName}/`
+    const rootPath = `/bucket/${bucketName}/`
     if (!bucketPath && route.path !== rootPath) {
       router.replace(rootPath)
       return
@@ -361,12 +361,12 @@ const previewItem = ref<StorageListObject | undefined>()
 function onNavigate(item: StorageListObject) {
   const path = item.key || ''
   if (path === '/' || path === '') {
-    router.push(`/${bucketId.value}/`)
+    router.push(`/bucket/${bucketId.value}/`)
   } else if (path === '../') {
     const parentPath = currentPath.value.split('/').slice(0, -2).join('/')
-    router.push(parentPath ? `/${bucketId.value}/${parentPath}/` : `/${bucketId.value}/`)
+    router.push(parentPath ? `/bucket/${bucketId.value}/${parentPath}/` : `/bucket/${bucketId.value}/`)
   } else if (path.endsWith('/')) {
-    router.push(`/${bucketId.value}/${path}`)
+    router.push(`/bucket/${bucketId.value}/${path}`)
   } else {
     previewItem.value = item
     isShowPreview.value = true

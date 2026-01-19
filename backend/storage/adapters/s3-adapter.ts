@@ -6,6 +6,7 @@ import {
   ListObjectsV2Command,
   ListObjectsV2Output,
   PutObjectCommand,
+  S3Client,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
@@ -22,8 +23,8 @@ import { createS3Client, encodeCopySource, type S3BucketConfig } from '../../uti
 const stripQuotes = (value: string) => value.replace(/^\"|\"$/g, '')
 
 export class S3Adapter implements StorageAdapter {
-  private readonly s3
-  private readonly bucketName
+  private readonly s3: S3Client
+  private readonly bucketName: string
 
   constructor(private readonly cfg: S3BucketConfig) {
     this.s3 = createS3Client(cfg)
@@ -174,7 +175,7 @@ export class S3Adapter implements StorageAdapter {
     })
 
     // Bun/Vite 打包时可能引入 aws-sdk 多版本类型，导致泛型不兼容；这里做最小断言。
-    const url = await getSignedUrl(this.s3 as any, command as any, { expiresIn: opts.expiresIn })
+    const url = await getSignedUrl(this.s3, command, { expiresIn: opts.expiresIn })
 
     return {
       method: 'PUT',

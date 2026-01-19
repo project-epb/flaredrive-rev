@@ -1,7 +1,7 @@
 <template lang="pug">
 .user-menu-container
   //- Not Logged In
-  NButton(v-if='!auth.isAuthed', type='primary', secondary, @click='$router.push("/@auth/login")')
+  NButton(v-if='!auth.isAuthed', type='primary', secondary, @click='$router.push("/auth/login")')
     template(#icon)
       NIcon(:component='IconLogin')
     | Login
@@ -10,17 +10,12 @@
   NDropdown(v-else, :options='menuOptions', @select='handleSelect')
     NButton(quaternary, circle, size='large')
       //- Avatar or Icon
-      NAvatar(
-        v-if='auth.user?.id',
-        size='small',
-        round,
-        :style='{ backgroundColor: "var(--primary-color)", color: "#fff" }'
-      ) {{ getInitials(auth.user.email) }}
+      NAvatar(v-if='auth.user?.id', round) {{ getInitials(auth.user.email) }}
       NIcon(v-else, size='24', :component='IconUser')
 </template>
 
 <script setup lang="ts">
-import { IconLogin, IconLogout, IconSettings, IconUser, IconTool } from '@tabler/icons-vue'
+import { IconLogin, IconLogout, IconUser, IconDashboard, IconTools } from '@tabler/icons-vue'
 import { NIcon, useMessage } from 'naive-ui'
 import type { Component } from 'vue'
 
@@ -32,12 +27,13 @@ function renderIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
+const showAdmin = computed(() => (auth.user?.authorizationLevel || 0) >= 3)
 const menuOptions = computed(() => {
   const opts = [
     {
-      label: 'Settings',
-      key: 'settings',
-      icon: renderIcon(IconSettings),
+      label: 'Preferences',
+      key: 'preferences',
+      icon: renderIcon(IconTools),
     },
     {
       label: 'Logout',
@@ -47,11 +43,11 @@ const menuOptions = computed(() => {
   ]
 
   // Add Admin Settings if authorizationLevel > 0 (Assumption)
-  if ((auth.user?.authorizationLevel || 0) > 0) {
+  if (showAdmin.value) {
     opts.unshift({
-      label: 'Manage Buckets',
-      key: 'manage-buckets',
-      icon: renderIcon(IconTool),
+      label: 'Admin Dashboard',
+      key: 'admin',
+      icon: renderIcon(IconDashboard),
     })
   }
 
@@ -62,17 +58,14 @@ const handleSelect = async (key: string) => {
   switch (key) {
     case 'logout':
       await auth.logout()
-      router.push('/@auth/login')
+      router.push('/auth/login')
       break
-    case 'settings':
-      // router.push('/settings') // Not implemented yet
-      message.info('Settings not implemented yet')
-      break
-    case 'manage-buckets':
-      router.push('/@admin/buckets')
+    case 'preferences':
+      // router.push('/@preferences') // Not implemented yet
+      message.info('Preferences not implemented yet')
       break
     case 'admin':
-      router.push('/@admin/buckets')
+      router.push('/admin')
       break
   }
 }
