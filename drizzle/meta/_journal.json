@@ -15,6 +15,13 @@
       "when": 1768816587018,
       "tag": "0001_fantastic_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768890037211,
+      "tag": "0002_glossy_whirlwind",
+      "breakpoints": true
     }
   ]
 }

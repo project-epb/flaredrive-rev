@@ -47,6 +47,24 @@ NForm.space-y-4(ref='formRef', :model='formValue', :rules='rules', @submit.preve
       template(#prefix)
         IconGlobe
 
+  NFormItem(
+    label='Edge Thumbnail URL (Optional)',
+    path='edgeThumbnailUrl',
+    feedback='URL structure for edge-rendered thumbnails. Variables: {cdn_base_url}, {width}, {height}, {file_key}'
+  )
+    .flex.flex-col.gap-2.w-full
+      NInput(v-model:value='formValue.edgeThumbnailUrl', placeholder='URL Template', size='large')
+        template(#prefix)
+          IconPhoto
+      .flex.gap-2.flex-wrap
+        NButton(
+          v-for='preset in edgeThumbnailPresets',
+          :key='preset.label',
+          size='small',
+          dashed,
+          @click='formValue.edgeThumbnailUrl = preset.value'
+        ) {{ preset.label }}
+
   NFormItem(label='Upload Method', path='uploadMethod')
     NSelect(
       v-model:value='formValue.uploadMethod',
@@ -67,7 +85,16 @@ NForm.space-y-4(ref='formRef', :model='formValue', :rules='rules', @submit.preve
 
 <script setup lang="ts">
 import type { BucketInfo } from '@/models/BucketClient'
-import { IconTag, IconDatabase, IconServer, IconMapPin, IconKey, IconLock, IconGlobe } from '@tabler/icons-vue'
+import {
+  IconTag,
+  IconDatabase,
+  IconServer,
+  IconMapPin,
+  IconKey,
+  IconLock,
+  IconGlobe,
+  IconPhoto,
+} from '@tabler/icons-vue'
 import fexios from 'fexios'
 import { useMessage, type FormInst, type FormRules } from 'naive-ui'
 
@@ -88,6 +115,7 @@ const formValue = reactive({
   accessKeyId: '',
   secretAccessKey: '',
   cdnBaseUrl: props.bucket?.cdnBaseUrl || '',
+  edgeThumbnailUrl: props.bucket?.edgeThumbnailUrl || '',
   forcePathStyle: props.bucket?.forcePathStyle === 1 || props.bucket?.forcePathStyle === true,
   uploadMethod: props.bucket?.uploadMethod || 'presigned',
 })
@@ -95,6 +123,18 @@ const formValue = reactive({
 const uploadMethodOptions = [
   { label: 'Presigned direct upload', value: 'presigned' },
   { label: 'FlareDrive proxy upload', value: 'proxy' },
+]
+
+const edgeThumbnailPresets = [
+  {
+    label: 'Cloudflare',
+    value:
+      '{cdn_base_url}cdn-cgi/image/format=auto,fit=contain,width={width},height={height},onerror=redirect/{file_key}',
+  },
+  {
+    label: 'Upyun',
+    value: '{cdn_base_url}{file_key}!/fwfh/{width}x{height}/format/webp',
+  },
 ]
 
 const rules = computed<FormRules>(() => {

@@ -189,6 +189,7 @@ admin.get('/buckets', async (ctx) => {
       ownerEmail: users.email,
       name: buckets.name,
       cdnBaseUrl: buckets.cdnBaseUrl,
+      edgeThumbnailUrl: buckets.edgeThumbnailUrl,
       endpointUrl: buckets.endpointUrl,
       region: buckets.region,
       bucketName: buckets.bucketName,

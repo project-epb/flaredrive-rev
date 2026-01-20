@@ -63,7 +63,7 @@ const columns = computed(() => {
               height={40}
               objectFit="cover"
               lazy
-              src={bucket.getCDNUrl(row)}
+              src={bucket.getThumbnailUrl(row, 80, 80)}
               previewSrc={bucket.getCDNUrl(row)}
               /** @ts-ignore */
               onClick={(e) => {

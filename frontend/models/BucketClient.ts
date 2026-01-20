@@ -28,6 +28,7 @@ export interface BucketInfo {
   id: string
   name: string
   cdnBaseUrl?: string
+  edgeThumbnailUrl?: string
   bucketName: string
   endpointUrl: string
   region: string

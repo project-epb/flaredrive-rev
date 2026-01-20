@@ -34,7 +34,7 @@ const loadBuckets = async () => {
     const { data } = await fexios.get<BucketInfo[]>('/api/admin/buckets')
     rows.value = data || []
   } catch (e: any) {
-    message.error(e?.response?.data?.error || e?.message || '加载失败')
+    message.error(e?.response?.data?.error || e?.message || 'Failed to load buckets')
   } finally {
     isLoading.value = false
   }
@@ -47,10 +47,10 @@ onMounted(() => {
 const handleDelete = async (row: BucketInfo) => {
   try {
     await fexios.delete(`/api/admin/buckets/${row.id}`)
-    message.success('已删除')
+    message.success('Deleted successfully')
     await loadBuckets()
   } catch (e: any) {
-    message.error(e?.response?.data?.error || e?.message || '删除失败')
+    message.error(e?.response?.data?.error || e?.message || 'Failed to delete')
   }
 }
 
@@ -58,7 +58,7 @@ const columns: DataTableColumns<BucketInfo & { ownerEmail?: string; ownerUserId?
   { title: 'ID', key: 'id', width: 140, ellipsis: true },
   { title: '名称', key: 'name', width: 180, ellipsis: true },
   {
-    title: '归属用户',
+    title: 'Owner',
     key: 'ownerEmail',
     width: 200,
     render: (row) => row.ownerEmail || `#${row.ownerUserId}`,
@@ -83,7 +83,7 @@ const columns: DataTableColumns<BucketInfo & { ownerEmail?: string; ownerUserId?
     render: (row) => (row.forcePathStyle ? h(NTag, { type: 'info', size: 'small' }, () => 'Yes') : 'No'),
   },
   {
-    title: '操作',
+    title: 'Actions',
     key: 'actions',
     width: 120,
     render(row) {

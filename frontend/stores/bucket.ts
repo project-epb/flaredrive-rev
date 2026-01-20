@@ -25,6 +25,7 @@ export const useBucketStore = defineStore('bucket', () => {
   const availableBuckets = ref<BucketInfo[]>([])
   const isBucketListLoading = ref(false)
   const bucketCdnMap = ref<Record<string, string>>({})
+  const bucketEdgeThumbnailMap = ref<Record<string, string>>({})
   const bucketUploadMethodMap = ref<Record<string, 'presigned' | 'proxy'>>({})
 
   const normalizeCdnBaseUrl = (value: string) => {
@@ -54,6 +55,15 @@ export const useBucketStore = defineStore('bucket', () => {
         (acc, item) => {
           if (item?.id) {
             acc[item.id] = normalizeCdnBaseUrl(item.cdnBaseUrl || '')
+          }
+          return acc
+        },
+        {} as Record<string, string>
+      )
+      bucketEdgeThumbnailMap.value = (data || []).reduce(
+        (acc, item) => {
+          if (item?.id && item?.edgeThumbnailUrl) {
+            acc[item.id] = item.edgeThumbnailUrl
           }
           return acc
         },
@@ -139,6 +149,31 @@ export const useBucketStore = defineStore('bucket', () => {
       bucketCdnMap.value[bucketName] || (bucketName ? normalizeCdnBaseUrl(`/api/raw/${bucketName}/`) : CDN_BASE_URL)
     const url = new URL(filePath, cdnBaseUrl)
     return url.toString()
+  }
+
+  const getThumbnailUrl = (
+    payload: StorageListObject | string,
+    width: number,
+    height: number,
+    bucketName = currentBucketName.value
+  ) => {
+    if (!payload) return ''
+    const filePath = typeof payload === 'string' ? payload : payload.key
+    if (!filePath) return ''
+
+    const templateUrl = bucketEdgeThumbnailMap.value[bucketName]
+    if (templateUrl) {
+      const cdnBaseUrl =
+        bucketCdnMap.value[bucketName] || (bucketName ? normalizeCdnBaseUrl(`/api/raw/${bucketName}/`) : CDN_BASE_URL)
+      // Replace variables
+      return templateUrl
+        .replace(/{cdn_base_url}/g, cdnBaseUrl)
+        .replace(/{width}/g, width.toString())
+        .replace(/{height}/g, height.toString())
+        .replace(/{file_key}/g, filePath)
+    }
+
+    return getCDNUrl(payload, bucketName)
   }
 
   const UPLOAD_HISTORY_MAX = 1000
@@ -378,6 +413,7 @@ export const useBucketStore = defineStore('bucket', () => {
     deleteFile,
     rename,
     getCDNUrl,
+    getThumbnailUrl,
     uploadHistory,
     // uploadQueue: uploadQueue as PQueue, // 类型问题！！
     addToUploadQueue,

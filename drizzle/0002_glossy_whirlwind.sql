@@ -1,0 +1,1 @@
+ALTER TABLE `buckets` ADD `edge_thumbnail_url` text;

@@ -41,7 +41,7 @@ const renderIcon = (icon: Component) => {
 
 const menuOptions = computed<MenuOption[]>(() => [
   {
-    label: '控制台',
+    label: 'Admin Dashboard',
     key: '/admin',
     icon: renderIcon(IconDashboard),
   },
@@ -50,12 +50,12 @@ const menuOptions = computed<MenuOption[]>(() => [
     type: 'divider',
   },
   {
-    label: '用户管理',
+    label: 'User Management',
     key: '/admin/users',
     icon: renderIcon(IconUsers),
   },
   {
-    label: '存储桶管理',
+    label: 'Bucket Management',
     key: '/admin/buckets',
     icon: renderIcon(IconBucket),
   },

@@ -12,6 +12,7 @@ export type BucketConfigRow = {
   bucketName: string
   forcePathStyle: number
   uploadMethod: 'presigned' | 'proxy'
+  edgeThumbnailUrl: string | null
   createdAt: number
 }
 
@@ -38,6 +39,8 @@ export const validateBucketConfigInput = (input: any) => {
   const forcePathStyle = !!input?.forcePathStyle
   const uploadMethodRaw = (input?.uploadMethod || '').toString().trim()
   const uploadMethod = uploadMethodRaw ? uploadMethodRaw : 'presigned'
+  const edgeThumbnailUrlRaw = (input?.edgeThumbnailUrl || '').toString().trim()
+  const edgeThumbnailUrl = edgeThumbnailUrlRaw || null
 
   if (!name) return { ok: false as const, error: 'Invalid name' }
   if (!bucketName) return { ok: false as const, error: 'Invalid bucketName' }
@@ -67,6 +70,7 @@ export const validateBucketConfigInput = (input: any) => {
       cdnBaseUrl: cdnBaseUrl || null,
       forcePathStyle: forcePathStyle ? 1 : 0,
       uploadMethod,
+      edgeThumbnailUrl,
     },
   }
 }

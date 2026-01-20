@@ -29,6 +29,7 @@ buckets.get('/', async (ctx) => {
       bucketName: bucketsTable.bucketName,
       forcePathStyle: bucketsTable.forcePathStyle,
       uploadMethod: bucketsTable.uploadMethod,
+      edgeThumbnailUrl: bucketsTable.edgeThumbnailUrl,
       createdAt: bucketsTable.createdAt,
     })
     .from(bucketsTable)
@@ -67,6 +68,7 @@ buckets.post('/', async (ctx) => {
       bucketName: parsed.value.bucketName,
       forcePathStyle: parsed.value.forcePathStyle,
       uploadMethod: parsed.value.uploadMethod,
+      edgeThumbnailUrl: parsed.value.edgeThumbnailUrl,
       createdAt: now,
     })
     .run()
@@ -104,6 +106,7 @@ buckets.put('/:id', async (ctx) => {
     bucketName: parsed.value.bucketName,
     forcePathStyle: parsed.value.forcePathStyle,
     uploadMethod: parsed.value.uploadMethod,
+    edgeThumbnailUrl: parsed.value.edgeThumbnailUrl,
   }
 
   // 编辑时允许留空表示不修改 AK/SK

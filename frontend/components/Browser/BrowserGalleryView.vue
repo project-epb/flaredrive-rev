@@ -37,7 +37,7 @@
             v-if='item.previewType === "image"',
             @click.stop,
             @load='resizeWaterfall',
-            :src='item.cdnUrl',
+            :src='bucket.getThumbnailUrl(item, 400, 400)',
             :preview-src='item.cdnUrl',
             :alt='item.key',
             w-full,

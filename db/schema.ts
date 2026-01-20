@@ -29,6 +29,7 @@ export const buckets = sqliteTable(
     bucketName: text('bucket_name').notNull(),
     forcePathStyle: integer('force_path_style').notNull().default(0),
     uploadMethod: text('upload_method').notNull().default('presigned'),
+    edgeThumbnailUrl: text('edge_thumbnail_url'),
     createdAt: integer('created_at').notNull(),
   },
   (t) => [
