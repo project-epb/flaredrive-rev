@@ -231,6 +231,7 @@ const route = useRoute()
 const router = useRouter()
 const bucket = useBucketStore()
 const navigation = useNavigationStore()
+const site = useSiteStore()
 
 // Get bucket name from route param
 const bucketId = computed(() => {
@@ -584,7 +585,8 @@ function createUploadFolderModal() {
   fileDialog.open({ directory: true, multiple: true })
 }
 fileDialog.onChange((files) => {
-  handleUploadInput(files, __markAsRandomMode ? RANDOM_UPLOAD_DIR : currentPath.value, {
+  const randomDir = (site.randomUploadDir || '').toString().trim()
+  handleUploadInput(files, __markAsRandomMode && randomDir ? randomDir : currentPath.value, {
     isDirectory: __markAsDirectoryMode,
   })
 })

@@ -69,6 +69,10 @@ admin.get('/settings', async (ctx) => {
   const resolved = await getSiteSettingsBatch(ctx, {
     siteName: SITE_SETTINGS.siteName,
     allowRegister: SITE_SETTINGS.allowRegister,
+    randomUploadDir: SITE_SETTINGS.randomUploadDir,
+    batchUploadConcurrency: SITE_SETTINGS.batchUploadConcurrency,
+    uploadHistoryLimit: SITE_SETTINGS.uploadHistoryLimit,
+    previewSizeLimitText: SITE_SETTINGS.previewSizeLimitText,
   })
 
   return ctx.json(resolved)
@@ -105,6 +109,62 @@ admin.put('/settings', async (ctx) => {
     }
   }
 
+  if ('randomUploadDir' in body) {
+    const v = (body as any).randomUploadDir
+    if (v === null) {
+      updates.push({ def: SITE_SETTINGS.randomUploadDir, value: null })
+    } else {
+      let dir = String(v ?? '').trim()
+      if (!dir || dir === '/') {
+        dir = ''
+      } else {
+        dir = dir.replace(/^\/+/, '')
+        if (dir && !dir.endsWith('/')) dir += '/'
+      }
+      if (dir.length > 256) return ctx.json({ error: 'Invalid randomUploadDir' }, 400)
+      updates.push({ def: SITE_SETTINGS.randomUploadDir, value: dir })
+    }
+  }
+
+  if ('batchUploadConcurrency' in body) {
+    const v = (body as any).batchUploadConcurrency
+    if (v === null) {
+      updates.push({ def: SITE_SETTINGS.batchUploadConcurrency, value: null })
+    } else {
+      const n = Number(v)
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0 || n > 64) {
+        return ctx.json({ error: 'Invalid batchUploadConcurrency' }, 400)
+      }
+      updates.push({ def: SITE_SETTINGS.batchUploadConcurrency, value: n })
+    }
+  }
+
+  if ('uploadHistoryLimit' in body) {
+    const v = (body as any).uploadHistoryLimit
+    if (v === null) {
+      updates.push({ def: SITE_SETTINGS.uploadHistoryLimit, value: null })
+    } else {
+      const n = Number(v)
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 100_000) {
+        return ctx.json({ error: 'Invalid uploadHistoryLimit' }, 400)
+      }
+      updates.push({ def: SITE_SETTINGS.uploadHistoryLimit, value: n })
+    }
+  }
+
+  if ('previewSizeLimitText' in body) {
+    const v = (body as any).previewSizeLimitText
+    if (v === null) {
+      updates.push({ def: SITE_SETTINGS.previewSizeLimitText, value: null })
+    } else {
+      const n = Number(v)
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 1024 * 1024 * 1024) {
+        return ctx.json({ error: 'Invalid previewSizeLimitText' }, 400)
+      }
+      updates.push({ def: SITE_SETTINGS.previewSizeLimitText, value: n })
+    }
+  }
+
   await setSiteSettingsBatch(ctx, updates)
   await invalidateResolvedPublicSiteSettingsCache(ctx)
 
@@ -112,6 +172,10 @@ admin.put('/settings', async (ctx) => {
   const resolved = await getSiteSettingsBatch(ctx, {
     siteName: SITE_SETTINGS.siteName,
     allowRegister: SITE_SETTINGS.allowRegister,
+    randomUploadDir: SITE_SETTINGS.randomUploadDir,
+    batchUploadConcurrency: SITE_SETTINGS.batchUploadConcurrency,
+    uploadHistoryLimit: SITE_SETTINGS.uploadHistoryLimit,
+    previewSizeLimitText: SITE_SETTINGS.previewSizeLimitText,
   })
 
   return ctx.json({ ok: true, ...resolved })

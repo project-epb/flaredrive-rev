@@ -5,13 +5,34 @@ import PQueue from 'p-queue'
 
 export const useBucketStore = defineStore('bucket', () => {
   const client = new BucketClient()
+  const site = useSiteStore()
+
+  const getRandomUploadDir = () => {
+    const raw = (site.randomUploadDir || '').toString().trim()
+    if (!raw || raw === '/') return ''
+    const dir = raw.replace(/^\/+/, '')
+    return dir && !dir.endsWith('/') ? `${dir}/` : dir
+  }
+
+  const getBatchUploadConcurrency = () => {
+    const n = Number(site.batchUploadConcurrency)
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) return 10
+    return Math.min(64, n)
+  }
+
+  const getUploadHistoryLimit = () => {
+    const n = Number(site.uploadHistoryLimit)
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) return 1000
+    return Math.min(100_000, n)
+  }
 
   const checkIsRandomUploadDir = (key: string) => {
+    const dir = getRandomUploadDir()
     return (
-      RANDOM_UPLOAD_DIR &&
-      RANDOM_UPLOAD_DIR.endsWith('/') &&
-      RANDOM_UPLOAD_DIR !== '/' &&
-      key.startsWith(RANDOM_UPLOAD_DIR)
+      dir &&
+      dir.endsWith('/') &&
+      dir !== '/' &&
+      key.startsWith(dir)
     )
   }
   const checkIsHiddenDir = (key: string) => {
@@ -179,13 +200,24 @@ export const useBucketStore = defineStore('bucket', () => {
     return getCDNUrl(payload, bucketName)
   }
 
-  const UPLOAD_HISTORY_MAX = 1000
   const uploadHistory = useLocalStorage<StorageListObject[]>('flaredrive:upload-history', [])
+  const uploadHistoryMax = computed(() => getUploadHistoryLimit())
+
+  watch(
+    uploadHistoryMax,
+    (max) => {
+      if (uploadHistory.value.length > max) {
+        uploadHistory.value = uploadHistory.value.slice(0, max)
+      }
+    },
+    { immediate: true }
+  )
+
   const addToUploadHistory = (item: StorageListObject) => {
     console.info('Upload history', item)
     uploadHistory.value = [item, ...uploadHistory.value.filter((i) => i.key !== item.key)]
-    if (uploadHistory.value.length > UPLOAD_HISTORY_MAX) {
-      uploadHistory.value = uploadHistory.value.slice(0, UPLOAD_HISTORY_MAX)
+    if (uploadHistory.value.length > uploadHistoryMax.value) {
+      uploadHistory.value = uploadHistory.value.slice(0, uploadHistoryMax.value)
     }
   }
 
@@ -243,9 +275,10 @@ export const useBucketStore = defineStore('bucket', () => {
     }
 
     if (checkIsRandomUploadDir(normalizedKey) && !options?.ignoreRandom) {
+      const dir = getRandomUploadDir()
       const hashFirst = fileHash.slice(0, 1)
       const hashSecond = fileHash.slice(0, 2)
-      targetKey = `${RANDOM_UPLOAD_DIR}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
+      targetKey = `${dir}${hashFirst}/${hashSecond}/${fileHash}${ext ? '.' + ext : ''}`
       metadata['original_name'] = file.name
     }
 
@@ -304,9 +337,16 @@ export const useBucketStore = defineStore('bucket', () => {
 
   // ---- Upload Queue ----
   const uploadQueue = new PQueue({
-    concurrency: BATCH_UPLOAD_CONCURRENCY,
+    concurrency: getBatchUploadConcurrency(),
     interval: 500,
   })
+
+  watch(
+    () => site.batchUploadConcurrency,
+    () => {
+      uploadQueue.concurrency = getBatchUploadConcurrency()
+    }
+  )
   const isUploading = ref(false)
   const pendingUploadCount = ref(0)
   const currentBatchTotal = ref(0)

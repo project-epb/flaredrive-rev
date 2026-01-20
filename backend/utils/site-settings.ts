@@ -41,9 +41,62 @@ const booleanSetting = (dbKey: string, envKey: string, defaultValue: boolean): S
   serialize: (value) => (value ? 'true' : 'false'),
 })
 
+const intSetting = (
+  dbKey: string,
+  envKey: string,
+  defaultValue: number,
+  options?: { min?: number; max?: number }
+): SiteSettingDefinition<number> => ({
+  dbKey,
+  envKey,
+  defaultValue,
+  parse: (raw, def) => {
+    if (typeof raw === 'undefined' || raw === null) return def
+    const n = typeof raw === 'number' ? raw : parseInt(String(raw), 10)
+    if (!Number.isFinite(n)) return def
+    const v = Math.trunc(n)
+    if (typeof options?.min === 'number' && v < options.min) return def
+    if (typeof options?.max === 'number' && v > options.max) return def
+    return v
+  },
+  serialize: (value) => String(Math.trunc(Number(value))),
+})
+
+const randomUploadDirSetting = (
+  dbKey: string,
+  envKey: string,
+  defaultValue: string
+): SiteSettingDefinition<string> => ({
+  dbKey,
+  envKey,
+  defaultValue,
+  parse: (raw, def) => {
+    if (typeof raw === 'undefined' || raw === null) return def
+    let v = String(raw).trim()
+    if (!v || v === '/') return ''
+    v = v.replace(/^\/+/, '')
+    if (!v) return ''
+    return v.endsWith('/') ? v : `${v}/`
+  },
+  serialize: (value) => String(value ?? ''),
+})
+
 export const SITE_SETTINGS = {
   siteName: stringSetting('site.name', 'SITE_NAME', 'FlareDrive'),
   allowRegister: booleanSetting('site.allowRegister', 'ALLOW_REGISTER', true),
+  randomUploadDir: randomUploadDirSetting('site.randomUploadDir', 'VITE_RANDOM_UPLOAD_DIR', ''),
+  batchUploadConcurrency: intSetting('site.batchUploadConcurrency', 'VITE_BATCH_UPLOAD_CONCURRENCY', 10, {
+    min: 1,
+    max: 64,
+  }),
+  uploadHistoryLimit: intSetting('site.uploadHistoryLimit', 'VITE_UPLOAD_HISORY_LIMIT', 1000, {
+    min: 0,
+    max: 100_000,
+  }),
+  previewSizeLimitText: intSetting('site.previewSizeLimitText', 'VITE_PREVIEW_SIZE_LIMIT_TEXT', 5 * 1024 * 1024, {
+    min: 0,
+    max: 1024 * 1024 * 1024,
+  }),
 } as const
 
 export type SiteSettingKey = keyof typeof SITE_SETTINGS
@@ -143,15 +196,31 @@ export const getPublicSiteSettings = async (ctx: any) => {
   return getSiteSettingsBatch(ctx, {
     siteName: SITE_SETTINGS.siteName,
     allowRegister: SITE_SETTINGS.allowRegister,
+    randomUploadDir: SITE_SETTINGS.randomUploadDir,
+    batchUploadConcurrency: SITE_SETTINGS.batchUploadConcurrency,
+    uploadHistoryLimit: SITE_SETTINGS.uploadHistoryLimit,
+    previewSizeLimitText: SITE_SETTINGS.previewSizeLimitText,
   })
 }
 
 export const getResolvedPublicSiteSettings = async (ctx: any) => {
-  const cached = await cacheGetJson<{ siteName: string; allowRegister: boolean }>(
-    ctx,
-    RESOLVED_PUBLIC_SETTINGS_CACHE_KEY
-  )
-  if (cached && typeof cached.siteName === 'string' && typeof cached.allowRegister === 'boolean') {
+  const cached = await cacheGetJson<{
+    siteName: string
+    allowRegister: boolean
+    randomUploadDir: string
+    batchUploadConcurrency: number
+    uploadHistoryLimit: number
+    previewSizeLimitText: number
+  }>(ctx, RESOLVED_PUBLIC_SETTINGS_CACHE_KEY)
+  if (
+    cached &&
+    typeof cached.siteName === 'string' &&
+    typeof cached.allowRegister === 'boolean' &&
+    typeof cached.randomUploadDir === 'string' &&
+    typeof cached.batchUploadConcurrency === 'number' &&
+    typeof cached.uploadHistoryLimit === 'number' &&
+    typeof cached.previewSizeLimitText === 'number'
+  ) {
     return cached
   }
 
@@ -159,6 +228,10 @@ export const getResolvedPublicSiteSettings = async (ctx: any) => {
   const computed = {
     siteName: resolved.siteName.value,
     allowRegister: resolved.allowRegister.value,
+    randomUploadDir: resolved.randomUploadDir.value,
+    batchUploadConcurrency: resolved.batchUploadConcurrency.value,
+    uploadHistoryLimit: resolved.uploadHistoryLimit.value,
+    previewSizeLimitText: resolved.previewSizeLimitText.value,
   }
 
   await cachePutJson(ctx, RESOLVED_PUBLIC_SETTINGS_CACHE_KEY, computed, {

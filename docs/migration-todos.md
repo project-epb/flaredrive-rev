@@ -145,3 +145,4 @@
 - 2026-01-17：整理 backend 目录结构为 routes/lib/storage，并用根目录 shim 再导出保持旧 import 路径兼容。
 - 2026-01-18：完成前端桶管理 (/admin/buckets)、上传流程重构（Presign+Record）、Raw 访问权限校验、元数据公开性切换 (Toggle Public)。
 - 2026-01-20：新增 D1 `site_settings`，将站点名称/开放注册等设置收束到数据库管理，并提供 public/admin API。
+- 2026-01-20：将随机上传目录/上传并发/上传历史上限/文本预览大小上限从前端 `VITE_*` 编译期配置迁移为 public-settings 运行时下发（D1 -> env -> default），并扩展后台设置编辑能力。

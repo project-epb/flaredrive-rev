@@ -40,13 +40,80 @@
           NText(depth='3', style='font-size: 12px')
             | When disabled, /auth/register is blocked.
 
+      NFormItem(path='randomUploadDir')
+        template(#label)
+          .flex.items-center.gap-2
+            span Random Upload Directory
+            NTag(size='small', :type='sourceTagType(settings?.randomUploadDir.source)') {{ settings?.randomUploadDir.source || '-' }}
+        NInput(
+          v-model:value='form.randomUploadDir',
+          placeholder='e.g. _random/',
+          :disabled='!isAdmin',
+          maxlength='256'
+        )
+        template(#feedback)
+          span.text-xs.opacity-70
+            | Empty or "/" disables random upload mode. Leading "/" is ignored; trailing "/" is enforced.
+
+      NFormItem(path='batchUploadConcurrency')
+        template(#label)
+          .flex.items-center.gap-2
+            span Batch Upload Concurrency
+            NTag(size='small', :type='sourceTagType(settings?.batchUploadConcurrency.source)') {{ settings?.batchUploadConcurrency.source || '-' }}
+        NInputNumber(v-model:value='form.batchUploadConcurrency', :disabled='!isAdmin', :min='1', :max='64', :step='1')
+        template(#feedback)
+          span.text-xs.opacity-70
+            | Higher values may freeze the browser.
+
+      NFormItem(path='uploadHistoryLimit')
+        template(#label)
+          .flex.items-center.gap-2
+            span Upload History Limit
+            NTag(size='small', :type='sourceTagType(settings?.uploadHistoryLimit.source)') {{ settings?.uploadHistoryLimit.source || '-' }}
+        NInputNumber(
+          v-model:value='form.uploadHistoryLimit',
+          :disabled='!isAdmin',
+          :min='0',
+          :max='100000',
+          :step='50'
+        )
+
+      NFormItem(path='previewSizeLimitText')
+        template(#label)
+          .flex.items-center.gap-2
+            span Text Preview Size Limit (bytes)
+            NTag(size='small', :type='sourceTagType(settings?.previewSizeLimitText.source)') {{ settings?.previewSizeLimitText.source || '-' }}
+        NInputNumber(
+          v-model:value='form.previewSizeLimitText',
+          :disabled='!isAdmin',
+          :min='0',
+          :max='1024 * 1024 * 1024',
+          :step='1024'
+        )
+        template(#feedback)
+          span.text-xs.opacity-70
+            | Default is 5242880 (5MB).
+
     .flex.justify-end.gap-3.mt-4
       NButton(secondary, @click='resetToFallback', :disabled='!isAdmin', :loading='isResetting') Reset to env/default
       NButton(type='primary', @click='saveAll', :disabled='!isAdmin', :loading='isSaving') Save
 </template>
 
 <script setup lang="ts">
-import { NAlert, NButton, NCard, NForm, NFormItem, NIcon, NInput, NSwitch, NTag, NText, useMessage } from 'naive-ui'
+import {
+  NAlert,
+  NButton,
+  NCard,
+  NForm,
+  NFormItem,
+  NIcon,
+  NInput,
+  NInputNumber,
+  NSwitch,
+  NTag,
+  NText,
+  useMessage,
+} from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 import fexios from 'fexios'
 import { IconRefresh } from '@tabler/icons-vue'
@@ -56,6 +123,10 @@ import type { SiteSettingResult, SiteSettingSource } from '../../../common/site-
 type AdminSettingsResponse = {
   siteName: SiteSettingResult<string>
   allowRegister: SiteSettingResult<boolean>
+  randomUploadDir: SiteSettingResult<string>
+  batchUploadConcurrency: SiteSettingResult<number>
+  uploadHistoryLimit: SiteSettingResult<number>
+  previewSizeLimitText: SiteSettingResult<number>
 }
 
 definePage({
@@ -80,6 +151,10 @@ const formRef = ref<FormInst | null>(null)
 const form = reactive({
   siteName: '',
   allowRegister: true,
+  randomUploadDir: '',
+  batchUploadConcurrency: 10,
+  uploadHistoryLimit: 1000,
+  previewSizeLimitText: 5 * 1024 * 1024,
 })
 
 const rules: FormRules = {
@@ -108,6 +183,52 @@ const rules: FormRules = {
       trigger: ['change'],
     },
   ],
+  randomUploadDir: [
+    {
+      validator: (_rule, value: unknown) => {
+        const v = (value || '').toString().trim()
+        if (v.length > 256) return new Error('Max 256 characters')
+        return true
+      },
+      trigger: ['blur', 'input'],
+    },
+  ],
+  batchUploadConcurrency: [
+    {
+      validator: (_rule, value: unknown) => {
+        const n = Number(value)
+        if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0 || n > 64) {
+          return new Error('Must be an integer between 1 and 64')
+        }
+        return true
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  uploadHistoryLimit: [
+    {
+      validator: (_rule, value: unknown) => {
+        const n = Number(value)
+        if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 100000) {
+          return new Error('Must be an integer between 0 and 100000')
+        }
+        return true
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
+  previewSizeLimitText: [
+    {
+      validator: (_rule, value: unknown) => {
+        const n = Number(value)
+        if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 1024 * 1024 * 1024) {
+          return new Error('Must be an integer between 0 and 1073741824 (1GiB)')
+        }
+        return true
+      },
+      trigger: ['blur', 'change'],
+    },
+  ],
 }
 
 const sourceTagType = (source?: SiteSettingSource) => {
@@ -123,6 +244,10 @@ const loadSettings = async () => {
     settings.value = data
     form.siteName = data?.siteName?.value || ''
     form.allowRegister = !!data?.allowRegister?.value
+    form.randomUploadDir = (data?.randomUploadDir?.value || '').toString()
+    form.batchUploadConcurrency = Number(data?.batchUploadConcurrency?.value ?? 10)
+    form.uploadHistoryLimit = Number(data?.uploadHistoryLimit?.value ?? 1000)
+    form.previewSizeLimitText = Number(data?.previewSizeLimitText?.value ?? 5 * 1024 * 1024)
     formRef.value?.restoreValidation()
   } catch (e: any) {
     message.error(e?.response?.data?.error || e?.message || 'Failed to load settings')
@@ -143,12 +268,23 @@ const saveAll = async () => {
   if (!ok) return
 
   const name = (form.siteName || '').toString().trim()
+  let randomDir = (form.randomUploadDir || '').toString().trim()
+  if (!randomDir || randomDir === '/') {
+    randomDir = ''
+  } else {
+    randomDir = randomDir.replace(/^\/+/, '')
+    if (randomDir && !randomDir.endsWith('/')) randomDir += '/'
+  }
 
   isSaving.value = true
   try {
     await fexios.put('/api/admin/settings', {
       siteName: name,
       allowRegister: !!form.allowRegister,
+      randomUploadDir: randomDir,
+      batchUploadConcurrency: form.batchUploadConcurrency,
+      uploadHistoryLimit: form.uploadHistoryLimit,
+      previewSizeLimitText: form.previewSizeLimitText,
     })
     message.success('Saved')
     await loadSettings()
@@ -170,6 +306,10 @@ const resetToFallback = async () => {
     await fexios.put('/api/admin/settings', {
       siteName: null,
       allowRegister: null,
+      randomUploadDir: null,
+      batchUploadConcurrency: null,
+      uploadHistoryLimit: null,
+      previewSizeLimitText: null,
     })
     message.success('Reset')
     await loadSettings()
