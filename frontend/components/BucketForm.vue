@@ -66,7 +66,7 @@ NForm.space-y-4(ref='formRef', :model='formValue', :rules='rules', @submit.preve
 </template>
 
 <script setup lang="ts">
-import type { BucketInfo } from '@/models/R2BucketClient'
+import type { BucketInfo } from '@/models/BucketClient'
 import { IconTag, IconDatabase, IconServer, IconMapPin, IconKey, IconLock, IconGlobe } from '@tabler/icons-vue'
 import fexios from 'fexios'
 import { useMessage, type FormInst, type FormRules } from 'naive-ui'

@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import type { StorageListObject } from '@/models/R2BucketClient'
+import type { StorageListObject } from '@/models/BucketClient'
 import { IconInfoCircle } from '@tabler/icons-vue'
 
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))

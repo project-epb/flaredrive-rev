@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 
 const props = withDefaults(

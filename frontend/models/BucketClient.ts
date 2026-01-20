@@ -36,7 +36,7 @@ export interface BucketInfo {
   uploadMethod?: 'presigned' | 'proxy'
 }
 
-export class R2BucketClient {
+export class BucketClient {
   readonly request: Fexios
   constructor(private baseURL: string = '/api/bucket/') {
     this.request = Fexios.create({

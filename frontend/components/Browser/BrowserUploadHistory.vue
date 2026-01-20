@@ -16,7 +16,7 @@ NDrawer(v-model:show='show', placement='bottom', default-height='75vh', resizabl
 
 <script setup lang="ts">
 import BrowserListView from './BrowserListView.vue'
-import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/BucketClient'
 
 const show = defineModel('show', { type: Boolean, default: false })
 const props = defineProps<{

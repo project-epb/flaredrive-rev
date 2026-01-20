@@ -22,7 +22,7 @@
 import { NButton, NButtonGroup, NPopconfirm, NTag, NSpace, useMessage, type DataTableColumns } from 'naive-ui'
 import { IconEdit, IconTrash } from '@tabler/icons-vue'
 import fexios from 'fexios'
-import type { BucketInfo } from '@/models/R2BucketClient'
+import type { BucketInfo } from '@/models/BucketClient'
 
 const message = useMessage()
 const rows = ref<BucketInfo[]>([])

@@ -11,8 +11,10 @@
 </template>
 
 <script setup lang="tsx">
-import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
+import { ClipboardHelper } from '@/utils/ClipboardHelper'
+import { DateHelper } from '@/utils/DateHelper'
 import { IconDots, IconWorld, IconWorldOff } from '@tabler/icons-vue'
 import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
@@ -139,7 +141,7 @@ const columns = computed(() => {
       align: 'center',
       render: (row: StorageListObject) => {
         if (row.key.endsWith('/')) return ''
-        return new Date(row.uploaded).toLocaleString()
+        return DateHelper.formatLocaleString(row.uploaded)
       },
       sorter: (a: StorageListObject, b: StorageListObject) => {
         // 文件夹不参与排序
@@ -181,18 +183,15 @@ const columns = computed(() => {
       render: (row: StorageListObject) => {
         if (row.key.endsWith('/')) return ''
         const isPublic = !!(row.customMetadata as any)?.isPublic
-        const onSelect = (key: string) => {
+        const onSelect = async (key: string) => {
           switch (key) {
             case 'copy_url':
               const url = bucket.getCDNUrl(row)
-              navigator.clipboard
-                .writeText(url)
-                .then(() => {
-                  nmessage.success('URL copied to clipboard')
-                })
-                .catch((err) => {
-                  nmessage.error('Failed to copy URL')
-                })
+              if (await ClipboardHelper.copyText(url)) {
+                nmessage.success('URL copied to clipboard')
+              } else {
+                nmessage.error('Failed to copy URL')
+              }
               break
             case 'download':
               emit('download', row)

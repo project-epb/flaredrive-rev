@@ -1,17 +1,10 @@
-import { type BucketInfo, R2BucketClient, type StorageListObject } from '@/models/R2BucketClient'
+import { type BucketInfo, BucketClient, type StorageListObject } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import fexios from 'fexios'
 import PQueue from 'p-queue'
 
 export const useBucketStore = defineStore('bucket', () => {
-  const client = new R2BucketClient()
-
-  console.info('FlareDrive Env', {
-    CDN_BASE_URL,
-    FLARE_DRIVE_HIDDEN_KEY,
-    RANDOM_UPLOAD_DIR,
-    BATCH_UPLOAD_CONCURRENCY,
-  })
+  const client = new BucketClient()
 
   const checkIsRandomUploadDir = (key: string) => {
     return (

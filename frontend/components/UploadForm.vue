@@ -13,7 +13,7 @@ NForm
 </template>
 
 <script setup lang="ts">
-import type { StorageListObject } from '@/models/R2BucketClient'
+import type { StorageListObject } from '@/models/BucketClient'
 import { IconUpload } from '@tabler/icons-vue'
 import { NFormItem, useMessage, type UploadCustomRequestOptions, type UploadFileInfo } from 'naive-ui'
 

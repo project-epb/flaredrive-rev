@@ -5,7 +5,7 @@ import { getDb } from '../utils/db.js'
 import { buckets as bucketsTable } from '../../db/schema.js'
 import { generateBucketId, validateBucketConfigInput } from '../utils/bucket-config.js'
 import { getSessionUser } from '../utils/session.js'
-import { createStorageAdapter } from '../storage/factory.js'
+import { createAdapterFromConfig } from '../utils/bucket-utils.js'
 
 export const buckets = new Hono<HonoEnv>()
 
@@ -160,14 +160,7 @@ buckets.post('/:id/test', async (ctx) => {
   if (!cfg) return ctx.json({ error: 'Not found' }, 404)
   if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
 
   const result = await adapter.testConnection()
   if (result.ok) {

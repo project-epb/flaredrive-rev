@@ -1,4 +1,4 @@
-import type { StorageListObject } from '@/models/R2BucketClient'
+import type { StorageListObject } from '@/models/BucketClient'
 import {
   IconFileMusic,
   IconFileTypeBmp,
@@ -235,10 +235,7 @@ export namespace FileHelper {
     if (contentType === 'text/plain' || ext === 'txt') {
       return IconFileTypeTxt
     }
-    if (
-      contentType.startsWith('image/') ||
-      ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)
-    ) {
+    if (contentType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(ext)) {
       switch (ext) {
         case 'bmp':
           return IconFileTypeBmp
@@ -396,7 +393,7 @@ export namespace FileHelper {
     if (!item) return 'unknown'
     const { contentType, ext } = FileHelper.getSimpleFileInfoByObject(item)
     if (ext === 'md') return 'markdown'
-    
+
     // PDF priority
     if (['pdf'].includes(ext) || contentType === 'application/pdf') return 'iframe'
 
@@ -412,10 +409,27 @@ export namespace FileHelper {
     if (contentType.startsWith('text/html') || ['html', 'htm'].includes(ext)) return 'html'
     if (
       contentType.startsWith('text/') ||
-      ['txt', 'json', 'yml', 'yaml', 'toml', 'py', 'js', 'ts', 'css', 'scss', 'vue', 'log', 'ini', 'xml', 'sql', 'env'].includes(ext)
+      [
+        'txt',
+        'json',
+        'yml',
+        'yaml',
+        'toml',
+        'py',
+        'js',
+        'ts',
+        'css',
+        'scss',
+        'vue',
+        'log',
+        'ini',
+        'xml',
+        'sql',
+        'env',
+      ].includes(ext)
     )
       return 'text'
-      
+
     return 'unknown'
   }
 }

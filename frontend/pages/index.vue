@@ -103,7 +103,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-vue'
 import { NIcon, useDialog, useMessage } from 'naive-ui'
-import type { BucketInfo } from '@/models/R2BucketClient'
+import type { BucketInfo } from '@/models/BucketClient'
 import BucketForm from '@/components/BucketForm.vue'
 import fexios from 'fexios'
 

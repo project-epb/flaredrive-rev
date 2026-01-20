@@ -5,8 +5,9 @@ import { getDb } from '../utils/db.js'
 import { buckets as bucketsTable } from '../../db/schema.js'
 import { uploadHistory } from '../../db/schema.js'
 import { nanoid } from 'nanoid'
-import { createStorageAdapter } from '../storage/factory.js'
 import { getSessionUser } from '../utils/session.js'
+import { createAdapterFromConfig, isValidKey } from '../utils/bucket-utils.js'
+import { getBucketConfigById } from '../utils/bucket-resolver.js'
 
 export const objects = new Hono<HonoEnv>()
 
@@ -34,14 +35,6 @@ const clampExpires = (value: unknown) => {
   return Math.min(3600, Math.max(60, Math.floor(n)))
 }
 
-const isValidKey = (key: string) => {
-  if (!key) return false
-  if (key.length > 1024) return false
-  if (key.startsWith('/')) return false
-  if (key.includes('\u0000')) return false
-  return true
-}
-
 objects.post('/:bucketId/presign', async (ctx) => {
   const user = await getSessionUser(ctx)
   if (!user) return ctx.json({ error: 'Unauthorized' }, 401)
@@ -60,32 +53,12 @@ objects.post('/:bucketId/presign', async (ctx) => {
   if (action !== 'put' && action !== 'get') return ctx.json({ error: 'Invalid action' }, 400)
   if (!isValidKey(key)) return ctx.json({ error: 'Invalid key' }, 400)
 
-  const db = getDb(ctx)
-  const cfg = await db
-    .select({
-      ownerUserId: bucketsTable.ownerUserId,
-      endpointUrl: bucketsTable.endpointUrl,
-      region: bucketsTable.region,
-      accessKeyId: bucketsTable.accessKeyId,
-      secretAccessKey: bucketsTable.secretAccessKey,
-      bucketName: bucketsTable.bucketName,
-      forcePathStyle: bucketsTable.forcePathStyle,
-    })
-    .from(bucketsTable)
-    .where(eq(bucketsTable.id, bucketId))
-    .get()
+  const cfg = await getBucketConfigById(ctx, bucketId)
 
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
   if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
 
   const expiresIn = clampExpires(body?.expiresInSec)
 

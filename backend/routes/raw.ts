@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { HonoEnv } from '../index.js'
 import { getBucketConfigById, parseBucketPath } from '../utils/bucket-resolver.js'
 import { normalizeBaseUrl } from '../utils/bucket-config.js'
-import { createStorageAdapter } from '../storage/factory.js'
+import { createAdapterFromConfig } from '../utils/bucket-utils.js'
 import { getSessionUser } from '../utils/session.js'
 import { getPathMetadata } from '../utils/metadata.js'
 
@@ -55,14 +55,7 @@ app.get('*', async (ctx) => {
     return ctx.redirect(cdnUrl.toString(), 302)
   }
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
 
   try {
     const presigned = await adapter.presignGet(filePath, {

@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="tsx">
-import { type StorageListObject, type StorageListResult } from '@/models/R2BucketClient'
+import { type StorageListObject, type StorageListResult } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import {
   IconBook,

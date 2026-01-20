@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
-import type { StorageListObject } from '@/models/R2BucketClient'
+import type { StorageListObject } from '@/models/BucketClient'
 
 const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
 

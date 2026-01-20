@@ -53,13 +53,13 @@
           td {{ fileNameParts.name }}
         tr
           th Size
-          td {{ item.size }}
+          td {{ FileHelper.formatFileSize(item.size) }}
         tr
           th Type
           td {{ item.httpMetadata?.contentType || 'unknown' }}
         tr
           th Last Modified
-          td {{ item.uploaded ? new Date(item.uploaded).toLocaleString() : 'unknown' }}
+          td {{ DateHelper.formatLocaleString(item.uploaded) || 'unknown' }}
         tr
           th Custom Metadata
           td(v-if='!Object.keys(item?.customMetadata || {}).length') No metadata
@@ -77,7 +77,9 @@
 
 <script setup lang="ts">
 import { FileHelper } from '@/utils/FileHelper'
-import type { StorageListObject } from '@/models/R2BucketClient'
+import { ClipboardHelper } from '@/utils/ClipboardHelper'
+import { DateHelper } from '@/utils/DateHelper'
+import type { StorageListObject } from '@/models/BucketClient'
 import { 
   IconFileUnknown, 
   IconTrash, 
@@ -146,17 +148,13 @@ watch(
 )
 
 const nmessage = useMessage()
-const handleCopyURL = () => {
+const handleCopyURL = async () => {
   if (!props.item) return
-  navigator.clipboard
-    .writeText(bucket.getCDNUrl(props.item))
-    .then(() => {
-      nmessage.success('URL copied to clipboard')
-    })
-    .catch((error) => {
-      console.error('Error copying URL:', error)
-      nmessage.error('Failed to copy URL')
-    })
+  if (await ClipboardHelper.copyText(bucket.getCDNUrl(props.item))) {
+    nmessage.success('URL copied to clipboard')
+  } else {
+    nmessage.error('Failed to copy URL')
+  }
 }
 </script>
 

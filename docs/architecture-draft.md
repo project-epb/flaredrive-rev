@@ -25,9 +25,9 @@
 ```
 Web UI
   ├── Auth UI (/@auth/login, /@auth/register)
-  ├── Bucket Config UI (/@admin/buckets)
-  ├── Site Config UI (/@admin/xxx, 可选)
-  └── Object Browser / Upload (/:bucketId/:path(.*)*)
+  ├── Bucket Config UI (/admin/buckets)
+  ├── Site Config UI (/admin/xxx, 可选)
+  └── Object Browser / Upload (/bucket/:bucketId/:path(.*)*)
 
 API (Workers + Nitro)
   ├── Auth
@@ -46,10 +46,6 @@ S3-compatible Providers
   └── R2 / AWS S3 / MinIO / ...
 ```
 
-路由设计：
-
-所有 `@` 开头的路由均为有特殊用途的管理路由，因此不允许存储桶 ID 使用 `@` 开头。
-
 ## 4. 关键设计决策
 
 ### 4.1 存储访问方式
@@ -58,7 +54,7 @@ S3-compatible Providers
   - 主路径：预签名 URL + 前端直传
   - 备选：小文件可通过 Worker 代理直传
 - 下载
-  - 主路径：/api/raw/:bucketId/* 重定向到预签名 URL
+  - 主路径：/api/raw/:bucketId/\* 重定向到预签名 URL
   - 备选：Worker 代理下载（仅限小文件）
   - 用户提供 cdn_base_url 时：前端可以直接渲染与下载
 
@@ -98,8 +94,6 @@ S3-compatible Providers
 - bucket_name (text)
 - force_path_style (integer: 0/1)
 - created_at (integer)
-
-bucket_id 新建时可选自定义，[a-zA-Z0-9-_]，长度 3-30，否则随机生成 nanoid。后续不可更改。
 
 ### sessions
 

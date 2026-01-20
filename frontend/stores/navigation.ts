@@ -1,4 +1,4 @@
-import type { BucketInfo } from '@/models/R2BucketClient'
+import type { BucketInfo } from '@/models/BucketClient'
 
 export const useNavigationStore = defineStore('navigation', () => {
   const router = useRouter()

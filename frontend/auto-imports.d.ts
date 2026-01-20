@@ -27,6 +27,7 @@ declare global {
   const computedWithControl: typeof import('@vueuse/core').computedWithControl
   const controlledComputed: typeof import('@vueuse/core').controlledComputed
   const controlledRef: typeof import('@vueuse/core').controlledRef
+  const copyText: typeof import('./utils/ClipboardHelper').copyText
   const createApp: typeof import('vue').createApp
   const createEventHook: typeof import('@vueuse/core').createEventHook
   const createGlobalState: typeof import('@vueuse/core').createGlobalState
@@ -49,6 +50,7 @@ declare global {
   const effectScope: typeof import('vue').effectScope
   const extendRef: typeof import('@vueuse/core').extendRef
   const formatFileSize: typeof import('./utils/FileHelper').formatFileSize
+  const formatLocaleString: typeof import('./utils/DateHelper').formatLocaleString
   const generateMediaFileThumbnail: typeof import('./utils/FileHelper').generateMediaFileThumbnail
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
@@ -370,6 +372,7 @@ declare module 'vue' {
     readonly computedWithControl: UnwrapRef<typeof import('@vueuse/core')['computedWithControl']>
     readonly controlledComputed: UnwrapRef<typeof import('@vueuse/core')['controlledComputed']>
     readonly controlledRef: UnwrapRef<typeof import('@vueuse/core')['controlledRef']>
+    readonly copyText: UnwrapRef<typeof import('./utils/ClipboardHelper')['copyText']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createEventHook: UnwrapRef<typeof import('@vueuse/core')['createEventHook']>
     readonly createGlobalState: UnwrapRef<typeof import('@vueuse/core')['createGlobalState']>
@@ -392,6 +395,7 @@ declare module 'vue' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
     readonly formatFileSize: UnwrapRef<typeof import('./utils/FileHelper')['formatFileSize']>
+    readonly formatLocaleString: UnwrapRef<typeof import('./utils/DateHelper')['formatLocaleString']>
     readonly generateMediaFileThumbnail: UnwrapRef<typeof import('./utils/FileHelper')['generateMediaFileThumbnail']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>

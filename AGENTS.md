@@ -63,6 +63,10 @@ const data = ref('Hello, FlareDrive Rev!')
 - `./drizzle.config.ts`：Drizzle ORM 配置文件
 - `./db/`：数据库 schema
 
+## 语言
+
+UI 界面暂时全部使用英文，尚未实现多语言支持。
+
 ## Agent守则：八荣八耻
 
 以暗猜接口为耻，以认真查阅为荣。

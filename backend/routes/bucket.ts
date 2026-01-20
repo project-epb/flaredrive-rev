@@ -1,7 +1,7 @@
 import { Context, Hono } from 'hono'
 import { HonoEnv } from '../index.js'
 import { getBucketConfigById, parseBucketPath } from '../utils/bucket-resolver.js'
-import { createStorageAdapter } from '../storage/factory.js'
+import { createAdapterFromConfig } from '../utils/bucket-utils.js'
 import { getSessionUser } from '../utils/session.js'
 import { getDb } from '../utils/db.js'
 import { uploadHistory } from '../../db/schema.js'
@@ -74,14 +74,7 @@ bucket.get('*', async (ctx) => {
   const limit = Math.min(1000, ctx.req.query('limit') ? parseInt(ctx.req.query('limit')) : 1000)
   const startAfter = ctx.req.query('startAfter') || ''
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
 
   try {
     const list = await adapter.list(path || '', {
@@ -128,14 +121,7 @@ bucket.put('*', async (ctx) => {
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
   if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
   const path = getFilePath(ctx)
   const fileName = getFileName(ctx)
   if (!fileName) {
@@ -254,14 +240,7 @@ bucket.delete('*', async (ctx) => {
   if (!cfg) return ctx.json({ error: 'Bucket not found' }, 404)
   if (cfg.ownerUserId !== user.id) return ctx.json({ error: 'Forbidden' }, 403)
 
-  const adapter = createStorageAdapter({
-    endpointUrl: cfg.endpointUrl,
-    region: cfg.region,
-    accessKeyId: cfg.accessKeyId,
-    secretAccessKey: cfg.secretAccessKey,
-    bucketName: cfg.bucketName,
-    forcePathStyle: cfg.forcePathStyle,
-  })
+  const adapter = createAdapterFromConfig(cfg)
   const path = getFilePath(ctx)
   if (!path) {
     return ctx.json({ error: 'No file path provided' }, 400)

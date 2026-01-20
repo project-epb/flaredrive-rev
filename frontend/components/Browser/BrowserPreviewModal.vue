@@ -9,7 +9,7 @@ NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
 </template>
 
 <script setup lang="ts">
-import type { StorageListObject } from '@/models/R2BucketClient'
+import type { StorageListObject } from '@/models/BucketClient'
 
 const show = defineModel('show', { type: Boolean, default: false })
 const props = defineProps<{

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import type { StorageListObject, StorageListResult } from '@/models/R2BucketClient'
+import type { StorageListObject, StorageListResult } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
 import { IconDots, IconSortAscending, IconSortDescending } from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
