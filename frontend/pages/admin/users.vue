@@ -7,7 +7,7 @@
 
     NButton(type='primary', @click='openCreate') New User
 
-  NDataTable(:columns='columns', :data='rows', :loading='isLoading', :row-key='(row) => row.id')
+  NDataTable(:columns='columns', :data='rows', :loading='isLoading', :row-key='(row) => row.id', scroll-x='100%')
 
   NModal(v-model:show='showCreate', title='Create User', preset='card', style='width: 520px; max-width: 90vw')
     NForm(:model='form', :rules='rules', ref='formRef', label-width='80')

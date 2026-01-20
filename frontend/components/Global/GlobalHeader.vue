@@ -1,8 +1,8 @@
 <template lang="pug">
 NLayoutHeader.global-header(bordered)
-  .flex(h-60px, px-4, py-2, gap-4, items-center, justify-between, h-full)
+  .flex(h-60px, px-4, py-2, gap-4, items-center, justify-between, h-full, overflow-x-auto)
     //- Left Side
-    .flex(items-center, gap-6)
+    .flex(items-center, gap-4)
       //- Logo / Home Link
       router-link(to='/', style='text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px')
         img(src='/favicon.png', alt='Site Logo', width='24', height='24')
@@ -12,13 +12,13 @@ NLayoutHeader.global-header(bordered)
       NButton(quaternary, @click='$router.push("/")')
         template(#icon)
           NIcon(:component='IconBucket')
-        | My Buckets
+        template(v-if='!isMobile') My Buckets
 
     //- Right Side
     .flex(items-center, gap-3)
       NButton(quaternary, size='small', v-if='showDashboard', @click='$router.push("/admin")')
         template(#icon): IconDashboard
-        | Dashboard
+        template(v-if='!isMobile') Dashboard
       NDropdown(:options='themeOptions', @select='theme.setTheme', :value='theme.rawTheme')
         NButton(quaternary, circle, @click='switchThemes'): component(:is='currentThemeOption.icon')
 
@@ -60,6 +60,9 @@ const switchThemes = () => {
   const nextTheme = themeOptions.value[nextIndex]!.key as 'auto' | 'light' | 'dark'
   theme.setTheme(nextTheme)
 }
+
+const { width: windowWidth } = useWindowSize()
+const isMobile = computed(() => windowWidth.value < 768)
 </script>
 
 <style scoped lang="sass">

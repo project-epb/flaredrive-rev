@@ -4,11 +4,13 @@ NLayout.full-layout-container.admin-layout(native-scrollbar, content-class='admi
   NLayout.admin-shell(has-sider, native-scrollbar)
     NLayoutSider.admin-sider(
       bordered,
-      show-trigger,
+      show-trigger='bar',
       v-model:collapsed='siderCollapsed',
-      :collapsed-width='64',
       :native-scrollbar='false',
-      :collapse-mode='windowWidth < 768 ? "transform" : "width"'
+      :collapsed-width='windowWidth < 768 ? 0 : 64',
+      :collapse-mode='windowWidth < 768 ? "transform" : "width"',
+      :position='windowWidth < 768 ? "absolute" : "static"',
+      @click.stop
     )
       NMenu.mt-2(
         :value='activeKey',
@@ -32,8 +34,8 @@ import type { Component } from 'vue'
 const route = useRoute()
 const router = useRouter()
 
-const siderCollapsed = useLocalStorage('flaredrive:admin/sider-collapsed', false)
 const { width: windowWidth } = useWindowSize()
+const siderCollapsed = useLocalStorage('flaredrive:admin/sider-collapsed', windowWidth.value < 768)
 
 const renderIcon = (icon: Component) => {
   return () => h(NIcon, null, { default: () => h(icon) })
@@ -71,6 +73,9 @@ const activeKey = computed(() => {
 
 const handleMenu = (key: string) => {
   if (key) router.push(key)
+  if (windowWidth.value < 768) {
+    siderCollapsed.value = true
+  }
 }
 </script>
 

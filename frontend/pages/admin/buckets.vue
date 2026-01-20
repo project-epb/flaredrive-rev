@@ -6,7 +6,14 @@
       NText(depth='3') Manage all configured storage buckets
     NButton(type='primary', @click='showBucketModal()') New Bucket
 
-  NDataTable(:columns='columns', :data='rows', :loading='isLoading', :row-key='(row) => row.id', scroll-x='100%')
+  NDataTable(
+    :columns='columns',
+    :data='rows',
+    :loading='isLoading',
+    :row-key='(row) => row.id',
+    scroll-x='100%',
+    :row-props='rowProps'
+  )
 
   NModal(
     v-model:show='showModal',
@@ -86,6 +93,13 @@ const columns: DataTableColumns<BucketInfo & { ownerEmail?: string; ownerUserId?
     title: 'Actions',
     key: 'actions',
     width: 120,
+    cellProps() {
+      return {
+        onClick(e: Event) {
+          e.stopPropagation()
+        },
+      }
+    },
     render(row) {
       return h(NButtonGroup, {}, () => [
         h(NButton, { size: 'small', onClick: () => showBucketModal(row), renderIcon: () => h(IconEdit) }),
@@ -105,6 +119,15 @@ const columns: DataTableColumns<BucketInfo & { ownerEmail?: string; ownerUserId?
     },
   },
 ]
+
+const rowProps = (row: BucketInfo) => {
+  return {
+    onClick() {
+      showBucketModal(row)
+    },
+    style: { cursor: 'pointer' },
+  }
+}
 
 const selectedBucket = ref<BucketInfo | undefined>()
 const showModal = ref(false)
