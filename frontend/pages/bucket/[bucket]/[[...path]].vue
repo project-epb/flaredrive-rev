@@ -215,6 +215,7 @@ import {
 } from '@tabler/icons-vue'
 import { NFormItem, NInput, NSkeleton, useMessage, useModal } from 'naive-ui'
 import type { Component } from 'vue'
+import type { BrowserLayout } from '@/stores/prefs'
 
 definePage({
   name: '@browser',
@@ -271,8 +272,10 @@ onBeforeRouteUpdate((to) => {
 const nmodal = useModal()
 const nmessage = useMessage()
 
-const currentLayout = useLocalStorage('flaredrive:current-layout', 'list')
-const layoutOptions = ref<{ label: string; value: string; icon?: Component; tooltip?: string }[]>([
+const prefs = usePrefsStore()
+const { browserLayout: currentLayout, showTopStickyRail: isShowTopStickyRail } = storeToRefs(prefs)
+
+const layoutOptions = ref<{ label: string; value: BrowserLayout; icon?: Component; tooltip?: string }[]>([
   { label: 'List', value: 'list', icon: IconList, tooltip: `Basic data list. Easy to organize files.` },
   {
     label: 'Gallery',
@@ -343,8 +346,6 @@ async function loadFileList() {
     isLoading.value = false
   }
 }
-
-const isShowTopStickyRail = useLocalStorage('flaredrive:top-sticky-rail/show', true)
 
 const searchInput = ref('')
 const filteredPayload = computed(() => {

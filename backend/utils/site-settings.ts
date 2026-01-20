@@ -5,9 +5,9 @@ import { cacheDelete, cacheGetJson, cachePutJson } from './cache.js'
 import { getDb } from './db.js'
 import { readEnvVars } from './readCtxEnv.js'
 
-export type SiteSettingSource = 'db' | 'env' | 'default'
+export type { SiteSettingResult, SiteSettingSource } from '../../common/site-settings.js'
 
-export type SiteSettingResult<T> = { value: T; source: SiteSettingSource }
+import type { SiteSettingResult, SiteSettingSource } from '../../common/site-settings.js'
 
 type SiteSettingResults<TDefs extends Record<string, SiteSettingDefinition<any>>> = {
   [K in keyof TDefs]: TDefs[K] extends SiteSettingDefinition<infer V> ? SiteSettingResult<V> : never

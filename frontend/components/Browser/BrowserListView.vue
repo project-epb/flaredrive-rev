@@ -19,6 +19,7 @@ import { IconDots, IconDownload, IconForms, IconLink, IconTrash, IconWorld, Icon
 import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
 import { useBucketStore } from '@/stores/bucket'
+import type { SortOrder } from '@/stores/prefs'
 
 const props = withDefaults(
   defineProps<{
@@ -26,7 +27,7 @@ const props = withDefaults(
     noActions?: boolean
     noFolder?: boolean
     defaultSortBy?: string
-    defaultSortOrder?: 'ascend' | 'descend'
+    defaultSortOrder?: SortOrder
   }>(),
   {
     noActions: false,

@@ -61,8 +61,7 @@ const handleSelect = async (key: string) => {
       router.push('/auth/login')
       break
     case 'preferences':
-      // router.push('/@preferences') // Not implemented yet
-      message.info('Preferences not implemented yet')
+      router.push('/preferences')
       break
     case 'admin':
       router.push('/admin')

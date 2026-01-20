@@ -83,6 +83,7 @@ import { useMessage } from 'naive-ui'
 import type { Component } from 'vue'
 import { Waterfall } from 'vue-waterfall-plugin-next'
 import 'vue-waterfall-plugin-next/dist/style.css'
+import type { GallerySortBy } from '@/stores/prefs'
 
 const props = defineProps<{
   payload: StorageListResult
@@ -99,9 +100,9 @@ const nmessage = useMessage()
 
 const bucket = useBucketStore()
 
-const sortBy = useLocalStorage<'key' | 'size' | 'uploaded'>('flaredrive:gallery/sort-by', 'key')
-const sortOrder = useLocalStorage<'ascend' | 'descend'>('flaredrive:gallery/sort-order', 'ascend')
-const changeSort = (key: 'key' | 'size' | 'uploaded') => {
+const prefs = usePrefsStore()
+const { gallerySortBy: sortBy, gallerySortOrder: sortOrder } = storeToRefs(prefs)
+const changeSort = (key: GallerySortBy) => {
   if (sortBy.value === key) {
     sortOrder.value = sortOrder.value === 'ascend' ? 'descend' : 'ascend'
   } else {

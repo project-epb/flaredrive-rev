@@ -110,6 +110,13 @@ declare module 'vue-router/auto-routes' {
       { bucket: ParamValue<false> },
       | never
     >,
+    '/preferences': RouteRecordInfo<
+      '/preferences',
+      '/preferences',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -196,6 +203,12 @@ declare module 'vue-router/auto-routes' {
     'frontend/pages/bucket/[bucket]/@upload.vue': {
       routes:
         | '@upload-standalone'
+      views:
+        | never
+    }
+    'frontend/pages/preferences.vue': {
+      routes:
+        | '/preferences'
       views:
         | never
     }

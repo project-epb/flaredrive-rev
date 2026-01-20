@@ -66,12 +66,15 @@ declare global {
   const ignorableWatch: typeof import('@vueuse/core').ignorableWatch
   const inject: typeof import('vue').inject
   const injectLocal: typeof import('@vueuse/core').injectLocal
+  const isBrowserLayout: typeof import('./stores/prefs').isBrowserLayout
   const isDefined: typeof import('@vueuse/core').isDefined
+  const isGallerySortBy: typeof import('./stores/prefs').isGallerySortBy
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
+  const isSortOrder: typeof import('./stores/prefs').isSortOrder
   const makeDestructurable: typeof import('@vueuse/core').makeDestructurable
   const mapActions: typeof import('pinia').mapActions
   const mapGetters: typeof import('pinia').mapGetters
@@ -261,6 +264,7 @@ declare global {
   const usePreferredLanguages: typeof import('@vueuse/core').usePreferredLanguages
   const usePreferredReducedMotion: typeof import('@vueuse/core').usePreferredReducedMotion
   const usePreferredReducedTransparency: typeof import('@vueuse/core').usePreferredReducedTransparency
+  const usePrefsStore: typeof import('./stores/prefs').usePrefsStore
   const usePrevious: typeof import('@vueuse/core').usePrevious
   const useRafFn: typeof import('@vueuse/core').useRafFn
   const useRefHistory: typeof import('@vueuse/core').useRefHistory
@@ -346,8 +350,14 @@ declare global {
   export type { AuthUser } from './stores/auth'
   import('./stores/auth')
   // @ts-ignore
+  export type { BrowserLayout, GallerySortBy, SortOrder, UserPrefsV1 } from './stores/prefs'
+  import('./stores/prefs')
+  // @ts-ignore
   export type { PublicSiteSettings } from './stores/site'
   import('./stores/site')
+  // @ts-ignore
+  export type { SiteSettingSource, SiteSettingResult } from '../common/site-settings'
+  import('../common/site-settings')
 }
 
 // for vue template auto import
@@ -415,12 +425,15 @@ declare module 'vue' {
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectLocal: UnwrapRef<typeof import('@vueuse/core')['injectLocal']>
+    readonly isBrowserLayout: UnwrapRef<typeof import('./stores/prefs')['isBrowserLayout']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
+    readonly isGallerySortBy: UnwrapRef<typeof import('./stores/prefs')['isGallerySortBy']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
+    readonly isSortOrder: UnwrapRef<typeof import('./stores/prefs')['isSortOrder']>
     readonly makeDestructurable: UnwrapRef<typeof import('@vueuse/core')['makeDestructurable']>
     readonly mapActions: UnwrapRef<typeof import('pinia')['mapActions']>
     readonly mapGetters: UnwrapRef<typeof import('pinia')['mapGetters']>
@@ -610,6 +623,7 @@ declare module 'vue' {
     readonly usePreferredLanguages: UnwrapRef<typeof import('@vueuse/core')['usePreferredLanguages']>
     readonly usePreferredReducedMotion: UnwrapRef<typeof import('@vueuse/core')['usePreferredReducedMotion']>
     readonly usePreferredReducedTransparency: UnwrapRef<typeof import('@vueuse/core')['usePreferredReducedTransparency']>
+    readonly usePrefsStore: UnwrapRef<typeof import('./stores/prefs')['usePrefsStore']>
     readonly usePrevious: UnwrapRef<typeof import('@vueuse/core')['usePrevious']>
     readonly useRafFn: UnwrapRef<typeof import('@vueuse/core')['useRafFn']>
     readonly useRefHistory: UnwrapRef<typeof import('@vueuse/core')['useRefHistory']>

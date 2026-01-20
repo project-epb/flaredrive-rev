@@ -51,11 +51,11 @@ import type { FormInst, FormRules } from 'naive-ui'
 import fexios from 'fexios'
 import { IconRefresh } from '@tabler/icons-vue'
 
-type SettingSource = 'db' | 'env' | 'default'
+import type { SiteSettingResult, SiteSettingSource } from '../../../common/site-settings'
 
 type AdminSettingsResponse = {
-  siteName: { value: string; source: SettingSource }
-  allowRegister: { value: boolean; source: SettingSource }
+  siteName: SiteSettingResult<string>
+  allowRegister: SiteSettingResult<boolean>
 }
 
 definePage({
@@ -110,7 +110,7 @@ const rules: FormRules = {
   ],
 }
 
-const sourceTagType = (source?: SettingSource) => {
+const sourceTagType = (source?: SiteSettingSource) => {
   if (source === 'db') return 'success'
   if (source === 'env') return 'warning'
   return 'default'
