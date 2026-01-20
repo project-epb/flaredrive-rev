@@ -44,6 +44,7 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | '/admin/'
       | '/admin/buckets'
+      | '/admin/settings'
       | '/admin/users'
     >,
     '/admin/': RouteRecordInfo<
@@ -60,6 +61,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/settings': RouteRecordInfo<
+      '/admin/settings',
+      '/admin/settings',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/admin/users': RouteRecordInfo<
       '/admin/users',
       '/admin/users',
@@ -67,15 +75,15 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '@auth-login': RouteRecordInfo<
-      '@auth-login',
+    '/auth/login': RouteRecordInfo<
+      '/auth/login',
       '/auth/login',
       Record<never, never>,
       Record<never, never>,
       | never
     >,
-    '@auth-register': RouteRecordInfo<
-      '@auth-register',
+    '/auth/register': RouteRecordInfo<
+      '/auth/register',
       '/auth/register',
       Record<never, never>,
       Record<never, never>,
@@ -132,6 +140,7 @@ declare module 'vue-router/auto-routes' {
         | '/admin'
         | '/admin/'
         | '/admin/buckets'
+        | '/admin/settings'
         | '/admin/users'
       views:
         | 'default'
@@ -148,6 +157,12 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
+    'frontend/pages/admin/settings.vue': {
+      routes:
+        | '/admin/settings'
+      views:
+        | never
+    }
     'frontend/pages/admin/users.vue': {
       routes:
         | '/admin/users'
@@ -156,13 +171,13 @@ declare module 'vue-router/auto-routes' {
     }
     'frontend/pages/auth/login.vue': {
       routes:
-        | '@auth-login'
+        | '/auth/login'
       views:
         | never
     }
     'frontend/pages/auth/register.vue': {
       routes:
-        | '@auth-register'
+        | '/auth/register'
       views:
         | never
     }

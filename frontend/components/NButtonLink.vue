@@ -1,15 +1,15 @@
 <template lang="pug">
-RouterLink(v-if='to', :to='to', custom)
-  template(#default='{ navigate, href, isActive, isExactActive }')
-    NButton(
-      tag='a',
-      :href,
-      :target,
-      @click='navigate',
-      v-bind='buttonProps',
-      :class='{ "is-active": isActive, "is-exact-active": isExactActive }'
-    )
-      slot
+RouterLink(v-if='to', :to='to', custom, v-slot='{ navigate, href, isActive, isExactActive }')
+  NButton(
+    tag='a',
+    :href,
+    :target,
+    @click='navigate',
+    :class='{ "is-active": isActive, "is-exact-active": isExactActive }',
+    v-bind='buttonProps'
+  )
+    slot
+    template(#icon): slot(name='icon')
 NButton(v-else, tag='a', :href, :target, v-bind='buttonProps')
   slot
 </template>

@@ -7,7 +7,7 @@
         NIcon(size='28', color='var(--primary-color)')
           IconCloud
       .flex.flex-col
-        NH2.m-0.text-lg.font-bold(style='line-height: 1.2') FlareDrive
+        NH2.m-0.text-lg.font-bold(style='line-height: 1.2') {{ site.siteName || 'FlareDrive' }}
         NText(depth='3', style='font-size: 12px') S3-compatible Storage Manager
 
     .actions.flex.items-center.gap-3
@@ -48,12 +48,8 @@
                 span.font-bold(style='font-size: 16px') {{ item.name }}
 
             template(#header-extra)
-              NDropdown(
-                :options='getBucketOptions(item)',
-                @select='(key) => handleBucketAction(key, item)',
-                trigger='click'
-              )
-                NButton.action-btn(quaternary, circle, size='small', @click.stop)
+              NDropdown(:options='getBucketOptions(item)', @select='(key) => handleBucketAction(key, item)')
+                NButton.action-btn(secondary, circle, size='small', @click.stop)
                   template(#icon): NIcon: IconDotsVertical
 
             .card-content.flex.flex-col.gap-2.mt-2
@@ -86,7 +82,7 @@
     BucketForm(:bucket='editingBucket || undefined', @cancel='closeModal', @success='handleFormSuccess')
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import {
   IconBucket,
   IconChevronRight,
@@ -106,6 +102,8 @@ import { NIcon, useDialog, useMessage } from 'naive-ui'
 import type { BucketInfo } from '@/models/BucketClient'
 import BucketForm from '@/components/BucketForm.vue'
 import fexios from 'fexios'
+
+const site = useSiteStore()
 
 const formatUrl = (url: string) => {
   try {
@@ -130,6 +128,11 @@ const bucketStore = useBucketStore()
 const navigation = useNavigationStore()
 const dialog = useDialog()
 const message = useMessage()
+
+const stopEvent = (e: Event) => {
+  e.preventDefault()
+  e.stopPropagation()
+}
 
 // Modal State
 const showModal = ref(false)
@@ -183,12 +186,9 @@ const getBucketOptions = (item: BucketInfo) => [
     icon: renderIcon(IconLink),
   },
   {
-    label: 'Delete',
+    label: () => <NText type="error">Delete</NText>,
     key: 'delete',
     icon: renderIcon(IconTrash),
-    props: {
-      style: { color: 'var(--error-color)' },
-    },
   },
 ]
 
@@ -265,11 +265,6 @@ const handleBucketAction = async (key: string, item: BucketInfo) => {
   cursor: pointer
   transition: all 0.2s ease
   animation: fadeInUp 0.4s ease both
-
-  &:hover
-    transform: translateY(-2px)
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
-    border-color: var(--primary-color)
 
 .bg-icon
   background-color: rgba(0, 0, 0, 0.05)

@@ -2,23 +2,46 @@
 NLayoutHeader.global-header(bordered)
   .flex(h-60px, px-4, py-2, gap-4, items-center, justify-between, h-full, overflow-x-auto)
     //- Left Side
-    .flex(items-center, gap-4)
+    .flex(items-center, gap-2)
       //- Logo / Home Link
-      router-link(to='/', style='text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px')
+      RouterLink(to='/', style='text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px')
         img(src='/favicon.png', alt='Site Logo', width='24', height='24')
-        span.font-bold.text-lg FlareDrive
+        span.font-bold.text-lg {{ site.siteName || 'FlareDrive' }}
 
       //- Navigation Links
-      NButton(quaternary, @click='$router.push("/")')
+      //- Current Bucket Link
+      NButtonLink(
+        v-if='$route.path.startsWith("/bucket/") && bucket.currentBucketInfo',
+        :to='`/bucket/${bucket.currentBucketInfo.id}/`',
+        quaternary,
+        type='primary',
+        size='small'
+      ) 
         template(#icon)
-          NIcon(:component='IconBucket')
-        template(v-if='!isMobile') My Buckets
+          NIcon: IconBucket
+        | {{ bucket.currentBucketInfo.name || bucket.currentBucketName }}
+      NButtonLink(
+        v-else-if='!isMobile',
+        to='/',
+        quaternary,
+        :type='$route.path === "/" ? "primary" : "default"',
+        size='small'
+      )
+        template(#icon)
+          NIcon: IconDatabase
+        | My Buckets
 
     //- Right Side
     .flex(items-center, gap-3)
-      NButton(quaternary, size='small', v-if='showDashboard', @click='$router.push("/admin")')
+      NButtonLink(
+        quaternary,
+        size='small',
+        v-if='showDashboard',
+        to='/admin',
+        :type='$route.path.startsWith("/admin") ? "primary" : "default"'
+      )
         template(#icon): IconDashboard
-        template(v-if='!isMobile') Dashboard
+        template(v-if='!isMobile') Admin
       NDropdown(:options='themeOptions', @select='theme.setTheme', :value='theme.rawTheme')
         NButton(quaternary, circle, @click='switchThemes'): component(:is='currentThemeOption.icon')
 
@@ -27,11 +50,12 @@ NLayoutHeader.global-header(bordered)
 
 <script setup lang="ts">
 import type { DropdownOption } from 'naive-ui/es/dropdown/src/interface'
-import { IconBucket, IconDashboard } from '@tabler/icons-vue'
+import { IconBucket, IconDashboard, IconDatabase } from '@tabler/icons-vue'
 
 const theme = useThemeStore()
 const auth = useAuthStore()
-const router = useRouter()
+const bucket = useBucketStore()
+const site = useSiteStore()
 const themeOptions = shallowRef<DropdownOption[]>([
   {
     type: '',

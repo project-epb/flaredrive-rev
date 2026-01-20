@@ -23,17 +23,17 @@
 <script setup lang="ts">
 import { NAlert, NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
-import { ALLOW_REGISTER } from '../../../common/app-env'
 
 definePage({
   name: '@auth-register',
 })
 
 const auth = useAuthStore()
+const site = useSiteStore()
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
-const allowRegister = ALLOW_REGISTER
+const allowRegister = computed(() => site.allowRegister)
 
 const redirectTo = computed(() => {
   const q = route.query.redirect
@@ -69,7 +69,7 @@ const submitting = ref(false)
 const formRef = ref<FormInst | null>(null)
 
 const onSubmit = async () => {
-  if (!allowRegister) {
+  if (!allowRegister.value) {
     message.warning('当前未开放注册')
     return
   }

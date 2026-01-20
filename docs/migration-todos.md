@@ -119,6 +119,7 @@
 
 - [ ] `audit_logs`（已在 upload_history 覆盖基础上传记录）
 - [x] `path_metadata`：目录公开/标签/目录密码 (isPublic 字段及切换功能已完成)
+- [x] 站点基础设置（D1 `site_settings`）：站点名称、是否开放注册（DB -> env -> 默认值）
 - [ ] 分享链接/只读访问（如后续需要）
 - [ ] 管理后台其它站点配置（草案中的 `/@admin/xxx`）
 
@@ -137,3 +138,4 @@
 - 2026-01-17：后端已移除 R2 binding 语义；新增 buckets CRUD+连接测试、对象 presign；引入 StorageAdapter/S3Adapter 并完成后端路由接线。
 - 2026-01-17：整理 backend 目录结构为 routes/lib/storage，并用根目录 shim 再导出保持旧 import 路径兼容。
 - 2026-01-18：完成前端桶管理 (/admin/buckets)、上传流程重构（Presign+Record）、Raw 访问权限校验、元数据公开性切换 (Toggle Public)。
+- 2026-01-20：新增 D1 `site_settings`，将站点名称/开放注册等设置收束到数据库管理，并提供 public/admin API。

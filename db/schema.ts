@@ -102,3 +102,13 @@ export const pathMetadata = sqliteTable(
     index('idx_path_metadata_bucket_updated').on(t.bucketId, t.updatedAt),
   ]
 )
+
+export const siteSettings = sqliteTable(
+  'site_settings',
+  {
+    key: text('key').primaryKey(),
+    value: text('value'),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [index('idx_site_settings_updated_at').on(t.updatedAt)]
+)

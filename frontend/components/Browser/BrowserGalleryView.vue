@@ -67,10 +67,18 @@
   NSkeleton(v-if='list.length === 0', h-200px)
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import type { StorageListObject, StorageListResult } from '@/models/BucketClient'
 import { FileHelper } from '@/utils/FileHelper'
-import { IconDots, IconSortAscending, IconSortDescending } from '@tabler/icons-vue'
+import {
+  IconDots,
+  IconDownload,
+  IconForms,
+  IconLink,
+  IconSortAscending,
+  IconSortDescending,
+  IconTrash,
+} from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 import type { Component } from 'vue'
 import { Waterfall } from 'vue-waterfall-plugin-next'
@@ -172,10 +180,14 @@ function onClickItem(item: StorageListObject) {
   emit('navigate', item)
 }
 const fileActionOptions = ref([
-  { label: 'Copy URL', key: 'copy_url' },
-  { label: 'Download', key: 'download' },
-  { label: 'Rename', key: 'rename' },
-  { label: 'Delete', key: 'delete' },
+  {
+    label: 'Copy URL',
+    key: 'copy_url',
+    icon: () => <IconLink />,
+  },
+  { label: 'Download', key: 'download', icon: () => <IconDownload /> },
+  { label: 'Rename', key: 'rename', icon: () => <IconForms /> },
+  { label: () => <NText type="error">Delete</NText>, key: 'delete', icon: () => <IconTrash /> },
 ])
 const onSelectAction = (action: string, item: StorageListObject) => {
   switch (action) {

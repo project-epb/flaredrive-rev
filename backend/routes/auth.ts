@@ -4,16 +4,11 @@ import { eq, and, gt } from 'drizzle-orm'
 import { users, sessions } from '../../db/schema.js'
 import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
-import { parseBoolean } from '../../common/app-env.js'
 import { readEnvVars } from '../utils/readCtxEnv.js'
+import { SITE_SETTINGS, getSiteSetting } from '../utils/site-settings.js'
 
 const COOKIE_NAME = 'flaredrive_session'
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30
-
-const isRegistrationEnabled = (ctx: any) => {
-  const raw = readEnvVars(ctx, 'ALLOW_REGISTER')
-  return parseBoolean(raw, true)
-}
 
 const getAdminCreateToken = (ctx: any) => {
   const raw = readEnvVars(ctx, 'ADMIN_CREATE_TOKEN')
@@ -116,7 +111,8 @@ const authorizationLevelForUser = (user: { id: number; authorizationLevel: numbe
 export const auth = new Hono<HonoEnv>()
 
 auth.post('/register', async (ctx) => {
-  if (!isRegistrationEnabled(ctx)) {
+  const allowRegister = (await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)).value
+  if (!allowRegister) {
     return ctx.json({ error: 'Registration disabled' }, 403)
   }
 

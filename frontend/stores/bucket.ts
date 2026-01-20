@@ -22,6 +22,9 @@ export const useBucketStore = defineStore('bucket', () => {
   }
 
   const currentBucketName = ref('')
+  const currentBucketInfo = computed(() => {
+    return availableBuckets.value.find((b) => b.id === currentBucketName.value) || null
+  })
   const availableBuckets = ref<BucketInfo[]>([])
   const isBucketListLoading = ref(false)
   const bucketCdnMap = ref<Record<string, string>>({})
@@ -400,6 +403,7 @@ export const useBucketStore = defineStore('bucket', () => {
   return {
     client,
     currentBucketName,
+    currentBucketInfo,
     availableBuckets,
     isBucketListLoading,
     setCurrentBucket,

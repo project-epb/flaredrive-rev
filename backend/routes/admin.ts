@@ -4,6 +4,7 @@ import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
 import { getSessionUser } from '../utils/session.js'
 import { buckets, pathMetadata, sessions, uploadHistory, users } from '../../db/schema.js'
+import { SITE_SETTINGS, getSiteSetting, setSiteSetting, unsetSiteSetting } from '../utils/site-settings.js'
 
 const isValidEmail = (email: string) => {
   if (!email || email.length > 254) return false
@@ -54,6 +55,58 @@ const requireAdmin = async (ctx: any) => {
 }
 
 export const admin = new Hono<HonoEnv>()
+
+admin.get('/settings', async (ctx) => {
+  const adminUser = await requireAdmin(ctx)
+  if (!adminUser.ok) return adminUser.response
+
+  const siteName = await getSiteSetting(ctx, SITE_SETTINGS.siteName)
+  const allowRegister = await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)
+
+  return ctx.json({
+    siteName,
+    allowRegister,
+  })
+})
+
+admin.put('/settings', async (ctx) => {
+  const adminUser = await requireAdmin(ctx)
+  if (!adminUser.ok) return adminUser.response
+
+  const body = await ctx.req.json().catch(() => null)
+  if (!body || typeof body !== 'object') return ctx.json({ error: 'Invalid payload' }, 400)
+
+  if ('siteName' in body) {
+    const v = (body as any).siteName
+    if (v === null) {
+      await unsetSiteSetting(ctx, SITE_SETTINGS.siteName)
+    } else {
+      const name = String(v ?? '').trim()
+      if (!name || name.length > 64) return ctx.json({ error: 'Invalid siteName' }, 400)
+      await setSiteSetting(ctx, SITE_SETTINGS.siteName, name)
+    }
+  }
+
+  if ('allowRegister' in body) {
+    const v = (body as any).allowRegister
+    if (v === null) {
+      await unsetSiteSetting(ctx, SITE_SETTINGS.allowRegister)
+    } else if (typeof v === 'boolean') {
+      await setSiteSetting(ctx, SITE_SETTINGS.allowRegister, v)
+    } else {
+      return ctx.json({ error: 'Invalid allowRegister' }, 400)
+    }
+  }
+
+  // Return resolved values after update
+  const siteName = await getSiteSetting(ctx, SITE_SETTINGS.siteName)
+  const allowRegister = await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)
+  return ctx.json({
+    ok: true,
+    siteName,
+    allowRegister,
+  })
+})
 
 admin.get('/users', async (ctx) => {
   const adminUser = await requireAdmin(ctx)

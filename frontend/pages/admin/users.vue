@@ -5,7 +5,10 @@
       h1.text-2xl.font-bold.mb-1 User Management
       NText(depth='3') Manage user accounts and permissions
 
-    NButton(type='primary', @click='openCreate') New User
+    .flex.gap-2
+      NButton(secondary, @click='loadUsers', :loading='isLoading')
+        template(#icon): NIcon: IconRefresh
+      NButton(type='primary', @click='openCreate') New User
 
   NDataTable(:columns='columns', :data='rows', :loading='isLoading', :row-key='(row) => row.id', scroll-x='100%')
 
@@ -38,6 +41,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import fexios from 'fexios'
+import { IconRefresh } from '@tabler/icons-vue'
 
 type AdminUserRow = {
   id: number

@@ -15,7 +15,7 @@ import type { StorageListObject, StorageListResult } from '@/models/BucketClient
 import { FileHelper } from '@/utils/FileHelper'
 import { ClipboardHelper } from '@/utils/ClipboardHelper'
 import { DateHelper } from '@/utils/DateHelper'
-import { IconDots, IconWorld, IconWorldOff } from '@tabler/icons-vue'
+import { IconDots, IconDownload, IconForms, IconLink, IconTrash, IconWorld, IconWorldOff } from '@tabler/icons-vue'
 import { NButton, NDropdown, NIcon, NImage, useMessage } from 'naive-ui'
 import type { TableColumns } from 'naive-ui/es/data-table/src/interface'
 import { useBucketStore } from '@/stores/bucket'
@@ -31,8 +31,6 @@ const props = withDefaults(
   {
     noActions: false,
     noFolder: false,
-    defaultSortBy: 'key',
-    defaultSortOrder: 'ascend',
   }
 )
 
@@ -211,15 +209,19 @@ const columns = computed(() => {
           <div>
             <NDropdown
               options={[
-                { label: 'Copy URL', key: 'copy_url' },
-                { label: 'Download', key: 'download' },
-                { 
-                  label: isPublic ? 'Make Private' : 'Make Public', 
-                  key: 'toggle_public',
-                  icon: isPublic ? () => <IconWorldOff size={16}/> : () => <IconWorld size={16}/>
+                {
+                  label: 'Copy URL',
+                  key: 'copy_url',
+                  icon: () => <IconLink />,
                 },
-                { label: 'Rename', key: 'rename' },
-                { label: 'Delete', key: 'delete' },
+                { label: 'Download', key: 'download', icon: () => <IconDownload /> },
+                {
+                  label: isPublic ? 'Make Private' : 'Make Public',
+                  key: 'toggle_public',
+                  icon: isPublic ? () => <IconWorldOff /> : () => <IconWorld />,
+                },
+                { label: 'Rename', key: 'rename', icon: () => <IconForms /> },
+                { label: () => <NText type="error">Delete</NText>, key: 'delete', icon: () => <IconTrash /> },
               ]}
               onSelect={onSelect}
             >

@@ -22,6 +22,13 @@
       "when": 1768890037211,
       "tag": "0002_glossy_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1768904840108,
+      "tag": "0003_elite_raider",
+      "breakpoints": true
     }
   ]
 }

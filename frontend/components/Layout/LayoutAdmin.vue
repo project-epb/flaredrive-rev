@@ -20,7 +20,11 @@ NLayout.full-layout-container.admin-layout(native-scrollbar, content-class='admi
         :collapsed-icon-size='22',
         :options='menuOptions'
       )
-    NLayoutContent.admin-content(content-class='admin-content-inner p-4', native-scrollbar)
+    NLayoutContent.admin-content(
+      content-class='admin-content-inner p-4',
+      native-scrollbar,
+      :content-style='{ paddingLeft: windowWidth >= 768 ? "2rem" : undefined }'
+    )
       slot
   GlobalFooter
 </template>
@@ -28,7 +32,7 @@ NLayout.full-layout-container.admin-layout(native-scrollbar, content-class='admi
 <script setup lang="ts">
 import { NIcon } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
-import { IconUsers, IconBucket, IconDashboard } from '@tabler/icons-vue'
+import { IconUsers, IconBucket, IconDashboard, IconSettings } from '@tabler/icons-vue'
 import type { Component } from 'vue'
 
 const route = useRoute()
@@ -52,6 +56,11 @@ const menuOptions = computed<MenuOption[]>(() => [
     type: 'divider',
   },
   {
+    label: 'Site Settings',
+    key: '/admin/settings',
+    icon: renderIcon(IconSettings),
+  },
+  {
     label: 'User Management',
     key: '/admin/users',
     icon: renderIcon(IconUsers),
@@ -65,6 +74,7 @@ const menuOptions = computed<MenuOption[]>(() => [
 
 const activeKey = computed(() => {
   const path = route.path
+  if (path.startsWith('/admin/settings')) return '/admin/settings'
   if (path.startsWith('/admin/users')) return '/admin/users'
   if (path.startsWith('/admin/buckets')) return '/admin/buckets'
   if (path === '/admin' || path.startsWith('/admin/')) return '/admin'

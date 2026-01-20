@@ -14,6 +14,17 @@ app.use(router)
 const auth = useAuthStore(pinia)
 auth.fetchMe().catch(() => void 0)
 
+// Site settings bootstrap
+const site = useSiteStore(pinia)
+site.fetchPublicSettings().catch(() => void 0)
+
+watchEffect(() => {
+  if ('document' in globalThis) {
+    const name = site.siteName || 'FlareDrive'
+    document.title = name
+  }
+})
+
 router.beforeEach(async (to) => {
   const isAuthRoute = to.path.startsWith('/auth')
   const requiresAuth = (to.meta as any)?.requiresAuth !== false && !isAuthRoute

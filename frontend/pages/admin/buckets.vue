@@ -4,7 +4,10 @@
     div
       h1.text-2xl.font-bold.mb-1 Buckets Management
       NText(depth='3') Manage all configured storage buckets
-    NButton(type='primary', @click='showBucketModal()') New Bucket
+    .flex.gap-2
+      NButton(secondary, @click='loadBuckets', :loading='isLoading')
+        template(#icon): NIcon: IconRefresh
+      NButton(type='primary', @click='showBucketModal()') New Bucket
 
   NDataTable(
     :columns='columns',
@@ -27,7 +30,7 @@
 
 <script setup lang="ts">
 import { NButton, NButtonGroup, NPopconfirm, NTag, NSpace, useMessage, type DataTableColumns } from 'naive-ui'
-import { IconEdit, IconTrash } from '@tabler/icons-vue'
+import { IconEdit, IconRefresh, IconTrash } from '@tabler/icons-vue'
 import fexios from 'fexios'
 import type { BucketInfo } from '@/models/BucketClient'
 
