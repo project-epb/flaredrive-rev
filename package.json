@@ -44,6 +44,7 @@
     "nanoid": "^5.1.6",
     "p-queue": "^9.1.0",
     "pinia": "^3.0.4",
+    "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "rehype-stringify": "^10.0.1",
     "remark-gfm": "^4.0.1",
