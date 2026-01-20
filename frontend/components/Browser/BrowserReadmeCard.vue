@@ -11,7 +11,7 @@
 import type { StorageListObject } from '@/models/BucketClient'
 import { IconInfoCircle } from '@tabler/icons-vue'
 
-const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
+const MarkdownRender = defineAsyncComponent(() => import('@/components/Markdown/MarkdownViewer.vue'))
 
 const props = withDefaults(
   defineProps<{

@@ -8,7 +8,7 @@
 import { FileHelper } from '@/utils/FileHelper'
 import type { StorageListObject } from '@/models/BucketClient'
 
-const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
+const MarkdownRender = defineAsyncComponent(() => import('@/components/Markdown/MarkdownViewer.vue'))
 
 const props = withDefaults(
   defineProps<{

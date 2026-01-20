@@ -1,5 +1,5 @@
 <template lang="pug">
-Component.markdown-viewer(:is='tag', v-html='html', prose, max-w='unset')
+Component.markdown-viewer(:is='tag', v-html='html', prose, max-w='unset', dark='prose-invert')
 </template>
 
 <script setup lang="ts">

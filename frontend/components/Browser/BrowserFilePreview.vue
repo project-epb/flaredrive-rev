@@ -80,18 +80,11 @@ import { FileHelper } from '@/utils/FileHelper'
 import { ClipboardHelper } from '@/utils/ClipboardHelper'
 import { DateHelper } from '@/utils/DateHelper'
 import type { StorageListObject } from '@/models/BucketClient'
-import { 
-  IconFileUnknown, 
-  IconTrash, 
-  IconDownload, 
-  IconCopy, 
-  IconWorld, 
-  IconWorldOff 
-} from '@tabler/icons-vue'
+import { IconFileUnknown, IconTrash, IconDownload, IconCopy, IconWorld, IconWorldOff } from '@tabler/icons-vue'
 import { useMessage } from 'naive-ui'
 
 const Hljs = defineAsyncComponent(() => import('@/components/Hljs.vue'))
-const MarkdownRender = defineAsyncComponent(() => import('@/components/MarkdownRender.vue'))
+const MarkdownRender = defineAsyncComponent(() => import('@/components/Markdown/MarkdownViewer.vue'))
 
 const props = defineProps<{
   item?: StorageListObject | null
