@@ -26,11 +26,17 @@ import { admin } from './routes/admin.js'
 import { site } from './routes/site.js'
 
 import type { D1Database } from '@cloudflare/workers-types/2023-07-01'
+import type { KVNamespace } from '@cloudflare/workers-types/2023-07-01'
+import type { DurableObjectNamespace } from '@cloudflare/workers-types/2023-07-01'
 import { BlankEnv } from 'hono/types'
+
+export { SessionRevocationDO } from './durable/session-revocation.js'
 
 export interface HonoEnv extends BlankEnv {
   Bindings: {
     D1: D1Database
+    KV: KVNamespace
+    SESSION_REVOCATION: DurableObjectNamespace
     [key: string]: unknown
   }
   Variables: {

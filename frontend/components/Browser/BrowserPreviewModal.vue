@@ -1,8 +1,8 @@
 <template lang="pug">
 NModal.file-preview-modal(preset='card', v-model:show='show', :title='fileName')
   BrowserFilePreview(
-    :item, 
-    @download='emit("download", $event)', 
+    :item,
+    @download='emit("download", $event)',
     @delete='emit("delete", $event)',
     @toggle-public='emit("togglePublic", $event)'
   )

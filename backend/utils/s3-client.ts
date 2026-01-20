@@ -13,7 +13,7 @@ export const createS3Client = (cfg: S3BucketConfig) => {
   return new S3Client({
     // AWS SDK v3 doesn't support 'auto' as a standard region and may try to load config.
     // For R2 and other S3-compatible providers, 'us-east-1' is the standard placeholder.
-    region: cfg.region === 'auto' ? 'us-east-1' : (cfg.region || 'us-east-1'),
+    region: cfg.region === 'auto' ? 'us-east-1' : cfg.region || 'us-east-1',
     endpoint: cfg.endpointUrl,
     forcePathStyle: !!cfg.forcePathStyle,
     credentials: {

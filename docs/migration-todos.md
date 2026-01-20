@@ -21,8 +21,8 @@
 ## 2. P0：项目结构与旧代码隔离（优先级最高）
 
 - [ ] 明确前后端边界：
-	- `/api/**`：Hono API
-	- 静态资源：Vite 构建产物 / 静态 assets
+  - `/api/**`：Hono API
+  - 静态资源：Vite 构建产物 / 静态 assets
 
 验收：`wrangler dev`/`vite dev` 时不再依赖 R2 binding 语义即可启动。
 
@@ -32,15 +32,16 @@
 > 仍需决策的是 buckets.id 的策略（自定义 3-30 vs 生成 nanoid），以及“首个用户为管理员”的具体实现方式。
 
 - [ ] 决策并固化主键策略：
-	- users：integer autoincrement vs text
-	- buckets：3-30 自定义 or nanoid（草案要求后续不可更改）
+  - users：integer autoincrement vs text
+  - buckets：3-30 自定义 or nanoid（草案要求后续不可更改）
 - [ ] 加入外键/索引（如 D1 支持范围内）：
-	- sessions.user_id、buckets.owner_user_id、upload_history(bucket_id,user_id)
+  - sessions.user_id、buckets.owner_user_id、upload_history(bucket_id,user_id)
 - [ ] `audit_logs` 表（可选）是否落地（或用 upload_history 覆盖最小需求）
 - [ ] 增加“首个注册用户为管理员（ID=1）”规则的实现方式：
-	- 若 users.id 不是 integer，需要定义等效规则（例如“首个创建的用户”）
+  - 若 users.id 不是 integer，需要定义等效规则（例如“首个创建的用户”）
 
 已确认（2026-01-18）：
+
 - buckets.id：使用随机 nanoid 自动生成（长度 12，URL-safe）
 - buckets.secret_access_key：MVP 阶段先明文存入 D1（后续再补加密/脱敏）
 
@@ -51,28 +52,28 @@
 - [x] 选型：纯 httpOnly Cookie 会话 + sessions 表（token 仅保存 hash）
 - [x] 密码哈希：Web Crypto `pbkdf2`（含 salt、迭代次数/参数版本化）
 - [ ] API：
-	- [x] `POST /api/auth/register`
-	- [x] `POST /api/auth/login`
-	- [x] `POST /api/auth/logout`
-	- [x] `GET /api/auth/me`
+  - [x] `POST /api/auth/register`
+  - [x] `POST /api/auth/login`
+  - [x] `POST /api/auth/logout`
+  - [x] `GET /api/auth/me`
 - [ ] 安全：
-	- [ ] 登录限流（IP/账号维度，最简可用内存/短期 KV 可选）
-	- [x] session token 存储为 hash（不落明文 token）
-	- [x] 记录 `login_xff`、`login_ua` 并做基础校验（可选但建议）
+  - [ ] 登录限流（IP/账号维度，最简可用内存/短期 KV 可选）
+  - [x] session token 存储为 hash（不落明文 token）
+  - [x] 记录 `login_xff`、`login_ua` 并做基础校验（可选但建议）
 
 验收：未登录访问受保护接口返回 401；注册/登录后可通过 `/api/auth/me` 获取用户信息。
 
 ## 5. P3：桶配置管理（Bucket CRUD + 连接测试）
 
 - [ ] API：
-	- [x] `GET /api/buckets`
-	- [x] `POST /api/buckets`
-	- [x] `PUT /api/buckets/:id`
-	- [x] `DELETE /api/buckets/:id`
+  - [x] `GET /api/buckets`
+  - [x] `POST /api/buckets`
+  - [x] `PUT /api/buckets/:id`
+  - [x] `DELETE /api/buckets/:id`
 - [x] Input Validation：bucket_id 规则、endpoint_url、force_path_style、region 等
 - [ ] 凭据处理：
-	- [ ] `secret_access_key` 加密存储（至少：Worker 内部加密 + 不在返回体中回显）
-	- [ ] 输出 DTO 脱敏（只回显末尾若干位或直接不回显）
+  - [ ] `secret_access_key` 加密存储（至少：Worker 内部加密 + 不在返回体中回显）
+  - [ ] 输出 DTO 脱敏（只回显末尾若干位或直接不回显）
 - [x] 增加“连接测试”动作（可作为创建/更新时的可选校验或独立接口）
 
 验收：管理员/拥有者可 CRUD；非拥有者不可读写（除非授权）。
@@ -81,9 +82,9 @@
 
 - [x] 定义统一接口（list/get/put/delete/copy/test/presign）
 - [ ] Provider 适配：
-	- [x] R2（S3 API 方式，不再依赖 R2 binding）
-	- [x] AWS S3
-	- [x] MinIO（force_path_style 常见）
+  - [x] R2（S3 API 方式，不再依赖 R2 binding）
+  - [x] AWS S3
+  - [x] MinIO（force_path_style 常见）
 - [x] 兼容差异处理：分页、错误码映射、metadata/header
 
 验收：同一套前端/接口可切换不同 provider，仅依赖 buckets 表配置。
@@ -91,18 +92,19 @@
 ## 7. P5：对象 API 与 Raw 访问
 
 - [x] 对象操作：
-	- [x] `GET /api/bucket/:bucketId/*`（list/metadata，原计划为 /objects）
-	- [x] `DELETE /api/bucket/:bucketId/*`（原计划为 /objects）
-	- [x] `PUT /api/bucket/:bucketId/*`（rename/metadata，含 upload_history 记录）
-	- [x] `POST /api/objects/:bucketId/presign`（上传/下载预签名）
-	- [x] `POST /api/objects/:bucketId/record`（上传完成后补录 history）
-	- [x] `PATCH /api/bucket/:bucketId/*`（修改元数据，如 isPublic）
+  - [x] `GET /api/bucket/:bucketId/*`（list/metadata，原计划为 /objects）
+  - [x] `DELETE /api/bucket/:bucketId/*`（原计划为 /objects）
+  - [x] `PUT /api/bucket/:bucketId/*`（rename/metadata，含 upload_history 记录）
+  - [x] `POST /api/objects/:bucketId/presign`（上传/下载预签名）
+  - [x] `POST /api/objects/:bucketId/record`（上传完成后补录 history）
+  - [x] `PATCH /api/bucket/:bucketId/*`（修改元数据，如 isPublic）
 - [x] 原始文件访问：
-	- [x] `GET /api/raw/:bucketId/*`（代理下载，已增加 Session/Owner/Public 校验）
-	- [ ] 可选：小文件代理（明确 size 限制）
+  - [x] `GET /api/raw/:bucketId/*`（代理下载，已增加 Session/Owner/Public 校验）
+  - [ ] 可选：小文件代理（明确 size 限制）
 - [x] 支持 `cdn_base_url`：前端渲染/下载可直链（public-read 场景，getCDNUrl 已实现）
 
 验收：
+
 - 预签名上传可成功 PUT；浏览器侧可列目录、预览文本/图片、删除对象。
 
 ## 8. P6：前端改造（UI/路由/接口对接）
@@ -126,6 +128,10 @@
 ## 10. P8：运维与质量（最后收口）
 
 - [ ] 最小化 secrets 泄露面：日志、响应体、前端缓存
+- [ ] 引入缓存层以降低 D1 读延迟与读放大：
+  - 方案：Workers KV（最终一致）做 cache-aside；强一致需求（限流/锁/强制注销）用 Durable Objects
+  - 优先缓存：site_settings / bucket config / path_metadata；session user 仅短 TTL 可选
+  - 调研报告：见 docs/workers-kv-cache-research.md
 - [ ] 错误处理与统一响应格式（至少做到可定位问题）
 - [ ] 文档：更新 README（部署/本地开发/D1 初始化/迁移）
 - [ ] 清理：删除不再使用的旧接口与旧前端耦合代码

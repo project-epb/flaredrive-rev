@@ -1,11 +1,13 @@
 import { Hono } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
-import { eq, and, gt } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { users, sessions } from '../../db/schema.js'
 import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
+import { cacheSessionUserByTokenHash, getSessionUser, invalidateSessionUserCacheByTokenHash } from '../utils/session.js'
 import { readEnvVars } from '../utils/readCtxEnv.js'
-import { SITE_SETTINGS, getSiteSetting } from '../utils/site-settings.js'
+import { getResolvedPublicSiteSettings } from '../utils/site-settings.js'
+import { revokeTokenHash } from '../utils/session-revocation.js'
 
 const COOKIE_NAME = 'flaredrive_session'
 const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30
@@ -111,7 +113,7 @@ const authorizationLevelForUser = (user: { id: number; authorizationLevel: numbe
 export const auth = new Hono<HonoEnv>()
 
 auth.post('/register', async (ctx) => {
-  const allowRegister = (await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)).value
+  const allowRegister = (await getResolvedPublicSiteSettings(ctx)).allowRegister
   if (!allowRegister) {
     return ctx.json({ error: 'Registration disabled' }, 403)
   }
@@ -257,6 +259,18 @@ auth.post('/login', async (ctx) => {
     })
     .run()
 
+  // Best-effort prewarm: avoids an immediate D1 lookup on the first authenticated request.
+  await cacheSessionUserByTokenHash(
+    ctx,
+    tokenHash,
+    {
+      id: user.id,
+      email: user.email,
+      authorizationLevel: authorizationLevelForUser({ id: user.id, authorizationLevel: user.authorizationLevel }),
+    },
+    expiresAt
+  )
+
   setCookie(ctx, COOKIE_NAME, token, {
     httpOnly: true,
     secure: isSecureRequest(ctx),
@@ -273,7 +287,19 @@ auth.post('/logout', async (ctx) => {
   if (token) {
     const db = getDb(ctx)
     const tokenHash = await sha256Base64Url(token)
+
+    const row = await db
+      .select({ expiresAt: sessions.expiresAt })
+      .from(sessions)
+      .where(eq(sessions.tokenHash, tokenHash))
+      .get()
+    const revokeUntil = row?.expiresAt ?? Date.now() + SESSION_MAX_AGE_SEC * 1000
+
     await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash)).run()
+    await invalidateSessionUserCacheByTokenHash(ctx, tokenHash)
+
+    // Strong-consistency revoke (covers KV eventual consistency window).
+    await revokeTokenHash(ctx, tokenHash, revokeUntil)
   }
 
   deleteCookie(ctx, COOKIE_NAME, { path: '/' })
@@ -281,30 +307,11 @@ auth.post('/logout', async (ctx) => {
 })
 
 auth.get('/me', async (ctx) => {
-  const token = getCookie(ctx, COOKIE_NAME)
-  if (!token) return ctx.json({ error: 'Unauthorized', msg: 'Missing token' }, 401)
-
-  const db = getDb(ctx)
-  const tokenHash = await sha256Base64Url(token)
-  const now = Date.now()
-
-  const session = await db
-    .select({
-      userId: sessions.userId,
-      userEmail: users.email,
-      userAuth: users.authorizationLevel,
-      userId2: users.id,
-    })
-    .from(sessions)
-    .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, now)))
-    .get()
-
-  if (!session) {
+  const user = await getSessionUser(ctx)
+  if (!user) {
     setCookie(ctx, COOKIE_NAME, '', { path: '/' })
     return ctx.json({ error: 'Unauthorized' }, 401)
   }
 
-  const authLevel = authorizationLevelForUser({ id: session.userId2, authorizationLevel: session.userAuth })
-  return ctx.json({ id: session.userId2, email: session.userEmail, authorizationLevel: authLevel })
+  return ctx.json(user)
 })

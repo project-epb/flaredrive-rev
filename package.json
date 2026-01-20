@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "deploy": "wrangler deploy",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,vue,md}\"",
+    "format": "prettier --write \"./(frontend|backend)/**/*.{js,jsx,ts,tsx,json,css,scss,vue,md}\"",
     "user:create": "bun scripts/create-user.ts",
     "drizzle:generate": "drizzle-kit generate",
     "drizzle:migrate": "drizzle-kit migrate",

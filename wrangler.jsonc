@@ -14,6 +14,26 @@
       "migrations_dir": "drizzle",
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "a2c1ad5a6bd84771bb91b8310b6cb49a",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SESSION_REVOCATION",
+        "class_name": "SessionRevocationDO",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "do-session-revocation-v1",
+      "new_classes": ["SessionRevocationDO"],
+    },
+  ],
   "vars": {
     "ALLOW_REGISTER": "false",
   },

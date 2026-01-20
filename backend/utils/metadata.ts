@@ -38,18 +38,14 @@ export const setPathMetadata = async (
   if (typeof update.isPublic !== 'undefined') {
     values.isPublic = update.isPublic ? 1 : 0
   }
-  
+
   // Clean password/extra handling could be added here, for now keep simple
   if (typeof update.extra !== 'undefined') {
     values.extraMetadata = JSON.stringify(update.extra)
   }
 
   if (existing) {
-    await db
-      .update(pathMetadata)
-      .set(values)
-      .where(eq(pathMetadata.id, existing.id))
-      .run()
+    await db.update(pathMetadata).set(values).where(eq(pathMetadata.id, existing.id)).run()
     return existing.id
   } else {
     const id = nanoid()

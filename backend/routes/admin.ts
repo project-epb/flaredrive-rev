@@ -4,7 +4,13 @@ import type { HonoEnv } from '../index.js'
 import { getDb } from '../utils/db.js'
 import { getSessionUser } from '../utils/session.js'
 import { buckets, pathMetadata, sessions, uploadHistory, users } from '../../db/schema.js'
-import { SITE_SETTINGS, getSiteSetting, setSiteSetting, unsetSiteSetting } from '../utils/site-settings.js'
+import {
+  SITE_SETTINGS,
+  getSiteSettingsBatch,
+  invalidateResolvedPublicSiteSettingsCache,
+  setSiteSettingsBatch,
+} from '../utils/site-settings.js'
+import { revokeTokenHash } from '../utils/session-revocation.js'
 
 const isValidEmail = (email: string) => {
   if (!email || email.length > 254) return false
@@ -60,13 +66,12 @@ admin.get('/settings', async (ctx) => {
   const adminUser = await requireAdmin(ctx)
   if (!adminUser.ok) return adminUser.response
 
-  const siteName = await getSiteSetting(ctx, SITE_SETTINGS.siteName)
-  const allowRegister = await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)
-
-  return ctx.json({
-    siteName,
-    allowRegister,
+  const resolved = await getSiteSettingsBatch(ctx, {
+    siteName: SITE_SETTINGS.siteName,
+    allowRegister: SITE_SETTINGS.allowRegister,
   })
+
+  return ctx.json(resolved)
 })
 
 admin.put('/settings', async (ctx) => {
@@ -76,36 +81,40 @@ admin.put('/settings', async (ctx) => {
   const body = await ctx.req.json().catch(() => null)
   if (!body || typeof body !== 'object') return ctx.json({ error: 'Invalid payload' }, 400)
 
+  const updates: Array<{ def: any; value: any | null }> = []
+
   if ('siteName' in body) {
     const v = (body as any).siteName
     if (v === null) {
-      await unsetSiteSetting(ctx, SITE_SETTINGS.siteName)
+      updates.push({ def: SITE_SETTINGS.siteName, value: null })
     } else {
       const name = String(v ?? '').trim()
       if (!name || name.length > 64) return ctx.json({ error: 'Invalid siteName' }, 400)
-      await setSiteSetting(ctx, SITE_SETTINGS.siteName, name)
+      updates.push({ def: SITE_SETTINGS.siteName, value: name })
     }
   }
 
   if ('allowRegister' in body) {
     const v = (body as any).allowRegister
     if (v === null) {
-      await unsetSiteSetting(ctx, SITE_SETTINGS.allowRegister)
+      updates.push({ def: SITE_SETTINGS.allowRegister, value: null })
     } else if (typeof v === 'boolean') {
-      await setSiteSetting(ctx, SITE_SETTINGS.allowRegister, v)
+      updates.push({ def: SITE_SETTINGS.allowRegister, value: v })
     } else {
       return ctx.json({ error: 'Invalid allowRegister' }, 400)
     }
   }
 
+  await setSiteSettingsBatch(ctx, updates)
+  await invalidateResolvedPublicSiteSettingsCache(ctx)
+
   // Return resolved values after update
-  const siteName = await getSiteSetting(ctx, SITE_SETTINGS.siteName)
-  const allowRegister = await getSiteSetting(ctx, SITE_SETTINGS.allowRegister)
-  return ctx.json({
-    ok: true,
-    siteName,
-    allowRegister,
+  const resolved = await getSiteSettingsBatch(ctx, {
+    siteName: SITE_SETTINGS.siteName,
+    allowRegister: SITE_SETTINGS.allowRegister,
   })
+
+  return ctx.json({ ok: true, ...resolved })
 })
 
 admin.get('/users', async (ctx) => {
@@ -224,6 +233,16 @@ admin.delete('/users/:id', async (ctx) => {
 
   await db.delete(buckets).where(eq(buckets.ownerUserId, targetId)).run()
   await db.delete(uploadHistory).where(eq(uploadHistory.userId, targetId)).run()
+
+  // Strong-consistency: revoke all existing sessions immediately.
+  const userSessions = await db
+    .select({ tokenHash: sessions.tokenHash, expiresAt: sessions.expiresAt })
+    .from(sessions)
+    .where(eq(sessions.userId, targetId))
+    .all()
+
+  await Promise.all(userSessions.map((s) => revokeTokenHash(ctx, s.tokenHash, s.expiresAt)))
+
   await db.delete(sessions).where(eq(sessions.userId, targetId)).run()
   await db.delete(users).where(eq(users.id, targetId)).run()
 

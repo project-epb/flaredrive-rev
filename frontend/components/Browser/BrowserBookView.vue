@@ -2,7 +2,11 @@
 .browser-book-view
   NSkeleton(v-if='!payload', height='200px')
   .browser-book-view-main(v-else)
-    NCard(:title='bookName', :closable='!!(parentKey && items.length)', @close='$router.push(`/${currentBucket}/${parentKey}`)')
+    NCard(
+      :title='bookName',
+      :closable='!!(parentKey && items.length)',
+      @close='$router.push(`/${currentBucket}/${parentKey}`)'
+    )
       NEmpty(v-if='!items.length')
       .book-pages-container(:data-page-count='items.length')
         .book-page-item(
@@ -95,7 +99,7 @@ const parentKey = computed(() => {
  * 按 key ascend 排序，过滤出来 image/* text/plain *.md 的对象
  * 这样我们才能把它渲染成类似书本的效果
  */
-const items = computed< 
+const items = computed<
   (StorageListObject & {
     previewType: ReturnType<typeof FileHelper.getPreviewType>
     cdnUrl: string

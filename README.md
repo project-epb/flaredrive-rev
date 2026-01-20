@@ -8,54 +8,125 @@
 
 </div>
 
-> [!NOTE]
-> Original project: [longern/FlareDrive](https://github.com/longern/FlareDrive)
->
-> This is a totally rewritten version of FlareDrive by @dragon-fish
+[简体中文](README.zh_CN.md)
 
-CloudFlare R2 storage manager with Pages and Workers. Free 10 GB storage. Free serverless backend with a limit of 100,000 invocation requests per day. [More about pricing](https://developers.cloudflare.com/r2/platform/pricing/)
+Cloud-native S3-compatible bucket manager built on Cloudflare Workers.
 
-## Features
+This repository is under active refactoring. For architecture notes and progress tracking, see:
 
-![](https://github.com/user-attachments/assets/7a89b857-c11d-4c1e-bb5b-2f12d95896d3)
+- [docs/architecture-draft.md](docs/architecture-draft.md)
+- [docs/migration-todos.md](docs/migration-todos.md)
 
-- Drag-and-drop upload
-- Multiple layouts: List, Grid, and Gallery
-- File preview: Image, Video, Audio, PDF, and Text...
-- Upload history (\* currently on local storage)
+## What it is
 
-## Usage
+- **Backend**: Cloudflare Workers + Hono (`/api/**`)
+- **Database**: Cloudflare D1 (SQLite-compatible) + Drizzle ORM
+- **Frontend**: Vue 3 SPA (Naive UI) bundled by Vite and served via Workers assets
+- **Storage**: S3-compatible providers (Cloudflare R2 / AWS S3 / MinIO / ...)
 
-### Installation
+## Features (current)
 
-Before starting, you should make sure that
+- User registration/login (cookie-based sessions)
+- Bucket configuration & connection test (stored in D1)
+- Object browser (list/preview/delete)
+- Upload via presigned URL + upload history recording
+- Raw file access via `/api/raw/:bucketId/*` with access checks
+- Site settings stored in D1 (fallback: env → default)
 
-- you have created a [CloudFlare](https://dash.cloudflare.com/) account
-- your payment method is added
+UI is currently English-only.
 
-FlareDrive is almost ready to use out of the box. It only takes a few simple steps to install:
+## Requirements
 
-1. [Click this link to start the installation](https://dash.cloudflare.com/?to=/:account/workers-and-pages/create/deploy-to-workers)
-2. Paste `https://github.com/project-epb/flaredrive-rev` into the "Git repository URL" box and click Next.
-3. Follow the prompts in the form to create a new project.
-4. Done!
+- Node.js 22+ (recommended: 24.x)
+- Bun
+- Cloudflare account (for deploy / production D1)
 
-(Optional) If you want a custom domain or CDN, check the control panel of the workers and the control panel of the R2 bucket you created in the previous step.
+## Local development
 
-Check out the [`.env.sample`](.env.sample) file for all the environment variables available for configuration!
+Install dependencies:
 
-**Configuration example:**
+```bash
+bun install
+```
 
-![](https://github.com/user-attachments/assets/b7a0f279-69ed-4232-a784-4845a9975cd3)
+Optional: create a local env file (frontend build-time options):
 
-### Authentication
+```bash
+cp .env.sample .env
+```
 
-There is no built-in authentication support, yet. By default everyone can read and write your storage. But CloudFlare Zero Trust can be used to protect your data. Do these steps to enable authentication:
+Apply D1 migrations to local database:
 
-1. Enable CloudFlare Zero Trust
-2. In **Access**->**Applications**, create a self-hosted application
-3. Set **Path** as `api/bucket/` to disable public write or leave it blank to disable public read
-4. Create a policy which accepts your email only
+```bash
+bun run drizzle:push
+```
+
+Start dev server:
+
+```bash
+bun dev
+```
+
+Default dev URL: `http://localhost:5880`
+
+## Authentication / creating the first admin
+
+There are two common ways:
+
+1. **Enable registration**, then the first registered user (ID=1) becomes admin automatically.
+
+- The flag is resolved by **DB → env → default**.
+- In `wrangler.jsonc`, `ALLOW_REGISTER` defaults to `false`.
+- Admins can change it later in the UI: `/@admin/settings`.
+
+2. **Admin create endpoint** (no public registration needed)
+
+- Set `ADMIN_CREATE_TOKEN` as a Worker secret.
+- Then run:
+
+```bash
+bun run user:create -- --url http://localhost:5880 --email admin@example.com --password "StrongPass123" --token "<ADMIN_CREATE_TOKEN>"
+```
+
+Script details: [scripts/create-user.ts](scripts/create-user.ts)
+
+## Useful scripts
+
+- `bun dev` - start dev server
+- `bun run build` - build frontend + worker assets
+- `bun run deploy` - deploy to Cloudflare Workers
+- `bun run drizzle:push` - apply D1 migrations locally
+- `bun run drizzle:push-prod` - apply D1 migrations to production (D1 HTTP)
+- `bun run drizzle:studio` - open Drizzle Studio (local)
+- `bun run drizzle:studio-prod` - open Drizzle Studio (production)
+
+## Environment variables
+
+Frontend (Vite) env vars live in:
+
+- `.env` (optional)
+- `.env.development` / `.env.production`
+- `.env.sample` lists supported keys
+
+Backend (Worker) env vars are configured in Cloudflare (Dashboard / Wrangler):
+
+- `ALLOW_REGISTER` (string boolean)
+- `SITE_NAME` (instance display name)
+- `ADMIN_CREATE_TOKEN` (enables `/api/auth/admin-create`)
+
+Production Drizzle (D1 HTTP driver) requires:
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_DATABASE_ID`
+
+## Project structure
+
+- `backend/` - Worker API (Hono)
+- `frontend/` - Vue SPA
+- `db/` - Drizzle schema
+- `drizzle/` - SQL migrations
+- `common/` - shared utilities
 
 ## Screenshots
 
@@ -75,7 +146,7 @@ There is no built-in authentication support, yet. By default everyone can read a
 
 ![](https://github.com/user-attachments/assets/f8e5c6ab-7d16-48f3-972c-49ef109549b8)
 
----
+## License
 
 > MIT License
 >
