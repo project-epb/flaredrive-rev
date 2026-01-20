@@ -1,14 +1,19 @@
 <template lang="pug">
 #auth-login
-  NCard(title='登录', size='large')
+  NCard(title='Login', size='large')
     NForm(:model='form', :rules='rules', ref='formRef', label-placement='top')
-      NFormItem(label='邮箱', path='email')
+      NFormItem(label='Email', path='email')
         NInput(v-model:value='form.email', placeholder='you@example.com', autofocus)
-      NFormItem(label='密码', path='password')
-        NInput(v-model:value='form.password', type='password', show-password-on='click', placeholder='至少 8 位')
+      NFormItem(label='Password', path='password')
+        NInput(
+          v-model:value='form.password',
+          type='password',
+          show-password-on='click',
+          placeholder='At least 8 characters'
+        )
       .flex(gap-3, items-center)
-        NButton(type='primary', :loading='submitting', @click='onSubmit') 登录
-        NButton(v-if='allowRegister', secondary, @click='goRegister') 去注册
+        NButton(type='primary', :loading='submitting', @click='onSubmit') Login
+        NButton(v-if='allowRegister', quaternary, @click='goRegister') Register
 </template>
 
 <script setup lang="ts">
@@ -38,10 +43,10 @@ const form = reactive({
 
 const rules: FormRules = {
   email: [
-    { required: true, message: '请输入邮箱', trigger: ['blur', 'input'] },
-    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'input'] },
+    { required: true, message: 'Please enter your email', trigger: ['blur', 'input'] },
+    { type: 'email', message: 'Invalid email format', trigger: ['blur', 'input'] },
   ],
-  password: [{ required: true, message: '请输入密码', trigger: ['blur', 'input'] }],
+  password: [{ required: true, message: 'Please enter your password', trigger: ['blur', 'input'] }],
 }
 
 const submitting = ref(false)
@@ -58,17 +63,17 @@ const onSubmit = async () => {
   submitting.value = true
   try {
     await auth.login({ email: form.email, password: form.password })
-    message.success('登录成功')
+    message.success('Login successful')
     await router.replace(redirectTo.value)
   } catch (e: any) {
-    message.error(e?.message || '登录失败')
+    message.error(e?.message || 'Login failed')
   } finally {
     submitting.value = false
   }
 }
 
 const goRegister = () => {
-  router.push({ path: '/@auth/register', query: { redirect: redirectTo.value } })
+  router.push({ name: '@auth-register', query: { redirect: redirectTo.value } })
 }
 </script>
 

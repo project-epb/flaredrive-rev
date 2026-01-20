@@ -1,23 +1,23 @@
 <template lang="pug">
 #auth-register
-  NCard(title='注册', size='large')
-    NAlert(v-if='!allowRegister', type='warning', show-icon) 当前未开放注册，请联系管理员或使用命令行创建账号。
+  NCard(title='Register', size='large')
+    NAlert(v-if='!allowRegister', type='warning', show-icon) Sorry, registration is currently closed.
     NForm(:model='form', :rules='rules', ref='formRef', label-placement='top')
-      NFormItem(label='邮箱', path='email')
+      NFormItem(label='Email', path='email')
         NInput(v-model:value='form.email', placeholder='you@example.com', autofocus, :disabled='!allowRegister')
-      NFormItem(label='密码', path='password')
+      NFormItem(label='Password', path='password')
         NInput(
           v-model:value='form.password',
           type='password',
           show-password-on='click',
-          placeholder='至少 8 位',
+          placeholder='At least 8 characters',
           :disabled='!allowRegister'
         )
-      NFormItem(label='确认密码', path='password2')
+      NFormItem(label='Confirm Password', path='password2')
         NInput(v-model:value='form.password2', type='password', show-password-on='click', :disabled='!allowRegister')
       .flex(gap-3, items-center)
-        NButton(type='primary', :loading='submitting', :disabled='!allowRegister', @click='onSubmit') 注册并登录
-        NButton(secondary, @click='goLogin') 去登录
+        NButton(type='primary', :loading='submitting', :disabled='!allowRegister', @click='onSubmit') Register and Login
+        NButton(quaternary, @click='goLogin') I have an account
 </template>
 
 <script setup lang="ts">
@@ -48,18 +48,18 @@ const form = reactive({
 
 const rules: FormRules = {
   email: [
-    { required: true, message: '请输入邮箱', trigger: ['blur', 'input'] },
-    { type: 'email', message: '邮箱格式不正确', trigger: ['blur', 'input'] },
+    { required: true, message: 'Please enter your email', trigger: ['blur', 'input'] },
+    { type: 'email', message: 'Invalid email format', trigger: ['blur', 'input'] },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: ['blur', 'input'] },
-    { min: 8, message: '密码至少 8 位', trigger: ['blur', 'input'] },
+    { required: true, message: 'Please enter your password', trigger: ['blur', 'input'] },
+    { min: 8, message: 'Password must be at least 8 characters', trigger: ['blur', 'input'] },
   ],
   password2: [
-    { required: true, message: '请再次输入密码', trigger: ['blur', 'input'] },
+    { required: true, message: 'Please confirm your password', trigger: ['blur', 'input'] },
     {
       validator: (_rule, value) => value === form.password,
-      message: '两次输入的密码不一致',
+      message: 'The two passwords do not match',
       trigger: ['blur', 'input'],
     },
   ],
@@ -70,7 +70,7 @@ const formRef = ref<FormInst | null>(null)
 
 const onSubmit = async () => {
   if (!allowRegister.value) {
-    message.warning('当前未开放注册')
+    message.warning('Registration is currently closed')
     return
   }
   if (submitting.value) return
@@ -84,10 +84,10 @@ const onSubmit = async () => {
   try {
     await auth.register({ email: form.email, password: form.password })
     await auth.login({ email: form.email, password: form.password })
-    message.success('注册成功')
+    message.success('Registration successful')
     await router.replace(redirectTo.value)
   } catch (e: any) {
-    message.error(e?.message || '注册失败')
+    message.error(e?.message || 'Registration failed')
   } finally {
     submitting.value = false
   }
