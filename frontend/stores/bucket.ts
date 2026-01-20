@@ -162,12 +162,12 @@ export const useBucketStore = defineStore('bucket', () => {
     if (!filePath) return ''
 
     const templateUrl = bucketEdgeThumbnailMap.value[bucketName]
-    if (templateUrl) {
-      const cdnBaseUrl =
-        bucketCdnMap.value[bucketName] || (bucketName ? normalizeCdnBaseUrl(`/api/raw/${bucketName}/`) : CDN_BASE_URL)
+    const configuredCdnUrl = bucketCdnMap.value[bucketName]
+
+    if (templateUrl && configuredCdnUrl) {
       // Replace variables
       return templateUrl
-        .replace(/{cdn_base_url}/g, cdnBaseUrl)
+        .replace(/{cdn_base_url}/g, configuredCdnUrl)
         .replace(/{width}/g, width.toString())
         .replace(/{height}/g, height.toString())
         .replace(/{file_key}/g, filePath)
