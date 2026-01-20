@@ -130,19 +130,25 @@ bun run user:create -- --url http://localhost:5880 --email admin@example.com --p
 
 ## 截图
 
-**Gallery Layout**
+**存储桶管理**
+
+![](https://github.com/user-attachments/assets/e36d3442-6b73-445a-b672-d1b8851d53ce)
+
+![](https://github.com/user-attachments/assets/77ad92fe-f530-4485-9e59-f56d0b642572)
+
+**画廊布局**
 
 ![](https://github.com/user-attachments/assets/a815f682-fac4-459b-b53a-9c219966be3d)
 
-**Book Layout**
+**阅读布局**
 
 ![](https://github.com/user-attachments/assets/27135561-6ab7-40fd-8bae-3cb833f74c4c)
 
-**Manga!**
+**漫画模式！**
 
 ![](https://github.com/user-attachments/assets/bcb31353-7709-4152-b6a9-8297e300a387)
 
-**File Info**
+**文件信息**
 
 ![](https://github.com/user-attachments/assets/f8e5c6ab-7d16-48f3-972c-49ef109549b8)
 

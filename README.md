@@ -130,6 +130,12 @@ Production Drizzle (D1 HTTP driver) requires:
 
 ## Screenshots
 
+**My Buckets**
+
+![](https://github.com/user-attachments/assets/e36d3442-6b73-445a-b672-d1b8851d53ce)
+
+![](https://github.com/user-attachments/assets/77ad92fe-f530-4485-9e59-f56d0b642572)
+
 **Gallery Layout**
 
 ![](https://github.com/user-attachments/assets/a815f682-fac4-459b-b53a-9c219966be3d)
