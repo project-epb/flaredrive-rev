@@ -1,12 +1,17 @@
 <template lang="pug">
 .browser-list-view
+  .placeholder(v-if='!payload && isLoading')
+    NCard
+      .grid(grid-cols-1, gap-3)
+        NSkeleton(v-for='_ in 10', h-50px, rounded-lg)
   NDataTable(
     :columns='columns',
     :data='tableData',
     :row-key='(row) => row.key',
     :row-props='(row) => ({ onClick: () => handleRowClick(row), style: row.key === "/" ? { opacity: "50%", pointerEvents: "none" } : { cursor: "pointer" } })',
     bordered,
-    hoverable
+    hoverable,
+    :loading='isLoading'
   )
 </template>
 
@@ -23,7 +28,8 @@ import type { SortOrder } from '@/stores/prefs'
 
 const props = withDefaults(
   defineProps<{
-    payload: StorageListResult
+    payload?: StorageListResult
+    isLoading?: boolean
     noActions?: boolean
     noFolder?: boolean
     defaultSortBy?: string
@@ -247,6 +253,7 @@ const isROOT = computed(() => {
   return props.payload?.prefix === ''
 })
 const tableData = computed(() => {
+  if (!props.payload) return [] as StorageListObject[]
   let list = props.payload?.objects || []
   if (!props.noFolder) {
     if (props.payload?.folders) {

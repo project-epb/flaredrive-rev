@@ -23,7 +23,7 @@ NLayout.full-layout-container.admin-layout(native-scrollbar, content-class='admi
     NLayoutContent.admin-content(
       content-class='admin-content-inner p-4',
       native-scrollbar,
-      :content-style='{ paddingLeft: windowWidth >= 768 ? "2rem" : undefined }'
+      :content-style='{ paddingLeft: "1.5rem" }'
     )
       slot
   GlobalFooter

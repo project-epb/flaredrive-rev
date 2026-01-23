@@ -1,13 +1,16 @@
 <template lang="pug">
 .browser-book-view
-  NSkeleton(v-if='!payload', height='200px')
+  NCard.placeholder(v-if='!payload && isLoading')
+    template(#header)
+      NSkeleton(text, w-48)
+    NSkeleton(text, v-for='_ in 20', :width='Math.random() * (80 - 40) + 40 + "%"', mb-2)
   .browser-book-view-main(v-else)
     NCard(
       :title='bookName',
       :closable='!!(parentKey && items.length)',
       @close='$router.push(`/${currentBucket}/${parentKey}`)'
     )
-      NEmpty(v-if='!items.length')
+      BrowserEmpty(v-if='!items.length')
       .book-pages-container(:data-page-count='items.length')
         .book-page-item(
           v-for='(item, index) in items',
@@ -67,12 +70,13 @@ import { FileHelper } from '@/utils/FileHelper'
 const props = withDefaults(
   defineProps<{
     payload?: StorageListResult | null
+    isLoading?: boolean
   }>(),
   { payload: null }
 )
 const bucket = useBucketStore()
 const route = useRoute()
-const currentBucket = computed(() => route.params.bucket as string)
+const currentBucket = computed(() => (route.params as any).bucket as string)
 
 const bookName = computed(() => {
   if (!props.payload) return 'Loading...'

@@ -13,8 +13,12 @@
         template(#icon, v-if='item.icon'): component(:is='item.icon')
         | {{ item.label }}
 
+  .placeholder(v-if='list.length <= 0 && isLoading')
+    .grid(grid-cols-4, gap-3)
+      NSkeleton(v-for='_ in 20', h-200px, rounded-lg)
+
   Waterfall(
-    v-if='list.length > 0',
+    v-else,
     ref='waterfallRef',
     :list='list',
     :breakpoints='{ 9999: { rowPerView: 5 }, 1160: { rowPerView: 4 }, 900: { rowPerView: 3 }, 580: { rowPerView: 2 }, 360: { rowPerView: 1 } }',
@@ -63,8 +67,6 @@
               .file-actions(v-if='!item.key.endsWith("/")', @click.stop)
                 NDropdown(:options='fileActionOptions', @select='(action) => onSelectAction(action, item)')
                   NButton(secondary, :render-icon='() => h(IconDots)', circle, size='small')
-
-  NSkeleton(v-if='list.length === 0', h-200px)
 </template>
 
 <script setup lang="tsx">
@@ -87,6 +89,7 @@ import type { GallerySortBy } from '@/stores/prefs'
 
 const props = defineProps<{
   payload: StorageListResult
+  isLoading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -132,6 +135,7 @@ const list = computed<
     previewType?: ReturnType<typeof FileHelper.getPreviewType>
   })[]
 >(() => {
+  if (!props.payload) return [] as any
   return [
     props.payload.prefix === '' ? FileHelper.createNullObject('/') : FileHelper.createNullObject('../'),
     ...props.payload.folders.map(FileHelper.createNullObject),

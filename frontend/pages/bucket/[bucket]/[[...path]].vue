@@ -1,6 +1,5 @@
 <template lang="pug">
 #browser-view
-  BreadcrumbNav(mb-2)
   .top-sticky-rail(mb-8, z-5, sticky, top='[calc(60px+0.25rem)]')
     NCollapseTransition(:show='isShowTopStickyRail || !!searchInput')
       NCard(size='small')
@@ -72,6 +71,8 @@
     )
       NIcon(size='12'): component(:is='isShowTopStickyRail ? IconChevronCompactUp : IconChevronCompactDown')
 
+  BreadcrumbNav(mb-2)
+
   //- Alerts
   NAlert(v-if='bucket.checkIsRandomUploadDir(currentPath)', type='info', title='Random upload', closable, my-4) 
     | This is a random upload directory. The files uploaded here will be stored in a random name. You can find the final URL in the
@@ -85,11 +86,11 @@
     | It's strongly recommended to not upload or delete files in this directory.
 
   //- file browser
-  NSkeleton(v-if='!payload', height='200px')
-  NSpin(v-else, :show='isLoading')
+  NSpin(:show='isLoading')
     BrowserListView(
       v-if='currentLayout === "list"',
       :payload='filteredPayload',
+      :is-loading,
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
@@ -98,6 +99,7 @@
     BrowserGalleryView(
       v-if='currentLayout === "gallery"',
       :payload='filteredPayload',
+      :is-loading,
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
@@ -106,11 +108,14 @@
     BrowserBookView(
       v-if='currentLayout === "book"',
       :payload='payload',
+      :is-loading,
       @navigate='onNavigate',
       @delete='onDelete',
       @download='onDownload',
       @rename='onRename'
     )
+
+  BreadcrumbNav(mb-2)
 
   //- readme
   BrowserReadmeCard#readme(
@@ -230,7 +235,6 @@ const UploadProgress = defineAsyncComponent(() => import('@/components/UploadPro
 const route = useRoute()
 const router = useRouter()
 const bucket = useBucketStore()
-const navigation = useNavigationStore()
 const site = useSiteStore()
 
 // Get bucket name from route param

@@ -14,6 +14,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     BreadcrumbNav: typeof import('./components/BreadcrumbNav.vue')['default']
     BrowserBookView: typeof import('./components/Browser/BrowserBookView.vue')['default']
+    BrowserEmpty: typeof import('./components/Browser/BrowserEmpty.vue')['default']
     BrowserFilePreview: typeof import('./components/Browser/BrowserFilePreview.vue')['default']
     BrowserGalleryView: typeof import('./components/Browser/BrowserGalleryView.vue')['default']
     BrowserGridView: typeof import('./components/Browser/BrowserGridView.vue')['default']
@@ -91,6 +92,7 @@ declare module 'vue' {
 declare global {
   const BreadcrumbNav: typeof import('./components/BreadcrumbNav.vue')['default']
   const BrowserBookView: typeof import('./components/Browser/BrowserBookView.vue')['default']
+  const BrowserEmpty: typeof import('./components/Browser/BrowserEmpty.vue')['default']
   const BrowserFilePreview: typeof import('./components/Browser/BrowserFilePreview.vue')['default']
   const BrowserGalleryView: typeof import('./components/Browser/BrowserGalleryView.vue')['default']
   const BrowserGridView: typeof import('./components/Browser/BrowserGridView.vue')['default']
