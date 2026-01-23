@@ -89,6 +89,7 @@ export class BucketClient {
         ...metaHeaders,
         'Content-Type': contentType || 'application/octet-stream',
       },
+      timeout: 0,
     })
   }
 

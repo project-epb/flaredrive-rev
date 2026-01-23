@@ -58,7 +58,7 @@ const main = async () => {
   })
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
+    const body: any = await res.json().catch(() => ({}))
     console.error('Failed:', res.status, body?.error || body)
     process.exit(1)
   }

@@ -18,6 +18,7 @@
     "backend/**/*.ts",
     "db/**/*.ts",
     "common/**/*.ts",
+    "scripts/**/*.ts",
     "drizzle.config.ts",
     "vite.config.ts",
     "unocss.config.ts"

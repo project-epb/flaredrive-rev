@@ -21,7 +21,7 @@ import { NButton, NCard, NForm, NFormItem, NInput, useMessage } from 'naive-ui'
 import type { FormInst, FormRules } from 'naive-ui'
 
 definePage({
-  name: '@auth-login',
+  name: 'auth-login',
 })
 
 const auth = useAuthStore()
@@ -73,7 +73,7 @@ const onSubmit = async () => {
 }
 
 const goRegister = () => {
-  router.push({ name: '@auth-register', query: { redirect: redirectTo.value } })
+  router.push({ name: 'auth-register', query: { redirect: redirectTo.value } })
 }
 </script>
 

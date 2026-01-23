@@ -85,7 +85,6 @@
 <script setup lang="tsx">
 import {
   IconBucket,
-  IconChevronRight,
   IconCloud,
   IconPlus,
   IconDotsVertical,
@@ -102,6 +101,10 @@ import { NIcon, useDialog, useMessage } from 'naive-ui'
 import type { BucketInfo } from '@/models/BucketClient'
 import BucketForm from '@/components/BucketForm.vue'
 import fexios from 'fexios'
+
+definePage({
+  name: 'index',
+})
 
 const site = useSiteStore()
 

@@ -218,7 +218,7 @@ import type { Component } from 'vue'
 import type { BrowserLayout } from '@/stores/prefs'
 
 definePage({
-  name: '@browser',
+  name: 'bucket-browse',
 })
 
 // Async components
@@ -261,12 +261,6 @@ onMounted(async () => {
   if (bucketId.value && !bucket.availableBuckets.some((b) => b.id === bucketId.value)) {
     router.replace('/')
     return
-  }
-})
-
-onBeforeRouteUpdate((to) => {
-  if (to.name === '@browser') {
-    navigation.saveCurrentRoute(to.fullPath)
   }
 })
 
@@ -443,15 +437,17 @@ async function onDownload(item: StorageListObject) {
 }
 async function onRename(item: StorageListObject) {
   const toPathInput = ref(item.key)
-  nmodal.create({
+  const m = nmodal.create({
     title: 'Rename File',
     preset: 'confirm',
     autoFocus: true,
     content: () => {
       return (
-        <NFormItem label="New Name (including path)">
-          <NInput value={toPathInput.value} onUpdateValue={(e) => (toPathInput.value = e)} clearable />
-        </NFormItem>
+        <NForm>
+          <NFormItem label="New Name (including path)">
+            <NInput value={toPathInput.value} onUpdateValue={(e) => (toPathInput.value = e)} clearable />
+          </NFormItem>
+        </NForm>
       )
     },
     positiveText: 'OK',
@@ -484,20 +480,22 @@ async function handleCreateFolder() {
     autoFocus: true,
     content: () => {
       return (
-        <NFormItem label="Folder Name">
-          <NInput value={folderNameInput.value} onUpdateValue={(e) => (folderNameInput.value = e)} clearable>
-            {{
-              prefix: () => (
-                <>
-                  /
-                  {currentPath.value.length > 12
-                    ? currentPath.value.slice(0, 6) + '...' + currentPath.value.slice(-6)
-                    : currentPath.value}
-                </>
-              ),
-            }}
-          </NInput>
-        </NFormItem>
+        <NForm>
+          <NFormItem label="Folder Name">
+            <NInput value={folderNameInput.value} onUpdateValue={(e) => (folderNameInput.value = e)} clearable>
+              {{
+                prefix: () => (
+                  <>
+                    /
+                    {currentPath.value.length > 12
+                      ? currentPath.value.slice(0, 6) + '...' + currentPath.value.slice(-6)
+                      : currentPath.value}
+                  </>
+                ),
+              }}
+            </NInput>
+          </NFormItem>
+        </NForm>
       )
     },
     positiveText: 'Create',
@@ -512,7 +510,7 @@ async function handleCreateFolder() {
         nmessage.error('Invalid folder name')
         return false
       }
-      router.push(`/${bucketId.value}/${currentPath.value}${folderName}/`)
+      router.push(`/bucket/${bucketId.value}/${currentPath.value}${folderName}/`)
     },
   })
 }

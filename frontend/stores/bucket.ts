@@ -28,12 +28,7 @@ export const useBucketStore = defineStore('bucket', () => {
 
   const checkIsRandomUploadDir = (key: string) => {
     const dir = getRandomUploadDir()
-    return (
-      dir &&
-      dir.endsWith('/') &&
-      dir !== '/' &&
-      key.startsWith(dir)
-    )
+    return dir && dir.endsWith('/') && dir !== '/' && key.startsWith(dir)
   }
   const checkIsHiddenDir = (key: string) => {
     return FLARE_DRIVE_HIDDEN_KEY && FLARE_DRIVE_HIDDEN_KEY !== '/' && key.startsWith(FLARE_DRIVE_HIDDEN_KEY + '/')
@@ -312,6 +307,7 @@ export const useBucketStore = defineStore('bucket', () => {
         headers: {
           'Content-Type': contentType,
         },
+        timeout: 0,
       })
 
       // 4. Record History

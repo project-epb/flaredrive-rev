@@ -20,6 +20,10 @@
 <script setup lang="ts">
 import { IconMoodSad, IconHome, IconArrowLeft } from '@tabler/icons-vue'
 
+definePage({
+  name: '404-fallback',
+})
+
 const router = useRouter()
 
 const goBack = () => {

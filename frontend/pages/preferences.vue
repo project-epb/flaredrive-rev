@@ -66,10 +66,10 @@
 <script setup lang="ts">
 import { useDialog, useMessage } from 'naive-ui'
 import type { SelectMixedOption } from 'naive-ui/es/select/src/interface'
-import type { BrowserLayout, GallerySortBy, SortOrder } from '@/stores/prefs'
 import { isBrowserLayout, isGallerySortBy, isSortOrder } from '@/stores/prefs'
 
 definePage({
+  name: 'preferences',
   meta: {
     // keep default auth requirement
   },
