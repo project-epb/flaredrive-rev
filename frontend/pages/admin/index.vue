@@ -20,6 +20,7 @@
   NDivider
 
   NCard.mt-6(title='About')
+    NImage(src='/logos/flaredrive-logo-h.png', alt='FlareDrive Logo', width='200')
     NP Powered by FlareDrive.
     .mt-3.flex.gap-2.flex-wrap
       NText MIT License
@@ -30,6 +31,18 @@
         | Made with 🐟 by
         |
         NA(href='https://github.com/dragon-fish', target='_blank', rel='noopener noreferrer') Dragon Fish
+    NP
+      | FlareDrive logo &amp; mascot
+      |
+      | ·
+      |
+      | Created by
+      |
+      NA(href='https://github.com/dragon-fish', target='_blank', rel='noopener noreferrer') Dragon Fish
+      |
+      | ·
+      |
+      | CC BY-SA 4.0 License
 </template>
 
 <script setup lang="ts">

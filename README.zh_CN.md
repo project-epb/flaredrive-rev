@@ -1,6 +1,6 @@
 <div align="center">
 
-![Logo](https://github.com/user-attachments/assets/e02724d9-58e9-431f-bb63-d4b52c6bb7d4)
+<img src="./public/logos/flaredrive-logo-h.png" width="200" alt="FlareDrive Logo" />
 
 # FlareDrive: REMASTERED
 
@@ -156,4 +156,10 @@ bun run user:create -- --url http://localhost:5880 --email admin@example.com --p
 
 > MIT License
 >
-> Copyright (c) 2022 Siyu Long<br>Copyright (c) 2025 Dragon Fish
+> - Copyright (c) 2022 Siyu Long (before f82ffdc)
+> - Copyright (c) 2025 Dragon Fish (remastered version)
+
+> FlareDrive Logos & mascots
+>
+> - CC BY-SA 4.0
+> - See more: [README](public/logos/README.md)

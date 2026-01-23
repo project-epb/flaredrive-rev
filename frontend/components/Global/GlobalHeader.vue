@@ -5,7 +5,7 @@ NLayoutHeader.global-header(bordered)
     .flex(items-center, gap-2)
       //- Logo / Home Link
       RouterLink(to='/', style='text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px')
-        img(src='/favicon.png', alt='Site Logo', width='24', height='24')
+        img(src='/logos/flaredrive-mascot.png', alt='Site Logo', width='24', height='24')
         span.font-bold.text-lg {{ site.siteName || 'FlareDrive' }}
 
       //- Navigation Links
